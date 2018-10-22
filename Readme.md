@@ -10,8 +10,8 @@ Items can be added, removed and even kept sorted in real-time.
 <br />
 
 <p>
-This is the standard-implementation. Do also have a look at <a href="http://github.com/svenbieg/clusters-runtime">Clusters-Runtime</a>,<br />
-the Windows Runtime Component of Clusters!
+First, i want to give a short overview how it works. The different clusters<br />
+will be discussed later.
 </p>
 <br />
 
