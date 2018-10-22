@@ -14,8 +14,9 @@ This is the standard-implementation of Clusters. If You are using the Windows Ru
 You need <a href="http://github.com/svenbieg/clusters-runtime">Clusters-Runtime</a>, the Windows Runtime Component of Clusters!
 </p>
 
-<h2>Creation</h2><br />
+<h2>Principle</h2><br />
 
+<h3>Creation</h3>
 <table>
 	<tr>
 		<td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="http://svenbieg.azurewebsites.net/Clusters"><img src="https://user-images.githubusercontent.com/12587394/47256722-d3dc4580-d484-11e8-8393-b0e7c026be5e.png" /></a></td>
