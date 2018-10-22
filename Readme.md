@@ -10,10 +10,11 @@ Items can be added, removed and even kept sorted in real-time.
 <br />
 
 <p>
-The algorithm is provided in form of c++-templates via <a href="http://github.com/svenbieg/clusters">GitHub</a>.<br />
-</p><br />
+This is the standard-implementation of Clusters. If You are using the Windows Runtime Environment,<br />
+You need <a href="http://github.com/svenbieg/clusters-runtime">Clusters-Runtime</a>, the Windows Runtime Component of Clusters!
+</p>
 
-<h2>Principle</h2><br />
+<h2>Creation</h2><br />
 
 <table>
 	<tr>
@@ -55,9 +56,5 @@ The next cluster is the index, which is used for sorting. Each id can be linked 
 It is more efficient than the map-class in standard-library. You can find some benchmarks on my website at
 <a href="http://svenbieg.azurewebsites.net/clusters/index" target="_blank">http://svenbieg.azurewebsites.net/clusters/index</a>.
 </p><br />
-
-<p>
-Do also take a look at <a href="http://github.com/svenbieg/clusters-runtime">Clusters-Runtime</a>, the Windows Runtime Component of Clusters!
-</p>
 
 <br /><br /><br /><br /><br />
