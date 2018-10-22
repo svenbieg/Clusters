@@ -10,8 +10,8 @@ Items can be added, removed and even kept sorted in real-time.
 <br />
 
 <p>
-First, i want to give a short overview how it works. The different clusters<br />
-will be discussed later.
+First, i want to give a short overview how it works. The different interfaces<br />
+will be discussed later in this document.
 </p>
 <br />
 
