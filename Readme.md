@@ -11,7 +11,7 @@ Items can be added, removed and even kept sorted in real-time.
 
 <p>
 First, i want to give You a short overview how it works. The different interfaces<br >
-will be discussed later in this document.
+will be explained later in this document.
 </p>
 <br />
 
