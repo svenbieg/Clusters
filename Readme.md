@@ -10,8 +10,9 @@ Items can be added, removed and even kept sorted in real-time.
 <br />
 
 <p>
-First, i want to give You a short overview how it works. The different interfaces<br >
-will be explained later in this document.
+This is the standard-implentation. Do also have a look at
+<a href="http://github.com/svenbieg/clusters-runtime">Clusters-Runtime</a>,<br />
+the Windows Runtime Component of Clusters.
 </p>
 <br />
 
@@ -43,20 +44,9 @@ will be explained later in this document.
 	</tr>
 </table><br />
 
-<h2>List</h2>
 <p>
-The most simple cluster is the list. Items can be inserted and removed at random positions.<br /><br />
-<a href="http://svenbieg.azurewebsites.net/clusters/list"><img alt="List" src="https://user-images.githubusercontent.com/12587394/47256760-3f261780-d485-11e8-9209-1289e929e138.jpg" /></a><br /><br />
-It is more efficient than the list in the standard-library. You can find benchmarks on my website at
-<a href="http://svenbieg.azurewebsites.net/clusters/list" target="_blank">http://svenbieg.azurewebsites.net/clusters/list</a>.
-</p><br />
-
-<h2>Index</h2>
-<p>
-The next cluster is the index, which is used for sorting. Each id can be linked with a user-defined entry.<br /><br />
-<a href="http://svenbieg.azurewebsites.net/clusters/index"><img alt="Index" src="https://user-images.githubusercontent.com/12587394/47256763-49481600-d485-11e8-818d-2a26f44ea511.jpg" /></a><br /><br />
-It is more efficient than the map-class in standard-library. You can find some benchmarks on my website at
-<a href="http://svenbieg.azurewebsites.net/clusters/index" target="_blank">http://svenbieg.azurewebsites.net/clusters/index</a>.
-</p><br />
+You can find detailed information on my
+<a href="http://svenbieg.azurewebsites.net/clusters">Homepage</a>.
+</p>
 
 <br /><br /><br /><br /><br />
