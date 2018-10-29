@@ -18,6 +18,7 @@
 //=======
 
 #include <exception>
+#include <utility>
 
 
 //===========
@@ -116,7 +117,7 @@ public:
 		{
 		_Item* items=get_items();
 		for(unsigned int u=0; u<count; u++)
-			new (&items[_m_item_count+u]) _Item(append[u]);
+			new (&items[_m_item_count+u]) _Item(std::move(append[u]));
 		_m_item_count+=count;
 		}
 	bool insert_at(size_t position, _Item const& item, bool)override
@@ -128,10 +129,9 @@ public:
 		if(_m_item_count==_Groupsize)
 			return false;
 		_Item* items=get_items();
-		new (&items[_m_item_count]) _Item(items[_m_item_count-1]);
-		for(unsigned int u=_m_item_count-1; u>position; u--)
-			items[u]=items[u-1];
-		items[position]=item;
+		for(unsigned int u=_m_item_count; u>position; u--)
+			new (&items[u]) _Item(std::move(items[u-1]));
+		new (&items[position]) _Item(item);
 		_m_item_count++;
 		return true;
 		}
@@ -143,28 +143,28 @@ public:
 			return;
 			}
 		_Item* items=get_items();
-		for(unsigned int u=_m_item_count+count-1; u>_m_item_count-1; u--)
-			new (&items[u]) _Item(items[u-count]);
-		for(unsigned int u=_m_item_count-1; u+1-count>position; u--)
-			items[u]=items[u-count];
+		for(unsigned int u=_m_item_count+count-1; u+1-count>position; u--)
+			new (&items[u]) _Item(std::move(items[u-count]));
 		for(unsigned int u=0; u<count; u++)
-			items[position+u]=insert[u];
+			new (&items[position+u]) _Item(std::move(insert[u]));
 		_m_item_count+=count;
 		}
 	void remove_at(size_t position)override
 		{
 		if(position>=_m_item_count)
 			throw std::invalid_argument("");
-		remove_items(position, 1);
+		_Item* items=get_items();
+		items[position].~_Item();
+		for(unsigned int u=position; u+1<_m_item_count; u++)
+			new (&items[u]) _Item(std::move(items[u+1]));
+		_m_item_count--;
 		}
 	void remove_items(unsigned int position, unsigned int count)
 		{
 		_Item* items=get_items();
 		for(unsigned int u=position; u+count<_m_item_count; u++)
-			items[u]=items[u+count];
+			new (&items[u]) _Item(std::move(items[u+count]));
 		_m_item_count-=count;
-		for(unsigned int u=0; u<count; u++)
-			items[_m_item_count+u].~_Item();
 		}
 
 private:

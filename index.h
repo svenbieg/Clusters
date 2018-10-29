@@ -18,6 +18,7 @@
 //=======
 
 #include <exception>
+#include <utility>
 
 
 //===========
@@ -42,7 +43,9 @@ template <typename _Id, typename _Item>
 class _index_item
 {
 public:
-	_index_item() {}
+	_index_item()noexcept {}
+	_index_item(_index_item const& item): Id(item.Id), Item(item.Item) {}
+	_index_item(_index_item const&& item): Id(std::move(item.Id)), Item(std::move(item.Item)) {}
 	_index_item(_Id const& id, _Item const& item): Id(id), Item(item) {}
 	_Id Id;
 	_Item Item;
@@ -53,6 +56,8 @@ class _index_item<_Id, void>
 {
 public:
 	_index_item() {}
+	_index_item(_index_item const& item): Id(item.Id) {}
+	_index_item(_index_item const&& item): Id(std::move(item.Id)) {}
 	_index_item(_Id const& id): Id(id) {}
 	_Id Id;
 };
@@ -193,14 +198,18 @@ public:
 			}
 		if(_m_item_count==_Groupsize)
 			return false;
-		insert_items(pos, 1, &item);
+		_item* items=get_items();
+		for(int i=_m_item_count; i>pos; i--)
+			new (&items[i]) _item(std::move(items[i-1]));
+		new (&items[pos]) _item(item);
+		_m_item_count++;
 		return true;
 		}
 	void append_items(unsigned int count, _item const* append)
 		{
 		_item* items=get_items();
 		for(unsigned int u=0; u<count; u++)
-			new (&items[_m_item_count+u]) _item(append[u]);
+			new (&items[_m_item_count+u]) _item(std::move(append[u]));
 		_m_item_count+=count;
 		}
 	void insert_items(unsigned int position, unsigned int count, _item const* insert)
@@ -211,12 +220,10 @@ public:
 			return;
 			}
 		_item* items=get_items();
-		for(unsigned int u=_m_item_count+count-1; u>_m_item_count-1; u--)
-			new (&items[u]) _item(items[u-count]);
-		for(unsigned int u=_m_item_count-1; u+1-count>position; u--)
-			items[u]=items[u-count];
+		for(unsigned int u=_m_item_count+count-1; u+1-count>position; u--)
+			new (&items[u]) _item(std::move(items[u-count]));
 		for(unsigned int u=0; u<count; u++)
-			items[position+u]=insert[u];
+			new (&items[position+u]) _item(std::move(insert[u]));
 		_m_item_count+=count;
 		}
 	bool remove(_Id const& id)override
@@ -224,23 +231,25 @@ public:
 		int pos=get_item_pos(id);
 		if(pos<0)
 			return false;
-		remove_items(pos, 1);
+		remove_at(pos);
 		return true;
 		}
 	void remove_at(size_t position)override
 		{
 		if(position>=_m_item_count)
 			throw std::invalid_argument("");
-		remove_items(position, 1);
+		_item* items=get_items();
+		items[position].~_item();
+		for(unsigned int u=position; u+1<_m_item_count; u++)
+			new (&items[u]) _item(std::move(items[u+1]));
+		_m_item_count--;
 		}
 	void remove_items(unsigned int position, unsigned int count)
 		{
 		_item* items=get_items();
 		for(unsigned int u=position; u+count<_m_item_count; u++)
-			items[u]=items[u+count];
+			new (&items[u]) _item(std::move(items[u+count]));
 		_m_item_count-=count;
-		for(unsigned int u=0; u<count; u++)
-			items[_m_item_count+u].~_item();
 		}
 
 private:
