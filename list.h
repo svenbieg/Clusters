@@ -17,6 +17,7 @@
 // Using
 //=======
 
+#include <cstring>
 #include <exception>
 #include <utility>
 
@@ -270,11 +271,9 @@ public:
 		}
 	void append_groups(unsigned int count, _group* const* groups)noexcept
 		{
+		std::memcpy(&_m_children[_m_child_count], groups, count*sizeof(_group*));
 		for(unsigned int u=0; u<count; u++)
-			{
-			_m_children[_m_child_count+u]=groups[u];
 			_m_item_count+=groups[u]->get_item_count();
-			}
 		_m_child_count+=count;
 		}
 	bool combine(unsigned int position)noexcept
@@ -356,16 +355,10 @@ public:
 		}
 	void insert_groups(unsigned int position, unsigned int count, _group* const* groups)noexcept
 		{
-		if(_m_child_count>position)
-			{
-			for(unsigned int u=_m_child_count+count-1; u+1-count>position; u--)
-				_m_children[u]=_m_children[u-count];
-			}
+		std::memmove(&_m_children[position+count], &_m_children[position], (_m_child_count-position)*sizeof(_group*));
+		std::memcpy(&_m_children[position], groups, count*sizeof(_group*));
 		for(unsigned int u=0; u<count; u++)
-			{
-			_m_children[position+u]=groups[u];
 			_m_item_count+=groups[u]->get_item_count();
-			}
 		_m_child_count+=count;
 		}
 	void move_children(unsigned int source, unsigned int destination, unsigned int count)
@@ -429,8 +422,7 @@ public:
 		{
 		for(unsigned int u=0; u<count; u++)
 			_m_item_count-=_m_children[position+u]->get_item_count();
-		for(unsigned int u=position; u+count<_m_child_count; u++)
-			_m_children[u]=_m_children[u+count];
+		std::memmove(&_m_children[position], &_m_children[position+count], (_m_child_count-position-count)*sizeof(_group*));
 		_m_child_count-=count;
 		}
 	inline void set_child_count(unsigned int count)noexcept { _m_child_count=count; }
