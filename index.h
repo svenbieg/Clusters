@@ -32,34 +32,34 @@ namespace clusters {
 // Forward-Declarations
 //======================
 
-template <typename _Id, typename _Item, unsigned int _Groupsize> class index;
+template <typename _Tid, typename _Tp, unsigned int _Groupsize> class index;
 
 
 //======
 // Item
 //======
 
-template <typename _Id, typename _Item>
+template <typename _Tid, typename _Tp>
 class _index_item
 {
 public:
 	_index_item()noexcept {}
 	_index_item(_index_item const& item): Id(item.Id), Item(item.Item) {}
 	_index_item(_index_item const&& item): Id(std::move(item.Id)), Item(std::move(item.Item)) {}
-	_index_item(_Id const& id, _Item const& item): Id(id), Item(item) {}
-	_Id Id;
-	_Item Item;
+	_index_item(_Tid const& id, _Tp const& item): Id(id), Item(item) {}
+	_Tid Id;
+	_Tp Item;
 };
 
-template <typename _Id>
-class _index_item<_Id, void>
+template <typename _Tid>
+class _index_item<_Tid, void>
 {
 public:
 	_index_item() {}
 	_index_item(_index_item const& item): Id(item.Id) {}
 	_index_item(_index_item const&& item): Id(std::move(item.Id)) {}
-	_index_item(_Id const& id): Id(id) {}
-	_Id Id;
+	_index_item(_Tid const& id): Id(id) {}
+	_Tid Id;
 };
 
 
@@ -67,22 +67,22 @@ public:
 // Group
 //=======
 
-template <typename _Id, typename _Item>
+template <typename _Tid, typename _Tp>
 class _index_group
 {
 private:
 	// Using 
-	using _item=_index_item<_Id, _Item>;
+	using _item=_index_item<_Tid, _Tp>;
 
 public:
 	// Con-Destructors
 	virtual ~_index_group() {}
 
 	// Access
-	virtual bool contains(_Id const& id)const noexcept=0;
-	virtual int find(_Id const& id)const noexcept=0;
-	virtual _item* get(_Id const& id)noexcept=0;
-	virtual _item const* get(_Id const& id)const noexcept=0;
+	virtual bool contains(_Tid const& id)const noexcept=0;
+	virtual int find(_Tid const& id)const noexcept=0;
+	virtual _item* get(_Tid const& id)noexcept=0;
+	virtual _item const* get(_Tid const& id)const noexcept=0;
 	virtual _item& get_at(size_t position)=0;
 	virtual _item const& get_at(size_t position)const=0;
 	virtual unsigned int get_child_count()const noexcept=0;
@@ -95,7 +95,7 @@ public:
 
 	// Modification
 	virtual bool add(_item const& item, bool again, bool* exists)=0;
-	virtual bool remove(_Id const& id)=0;
+	virtual bool remove(_Tid const& id)=0;
 	virtual void remove_at(size_t position)=0;
 };
 
@@ -104,12 +104,12 @@ public:
 // Item-group
 //============
 
-template <typename _Id, typename _Item, unsigned int _Groupsize>
-class _index_item_group: public _index_group<_Id, _Item>
+template <typename _Tid, typename _Tp, unsigned int _Groupsize>
+class _index_item_group: public _index_group<_Tid, _Tp>
 {
 private:
 	// Using
-	using _item=_index_item<_Id, _Item>;
+	using _item=_index_item<_Tid, _Tp>;
 
 public:
 	// Con-/Destructors
@@ -129,16 +129,16 @@ public:
 		}
 
 	// Access
-	inline bool contains(_Id const& id)const noexcept override { return get_item_pos(id)>=0; }
-	inline int find(_Id const& id)const noexcept override { return get_item_pos(id); }
-	_item* get(_Id const& id)noexcept override
+	inline bool contains(_Tid const& id)const noexcept override { return get_item_pos(id)>=0; }
+	inline int find(_Tid const& id)const noexcept override { return get_item_pos(id); }
+	_item* get(_Tid const& id)noexcept override
 		{
 		int ipos=get_item_pos(id);
 		if(ipos<0)
 			return nullptr;
 		return &get_items()[ipos];
 		}
-	_item const* get(_Id const& id)const noexcept override
+	_item const* get(_Tid const& id)const noexcept override
 		{
 		int ipos=get_item_pos(id);
 		if(ipos<0)
@@ -226,7 +226,7 @@ public:
 			new (&items[position+u]) _item(std::move(insert[u]));
 		_m_item_count+=count;
 		}
-	bool remove(_Id const& id)override
+	bool remove(_Tid const& id)override
 		{
 		int pos=get_item_pos(id);
 		if(pos<0)
@@ -254,7 +254,7 @@ public:
 
 private:
 	// Common
-	int get_insert_pos(_Id const& id)const noexcept
+	int get_insert_pos(_Tid const& id)const noexcept
 		{
 		_item const* items=get_items();
 		unsigned int start=0;
@@ -276,7 +276,7 @@ private:
 			}
 		return start;
 		}
-	int get_item_pos(_Id const& id)const noexcept
+	int get_item_pos(_Tid const& id)const noexcept
 		{
 		if(!_m_item_count)
 			return -1;
@@ -316,15 +316,15 @@ private:
 // Parent-group
 //==============
 
-template <typename _Id, typename _Item, unsigned int _Groupsize>
-class _index_parent_group: public _index_group<_Id, _Item>
+template <typename _Tid, typename _Tp, unsigned int _Groupsize>
+class _index_parent_group: public _index_group<_Tid, _Tp>
 {
 private:
 	// Using
-	using _item=_index_item<_Id, _Item>;
-	using _group=_index_group<_Id, _Item>;
-	using _item_group=_index_item_group<_Id, _Item, _Groupsize>;
-	using _parent_group=_index_parent_group<_Id, _Item, _Groupsize>;
+	using _item=_index_item<_Tid, _Tp>;
+	using _group=_index_group<_Tid, _Tp>;
+	using _item_group=_index_item_group<_Tid, _Tp, _Groupsize>;
+	using _parent_group=_index_parent_group<_Tid, _Tp, _Groupsize>;
 
 public:
 	// Con-Destructors
@@ -359,16 +359,16 @@ public:
 		}
 
 	// Access
-	inline bool contains(_Id const& id)const noexcept override { return get_item_pos(id)>=0; }
-	inline int find(_Id const& id)const noexcept override { return get_item_pos(id); }
-	_item* get(_Id const& id)noexcept override
+	inline bool contains(_Tid const& id)const noexcept override { return get_item_pos(id)>=0; }
+	inline int find(_Tid const& id)const noexcept override { return get_item_pos(id); }
+	_item* get(_Tid const& id)noexcept override
 		{
 		int ipos=get_item_pos(id);
 		if(ipos<0)
 			return nullptr;
 		return _m_children[ipos]->get(id);
 		}
-	_item const* get(_Id const& id)const noexcept override
+	_item const* get(_Tid const& id)const noexcept override
 		{
 		int ipos=get_item_pos(id);
 		if(ipos<0)
@@ -500,7 +500,7 @@ public:
 				}
 			}
 		}
-	bool remove(_Id const& id)override
+	bool remove(_Tid const& id)override
 		{
 		int pos=get_item_pos(id);
 		if(pos<0)
@@ -599,7 +599,7 @@ private:
 			}
 		return _Groupsize;
 		}
-	int get_item_pos(_Id const& id)const
+	int get_item_pos(_Tid const& id)const
 		{
 		if(!_m_child_count)
 			return -1;
@@ -629,7 +629,7 @@ private:
 			u--;
 		return -(INT)u-1;
 		}
-	unsigned int get_insert_pos(_Id const& id, unsigned int* group)const
+	unsigned int get_insert_pos(_Tid const& id, unsigned int* group)const
 		{
 		if(!_m_child_count)
 			return 0;
@@ -726,16 +726,16 @@ private:
 // Iterator base-class
 //=====================
 
-template <typename _Id, typename _Item, unsigned int _Groupsize>
+template <typename _Tid, typename _Tp, unsigned int _Groupsize>
 class _index_iterator_base
 {
 protected:
 	// Using
-	using _base=_index_iterator_base<_Id, _Item, _Groupsize>;
-	using _item=_index_item<_Id, _Item>;
-	using _group=_index_group<_Id, _Item>;
-	using _item_group=_index_item_group<_Id, _Item, _Groupsize>;
-	using _parent_group=_index_parent_group<_Id, _Item, _Groupsize>;
+	using _base=_index_iterator_base<_Tid, _Tp, _Groupsize>;
+	using _item=_index_item<_Tid, _Tp>;
+	using _group=_index_group<_Tid, _Tp>;
+	using _item_group=_index_item_group<_Tid, _Tp, _Groupsize>;
+	using _parent_group=_index_parent_group<_Tid, _Tp, _Groupsize>;
 
 public:
 	// Access
@@ -755,7 +755,7 @@ public:
 	inline bool has_current()const noexcept { return _m_current!=nullptr; }
 
 	// Modification
-	bool find(_Id const& id)
+	bool find(_Tid const& id)
 		{
 		_m_current=nullptr;
 		bool bfound=true;
@@ -898,7 +898,7 @@ protected:
 		}
 	_index_iterator_base(_group* root, size_t position):
 		_m_its(nullptr), _m_level_count(0), _m_root(root) { set_position(position); }
-	_index_iterator_base(_group* root, _Id const& id):
+	_index_iterator_base(_group* root, _Tid const& id):
 		_m_its(nullptr), _m_level_count(0), _m_root(root) { find(id); }
 	~_index_iterator_base() { if(_m_its!=nullptr)operator delete(_m_its); }
 
@@ -951,29 +951,29 @@ protected:
 // Iterator
 //==========
 
-template <typename _Id, typename _Item, unsigned int _Groupsize>
-class _index_iterator: public _index_iterator_base<_Id, _Item, _Groupsize>
+template <typename _Tid, typename _Tp, unsigned int _Groupsize>
+class _index_iterator: public _index_iterator_base<_Tid, _Tp, _Groupsize>
 {
 private:
 	// Using
-	using _base=_index_iterator_base<_Id, _Item, _Groupsize>;
-	using _group=_index_group<_Id, _Item>;
-	using _it=_index_iterator<_Id, _Item, _Groupsize>;
+	using _base=_index_iterator_base<_Tid, _Tp, _Groupsize>;
+	using _group=_index_group<_Tid, _Tp>;
+	using _it=_index_iterator<_Tid, _Tp, _Groupsize>;
 
 public:
 	// Con-/Destructors
 	_index_iterator(_it& it): _base(it) {}
 	_index_iterator(_group* root, size_t position): _base(root, position) {}
-	_index_iterator(_group* root, _Id const& id): _base(root, id) {}
+	_index_iterator(_group* root, _Tid const& id): _base(root, id) {}
 
 	// Access
-	_Id get_current_id()const
+	_Tid get_current_id()const
 		{
 		if(_m_current==nullptr)
 			throw std::out_of_range("");
 		return _m_current->Id;
 		}
-	_Item get_current_item()const
+	_Tp get_current_item()const
 		{
 		if(_m_current==nullptr)
 			throw std::out_of_range("");
@@ -989,7 +989,7 @@ public:
 		_m_root->remove_at(pos);
 		set_position(pos);
 		}
-	void set_current_item(_Item const& item)
+	void set_current_item(_Tp const& item)
 		{
 		if(_m_current==nullptr)
 			throw std::out_of_range("");
@@ -997,23 +997,23 @@ public:
 		}
 };
 
-template <typename _Id, unsigned int _Groupsize>
-class _index_iterator<_Id, void, _Groupsize>: public _index_iterator_base<_Id, void, _Groupsize>
+template <typename _Tid, unsigned int _Groupsize>
+class _index_iterator<_Tid, void, _Groupsize>: public _index_iterator_base<_Tid, void, _Groupsize>
 {
 private:
 	// Using
-	using _base=_index_iterator_base<_Id, void, _Groupsize>;
-	using _group=_index_group<_Id, void>;
-	using _it=_index_iterator<_Id, void, _Groupsize>;
+	using _base=_index_iterator_base<_Tid, void, _Groupsize>;
+	using _group=_index_group<_Tid, void>;
+	using _it=_index_iterator<_Tid, void, _Groupsize>;
 
 public:
 	// Con-/Destructors
 	_index_iterator(_it& it): _base(it) {}
 	_index_iterator(_group* root, size_t position): _base(root, position) {}
-	_index_iterator(_group* root, _Id const& id): _base(root, id) {}
+	_index_iterator(_group* root, _Tid const& id): _base(root, id) {}
 
 	// Access
-	inline _Id get_current()const
+	inline _Tid get_current()const
 		{
 		if(_m_current==nullptr)
 			throw std::out_of_range("");
@@ -1036,29 +1036,29 @@ public:
 // Const-iterator
 //================
 
-template <typename _Id, typename _Item, unsigned int _Groupsize>
-class _index_const_iterator: public _index_iterator_base<_Id, _Item, _Groupsize>
+template <typename _Tid, typename _Tp, unsigned int _Groupsize>
+class _index_const_iterator: public _index_iterator_base<_Tid, _Tp, _Groupsize>
 {
 private:
 	// Using
-	using _base=_index_iterator_base<_Id, _Item, _Groupsize>;
-	using _group=_index_group<_Id, _Item>;
-	using _it=_index_const_iterator<_Id, _Item, _Groupsize>;
+	using _base=_index_iterator_base<_Tid, _Tp, _Groupsize>;
+	using _group=_index_group<_Tid, _Tp>;
+	using _it=_index_const_iterator<_Tid, _Tp, _Groupsize>;
 
 public:
 	// Con-/Destructors
 	_index_const_iterator(_it& it): _base(it) {}
 	_index_const_iterator(_group* root, size_t position): _base(root, position) {}
-	_index_const_iterator(_group* root, _Id const& id): _base(root, id) {}
+	_index_const_iterator(_group* root, _Tid const& id): _base(root, id) {}
 
 	// Access
-	inline _Id get_current_id()const
+	inline _Tid get_current_id()const
 		{
 		if(_m_current==nullptr)
 			throw std::out_of_range("");
 		return _m_current->Id;
 		}
-	inline _Id get_current_item()const
+	inline _Tid get_current_item()const
 		{
 		if(_m_current==nullptr)
 			throw std::out_of_range("");
@@ -1066,23 +1066,23 @@ public:
 		}
 };
 
-template <typename _Id, unsigned int _Groupsize>
-class _index_const_iterator<_Id, void, _Groupsize>: public _index_iterator_base<_Id, void, _Groupsize>
+template <typename _Tid, unsigned int _Groupsize>
+class _index_const_iterator<_Tid, void, _Groupsize>: public _index_iterator_base<_Tid, void, _Groupsize>
 {
 private:
 	// Using
-	using _base=_index_iterator_base<_Id, void, _Groupsize>;
-	using _group=_index_group<_Id, void>;
-	using _it=_index_const_iterator<_Id, void, _Groupsize>;
+	using _base=_index_iterator_base<_Tid, void, _Groupsize>;
+	using _group=_index_group<_Tid, void>;
+	using _it=_index_const_iterator<_Tid, void, _Groupsize>;
 
 public:
 	// Con-/Destructors
 	_index_const_iterator(_it& it): _base(it) {}
 	_index_const_iterator(_group* root, size_t position): _base(root, position) {}
-	_index_const_iterator(_group* root, _Id const& id): _base(root, id) {}
+	_index_const_iterator(_group* root, _Tid const& id): _base(root, id) {}
 
 	// Access
-	inline _Id get_current()const
+	inline _Tid get_current()const
 		{
 		if(_m_current==nullptr)
 			throw std::out_of_range("");
@@ -1095,16 +1095,16 @@ public:
 // Index base-class
 //==================
 
-template <typename _Id, typename _Item, unsigned int _Groupsize>
+template <typename _Tid, typename _Tp, unsigned int _Groupsize>
 class _index_base
 {
 private:
 	// Using
-	using _const_it=_index_const_iterator<_Id, _Item, _Groupsize>;
-	using _group=_index_group<_Id, _Item>;
-	using _it=_index_iterator<_Id, _Item, _Groupsize>;
-	using _item_group=_index_item_group<_Id, _Item, _Groupsize>;
-	using _parent_group=_index_parent_group<_Id, _Item, _Groupsize>;
+	using _const_it=_index_const_iterator<_Tid, _Tp, _Groupsize>;
+	using _group=_index_group<_Tid, _Tp>;
+	using _it=_index_iterator<_Tid, _Tp, _Groupsize>;
+	using _item_group=_index_item_group<_Tid, _Tp, _Groupsize>;
+	using _parent_group=_index_parent_group<_Tid, _Tp, _Groupsize>;
 
 public:
 	// Con-/Destructors
@@ -1123,7 +1123,7 @@ public:
 	~_index_base() { delete _m_root; }
 
 	// Access
-	inline bool contains(_Id const& id)const noexcept { return _m_root->contains(id); }
+	inline bool contains(_Tid const& id)const noexcept { return _m_root->contains(id); }
 	inline size_t get_count()const noexcept { return _m_root->get_item_count(); }
 
 	// Iteration
@@ -1131,8 +1131,8 @@ public:
 	inline _const_it at(size_t position)const { return _const_it(_m_root, position); }
 	inline _it at(_it const& it) { return _it(it); }
 	inline _const_it at(_const_it const& it)const { return _const_it(it); }
-	inline _it find(_Id const& id) { return _it(_m_root, id); }
-	inline _const_it find(_Id const& id)const { return _const_it(_m_root, id); }
+	inline _it find(_Tid const& id) { return _it(_m_root, id); }
+	inline _const_it find(_Tid const& id)const { return _const_it(_m_root, id); }
 	inline _it first() { return _it(_m_root, 0); }
 	inline _const_it first()const { return const_it(_m_root, 0); }
 	inline _it last() { return _it(_m_root, _m_root->get_item_count()-1); }
@@ -1144,7 +1144,7 @@ public:
 		delete _m_root;
 		_m_root=new _item_group();
 		}
-	bool remove(_Id const& id)
+	bool remove(_Tid const& id)
 		{
 		if(_m_root->remove(id))
 			{
@@ -1179,14 +1179,14 @@ protected:
 // Index typed
 //=============
 
-template <typename _Id, typename _Item, unsigned int _Groupsize>
-class _index_typed: public _index_base<_Id, _Item, _Groupsize>
+template <typename _Tid, typename _Tp, unsigned int _Groupsize>
+class _index_typed: public _index_base<_Tid, _Tp, _Groupsize>
 {
 private:
 	// Using
-	using _base=_index_base<_Id, _Item, _Groupsize>;
-	using _item=_index_item<_Id, _Item>;
-	using _parent_group=_index_parent_group<_Id, _Item, _Groupsize>;
+	using _base=_index_base<_Tid, _Tp, _Groupsize>;
+	using _item=_index_item<_Tid, _Tp>;
+	using _parent_group=_index_parent_group<_Tid, _Tp, _Groupsize>;
 
 public:
 	// Con-/Destructors
@@ -1194,15 +1194,15 @@ public:
 	_index_typed(_base const& base): _base(base) {}
 
 	// Access
-	inline _Item operator[](_Id const& id)const { return get(id); }
-	_Item get(_Id const& id)const
+	inline _Tp operator[](_Tid const& id)const { return get(id); }
+	_Tp get(_Tid const& id)const
 		{
 		_item* item=_m_root->get(id);
 		if(item==nullptr)
 			throw std::invalid_argument("");
 		return item->Item;
 		}
-	bool try_get(_Id const& id, _Item* item)const noexcept
+	bool try_get(_Tid const& id, _Tp* item)const noexcept
 		{
 		_item* ii=_m_root->get(id);
 		if(ii==nullptr)
@@ -1212,7 +1212,7 @@ public:
 		}
 
 	// Modification
-	bool add(_Id const& id, _Item const& item)
+	bool add(_Tid const& id, _Tp const& item)
 		{
 		_item ii(id, item);
 		bool exists=false;
@@ -1223,7 +1223,7 @@ public:
 		_m_root=new _parent_group(_m_root);
 		return _m_root->add(ii, true, &exists);
 		}
-	void set(_Id const& id, _Item const& item)
+	void set(_Tid const& id, _Tp const& item)
 		{
 		_item* p=_m_root->get(id);
 		if(p==nullptr)
@@ -1235,14 +1235,14 @@ public:
 		}
 };
 
-template <typename _Id, unsigned int _Groupsize>
-class _index_typed<_Id, void, _Groupsize>: public _index_base<_Id, void, _Groupsize>
+template <typename _Tid, unsigned int _Groupsize>
+class _index_typed<_Tid, void, _Groupsize>: public _index_base<_Tid, void, _Groupsize>
 {
 private:
 	// Using
-	using _base=_index_base<_Id, void, _Groupsize>;
-	using _item=_index_item<_Id, void>;
-	using _parent_group=_index_parent_group<_Id, void, _Groupsize>;
+	using _base=_index_base<_Tid, void, _Groupsize>;
+	using _item=_index_item<_Tid, void>;
+	using _parent_group=_index_parent_group<_Tid, void, _Groupsize>;
 
 public:
 	// Con-/Destructors
@@ -1250,11 +1250,11 @@ public:
 	_index_typed(_base const& base): _base(base) {}
 
 	// Access
-	inline _Id operator[](size_t position)const { return _m_root->get_at(position)->Id; }
-	inline _Id get_at(size_t position)const { return _m_root->get_at(position)->Id; }
+	inline _Tid operator[](size_t position)const { return _m_root->get_at(position)->Id; }
+	inline _Tid get_at(size_t position)const { return _m_root->get_at(position)->Id; }
 
 	// Modification
-	bool add(_Id const& id)
+	bool add(_Tid const& id)
 		{
 		_item item(id);
 		bool exists=false;
@@ -1272,12 +1272,12 @@ public:
 // Index
 //=======
 
-template <typename _Id, typename _Item=void, unsigned int _Groupsize=100>
-class index: public _index_typed<_Id, _Item, _Groupsize>
+template <typename _Tid, typename _Tp=void, unsigned int _Groupsize=100>
+class index: public _index_typed<_Tid, _Tp, _Groupsize>
 {
 private:
 	// Using
-	using _base=_index_typed<_Id, _Item, _Groupsize>;
+	using _base=_index_typed<_Tid, _Tp, _Groupsize>;
 
 public:
 	// Con-/Destructors

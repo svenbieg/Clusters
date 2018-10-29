@@ -33,14 +33,14 @@ namespace clusters {
 // Forward-Declarations
 //======================
 
-template <typename _Item, unsigned int _Groupsize> class list;
+template <typename _Tp, unsigned int _Groupsize> class list;
 
 
 //=======
 // Group
 //=======
 
-template <typename _Item>
+template <typename _Tp>
 class _list_group
 {
 public:
@@ -48,15 +48,15 @@ public:
 	virtual ~_list_group() {}
 
 	// Access
-	virtual _Item& get_at(size_t position)=0;
-	virtual _Item const& get_at(size_t position)const=0;
+	virtual _Tp& get_at(size_t position)=0;
+	virtual _Tp const& get_at(size_t position)const=0;
 	virtual unsigned int get_child_count()const noexcept=0;
 	virtual size_t get_item_count()const noexcept=0;
 	virtual unsigned int get_level()const noexcept=0;
 
 	// Modification
-	virtual bool append(_Item const& item, bool again)=0;
-	virtual bool insert_at(size_t position, _Item const& item, bool again)=0;
+	virtual bool append(_Tp const& item, bool again)=0;
+	virtual bool insert_at(size_t position, _Tp const& item, bool again)=0;
 	virtual void remove_at(size_t position)=0;
 };
 
@@ -65,34 +65,34 @@ public:
 // Item-group
 //============
 
-template <typename _Item, unsigned int _Groupsize>
-class _list_item_group: public _list_group<_Item>
+template <typename _Tp, unsigned int _Groupsize>
+class _list_item_group: public _list_group<_Tp>
 {
 public:
 	// Con-/Destructors
 	_list_item_group()noexcept: _m_item_count(0) {}
 	_list_item_group(_list_item_group const& group): _m_item_count(group._m_item_count)
 		{
-		_Item* dst=get_items();
-		_Item const* src=group.get_items();
+		_Tp* dst=get_items();
+		_Tp const* src=group.get_items();
 		for(unsigned int u=0; u<_m_item_count; u++)
-			new (&dst[u]) _Item(src[u]);
+			new (&dst[u]) _Tp(src[u]);
 		}
 	~_list_item_group()
 		{
-		_Item* items=get_items();
+		_Tp* items=get_items();
 		for(unsigned int u=0; u<_m_item_count; u++)
-			items[u].~_Item();
+			items[u].~_Tp();
 		}
 
 	// Access
-	inline _Item& get_at(size_t position)override
+	inline _Tp& get_at(size_t position)override
 		{
 		if(position>=_m_item_count)
 			throw std::invalid_argument("");
 		return get_items()[position];
 		}
-	inline _Item const& get_at(size_t position)const override
+	inline _Tp const& get_at(size_t position)const override
 		{
 		if(position>=_m_item_count)
 			throw std::invalid_argument("");
@@ -100,28 +100,28 @@ public:
 		}
 	inline unsigned int get_child_count()const noexcept override { return _m_item_count; }
 	inline size_t get_item_count()const noexcept override { return _m_item_count; }
-	inline _Item* get_items()noexcept { return (_Item*)_m_items; }
-	inline _Item const* get_items()const noexcept { return (_Item const*)_m_items; }
+	inline _Tp* get_items()noexcept { return (_Tp*)_m_items; }
+	inline _Tp const* get_items()const noexcept { return (_Tp const*)_m_items; }
 	inline unsigned int get_level()const noexcept override { return 0; }
 
 	// Modification
-	bool append(_Item const& item, bool)override
+	bool append(_Tp const& item, bool)override
 		{
 		if(_m_item_count==_Groupsize)
 			return false;
-		_Item* items=get_items();
-		new (&items[_m_item_count]) _Item(item);
+		_Tp* items=get_items();
+		new (&items[_m_item_count]) _Tp(item);
 		_m_item_count++;
 		return true;
 		}
-	void append_items(unsigned int count, _Item const* append)
+	void append_items(unsigned int count, _Tp const* append)
 		{
-		_Item* items=get_items();
+		_Tp* items=get_items();
 		for(unsigned int u=0; u<count; u++)
-			new (&items[_m_item_count+u]) _Item(std::move(append[u]));
+			new (&items[_m_item_count+u]) _Tp(std::move(append[u]));
 		_m_item_count+=count;
 		}
-	bool insert_at(size_t position, _Item const& item, bool)override
+	bool insert_at(size_t position, _Tp const& item, bool)override
 		{
 		if(position>_m_item_count)
 			throw std::invalid_argument("");
@@ -129,49 +129,49 @@ public:
 			return append(item, false);
 		if(_m_item_count==_Groupsize)
 			return false;
-		_Item* items=get_items();
+		_Tp* items=get_items();
 		for(unsigned int u=_m_item_count; u>position; u--)
-			new (&items[u]) _Item(std::move(items[u-1]));
-		new (&items[position]) _Item(item);
+			new (&items[u]) _Tp(std::move(items[u-1]));
+		new (&items[position]) _Tp(item);
 		_m_item_count++;
 		return true;
 		}
-	void insert_items(unsigned int position, unsigned int count, _Item const* insert)
+	void insert_items(unsigned int position, unsigned int count, _Tp const* insert)
 		{
 		if(position==_m_item_count)
 			{
 			append_items(count, insert);
 			return;
 			}
-		_Item* items=get_items();
+		_Tp* items=get_items();
 		for(unsigned int u=_m_item_count+count-1; u+1-count>position; u--)
-			new (&items[u]) _Item(std::move(items[u-count]));
+			new (&items[u]) _Tp(std::move(items[u-count]));
 		for(unsigned int u=0; u<count; u++)
-			new (&items[position+u]) _Item(std::move(insert[u]));
+			new (&items[position+u]) _Tp(std::move(insert[u]));
 		_m_item_count+=count;
 		}
 	void remove_at(size_t position)override
 		{
 		if(position>=_m_item_count)
 			throw std::invalid_argument("");
-		_Item* items=get_items();
-		items[position].~_Item();
+		_Tp* items=get_items();
+		items[position].~_Tp();
 		for(unsigned int u=position; u+1<_m_item_count; u++)
-			new (&items[u]) _Item(std::move(items[u+1]));
+			new (&items[u]) _Tp(std::move(items[u+1]));
 		_m_item_count--;
 		}
 	void remove_items(unsigned int position, unsigned int count)
 		{
-		_Item* items=get_items();
+		_Tp* items=get_items();
 		for(unsigned int u=position; u+count<_m_item_count; u++)
-			new (&items[u]) _Item(std::move(items[u+count]));
+			new (&items[u]) _Tp(std::move(items[u+count]));
 		_m_item_count-=count;
 		}
 
 private:
 	// Uninitialized array of items
 	unsigned int _m_item_count;
-	alignas(alignof(_Item[_Groupsize])) unsigned char _m_items[sizeof(_Item[_Groupsize])];
+	alignas(alignof(_Tp[_Groupsize])) unsigned char _m_items[sizeof(_Tp[_Groupsize])];
 };
 
 
@@ -179,14 +179,14 @@ private:
 // Parent-group
 //==============
 
-template <typename _Item, unsigned int _Groupsize>
-class _list_parent_group: public _list_group<_Item>
+template <typename _Tp, unsigned int _Groupsize>
+class _list_parent_group: public _list_group<_Tp>
 {
 private:
 	// Using
-	using _group=_list_group<_Item>;
-	using _item_group=_list_item_group<_Item, _Groupsize>;
-	using _parent_group=_list_parent_group<_Item, _Groupsize>;
+	using _group=_list_group<_Tp>;
+	using _item_group=_list_item_group<_Tp, _Groupsize>;
+	using _parent_group=_list_parent_group<_Tp, _Groupsize>;
 
 public:
 	// Con-Destructors
@@ -217,14 +217,14 @@ public:
 		}
 
 	// Access
-	_Item& get_at(size_t position)override
+	_Tp& get_at(size_t position)override
 		{
 		unsigned int group=get_group(&position);
 		if(group>=_Groupsize)
 			throw std::invalid_argument("");
 		return _m_children[group]->get_at(position);
 		}
-	_Item const& get_at(size_t position)const override
+	_Tp const& get_at(size_t position)const override
 		{
 		unsigned int group=get_group(&position);
 		if(group>=_Groupsize)
@@ -242,7 +242,7 @@ public:
 	inline unsigned int get_level()const noexcept override { return _m_level; }
 
 	// Modification
-	bool append(_Item const& item, bool again)override
+	bool append(_Tp const& item, bool again)override
 		{
 		unsigned int group=_m_child_count-1;
 		if(!again)
@@ -299,7 +299,7 @@ public:
 			}
 		return false;
 		}
-	bool insert_at(size_t position, _Item const& item, bool again)
+	bool insert_at(size_t position, _Tp const& item, bool again)
 		{
 		if(position>_m_item_count)
 			throw std::invalid_argument("");
@@ -402,7 +402,7 @@ public:
 				}
 			else
 				{
-				_Item const* srcitems=src->get_items();
+				_Tp const* srcitems=src->get_items();
 				unsigned int srccount=src->get_child_count();
 				dst->insert_items(0, count, &srcitems[srccount-count]);
 				src->remove_items(srccount-count, count);
@@ -513,19 +513,19 @@ private:
 // Iterator base-class
 //=====================
 
-template <typename _Item, unsigned int _Groupsize>
+template <typename _Tp, unsigned int _Groupsize>
 class _list_iterator_base
 {
 protected:
 	// Using
-	using _base=_list_iterator_base<_Item, _Groupsize>;
-	using _group=_list_group<_Item>;
-	using _item_group=_list_item_group<_Item, _Groupsize>;
-	using _parent_group=_list_parent_group<_Item, _Groupsize>;
+	using _base=_list_iterator_base<_Tp, _Groupsize>;
+	using _group=_list_group<_Tp>;
+	using _item_group=_list_item_group<_Tp, _Groupsize>;
+	using _parent_group=_list_parent_group<_Tp, _Groupsize>;
 
 public:
 	// Access
-	inline _Item get_current()const
+	inline _Tp get_current()const
 		{
 		if(_m_current==nullptr)
 			throw std::out_of_range("");
@@ -697,7 +697,7 @@ protected:
 			}
 		return _Groupsize;
 		}
-	_Item* _m_current;
+	_Tp* _m_current;
 	_it_struct* _m_its;
 	unsigned int _m_level_count;
 	_group* _m_root;
@@ -708,14 +708,14 @@ protected:
 // Iterator
 //==========
 
-template <typename _Item, unsigned int _Groupsize>
-class _list_iterator: public _list_iterator_base<_Item, _Groupsize>
+template <typename _Tp, unsigned int _Groupsize>
+class _list_iterator: public _list_iterator_base<_Tp, _Groupsize>
 {
 private:
 	// Using
-	using _base=_list_iterator_base<_Item, _Groupsize>;
-	using _group=_list_group<_Item>;
-	using _it=_list_iterator<_Item, _Groupsize>;
+	using _base=_list_iterator_base<_Tp, _Groupsize>;
+	using _group=_list_group<_Tp>;
+	using _it=_list_iterator<_Tp, _Groupsize>;
 
 public:
 	// Con-/Destructors
@@ -731,7 +731,7 @@ public:
 		_m_root->remove_at(pos);
 		set_position(pos);
 		}
-	void set_current(_Item const& item)
+	void set_current(_Tp const& item)
 		{
 		if(_m_current==nullptr)
 			throw std::out_of_range("");
@@ -744,14 +744,14 @@ public:
 // Const-iterator
 //================
 
-template <typename _Item, unsigned int _Groupsize>
-class _list_const_iterator: public _list_iterator_base<_Item, _Groupsize>
+template <typename _Tp, unsigned int _Groupsize>
+class _list_const_iterator: public _list_iterator_base<_Tp, _Groupsize>
 {
 private:
 	// Using
-	using _base=_list_iterator_base<_Item, _Groupsize>;
-	using _group=_list_group<_Item>;
-	using _it=_list_const_iterator<_Item, _Groupsize>;
+	using _base=_list_iterator_base<_Tp, _Groupsize>;
+	using _group=_list_group<_Tp>;
+	using _it=_list_const_iterator<_Tp, _Groupsize>;
 
 public:
 	// Con-/Destructors
@@ -764,16 +764,16 @@ public:
 // List
 //======
 
-template <typename _Item, unsigned int _Groupsize=100>
+template <typename _Tp, unsigned int _Groupsize=100>
 class list
 {
 private:
 	// Using
-	using _const_it=_list_const_iterator<_Item, _Groupsize>;
-	using _group=_list_group<_Item>;
-	using _it=_list_iterator<_Item, _Groupsize>;
-	using _item_group=_list_item_group<_Item, _Groupsize>;
-	using _parent_group=_list_parent_group<_Item, _Groupsize>;
+	using _const_it=_list_const_iterator<_Tp, _Groupsize>;
+	using _group=_list_group<_Tp>;
+	using _it=_list_iterator<_Tp, _Groupsize>;
+	using _item_group=_list_item_group<_Tp, _Groupsize>;
+	using _parent_group=_list_parent_group<_Tp, _Groupsize>;
 
 public:
 	// Con-/Destructors
@@ -792,8 +792,8 @@ public:
 	~list() { delete _m_root; }
 
 	// Access
-	inline _Item operator[](size_t position)const { return _m_root->get_at(position); }
-	inline _Item get_at(size_t position)const { return _m_root->get_at(position); }
+	inline _Tp operator[](size_t position)const { return _m_root->get_at(position); }
+	inline _Tp get_at(size_t position)const { return _m_root->get_at(position); }
 	inline size_t get_count()const noexcept { return _m_root->get_item_count(); }
 
 	// Iteration
@@ -807,7 +807,7 @@ public:
 	inline _const_it last()const { return _const_it(_m_root, _m_root->get_item_count()-1); }
 
 	// Modification
-	void append(_Item const& item)
+	void append(_Tp const& item)
 		{
 		if(_m_root->append(item, false))
 			return;
@@ -819,7 +819,7 @@ public:
 		delete _m_root;
 		_m_root=new _item_group();
 		}
-	inline void insert_at(size_t position, _Item const& item)
+	inline void insert_at(size_t position, _Tp const& item)
 		{
 		if(_m_root->insert_at(position, item, false))
 			return;
