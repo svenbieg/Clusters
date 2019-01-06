@@ -156,7 +156,7 @@ public:
 			throw std::invalid_argument("");
 		_Tp* items=get_items();
 		items[position].~_Tp();
-		for(unsigned int u=position; u+1<_m_item_count; u++)
+		for(unsigned int u=(unsigned int)position; u+1<_m_item_count; u++)
 			new (&items[u]) _Tp(std::move(items[u+1]));
 		_m_item_count--;
 		}
@@ -271,7 +271,7 @@ public:
 		}
 	void append_groups(unsigned int count, _group* const* groups)noexcept
 		{
-		std::memcpy(&_m_children[_m_child_count], groups, count*sizeof(_group*));
+		memcpy(&_m_children[_m_child_count], groups, count*sizeof(_group*));
 		for(unsigned int u=0; u<count; u++)
 			_m_item_count+=groups[u]->get_item_count();
 		_m_child_count+=count;
@@ -355,8 +355,8 @@ public:
 		}
 	void insert_groups(unsigned int position, unsigned int count, _group* const* groups)noexcept
 		{
-		std::memmove(&_m_children[position+count], &_m_children[position], (_m_child_count-position)*sizeof(_group*));
-		std::memcpy(&_m_children[position], groups, count*sizeof(_group*));
+		memmove(&_m_children[position+count], &_m_children[position], (_m_child_count-position)*sizeof(_group*));
+		memcpy(&_m_children[position], groups, count*sizeof(_group*));
 		for(unsigned int u=0; u<count; u++)
 			_m_item_count+=groups[u]->get_item_count();
 		_m_child_count+=count;
@@ -422,7 +422,7 @@ public:
 		{
 		for(unsigned int u=0; u<count; u++)
 			_m_item_count-=_m_children[position+u]->get_item_count();
-		std::memmove(&_m_children[position], &_m_children[position+count], (_m_child_count-position-count)*sizeof(_group*));
+		memmove(&_m_children[position], &_m_children[position+count], (_m_child_count-position-count)*sizeof(_group*));
 		_m_child_count-=count;
 		}
 	inline void set_child_count(unsigned int count)noexcept { _m_child_count=count; }
@@ -509,18 +509,105 @@ private:
 };
 
 
+//=========
+// Cluster
+//=========
+
+// Forward-Declaration
+template <typename _Tp, unsigned int _Groupsize, bool _Const> class _list_iterator_base;
+
+template <typename _Tp, unsigned int _Groupsize>
+class _list_cluster
+{
+private:
+	// Using
+	using _group=_list_group<_Tp>;
+	using _item_group=_list_item_group<_Tp, _Groupsize>;
+	using _parent_group=_list_parent_group<_Tp, _Groupsize>;
+
+public:
+	// Friends
+	friend class _list_iterator_base<_Tp, _Groupsize, true>;
+	friend class _list_iterator_base<_Tp, _Groupsize, false>;
+
+	// Access
+	inline _Tp operator[](size_t position)const { return _m_root->get_at(position); }
+	inline _Tp get_at(size_t position)const { return _m_root->get_at(position); }
+	inline size_t get_count()const noexcept { return _m_root->get_item_count(); }
+
+	// Modification
+	void append(_Tp const& item)
+		{
+		if(_m_root->append(item, false))
+			return;
+		_m_root=new _parent_group(_m_root);
+		_m_root->append(item, true);
+		}
+	void clear()
+		{
+		delete _m_root;
+		_m_root=new _item_group();
+		}
+	inline void insert_at(size_t position, _Tp const& item)
+		{
+		if(_m_root->insert_at(position, item, false))
+			return;
+		_m_root=new _parent_group(_m_root);
+		_m_root->insert_at(position, item, true);
+		}
+	void remove_at(size_t position)
+		{
+		_m_root->remove_at(position);
+		update_root();
+		}
+
+protected:
+	// Con-/Destructors
+	_list_cluster(): _m_root(new _item_group()) {}
+	_list_cluster(_list_cluster const& list)
+		{
+		if(list._m_root->get_level()>0)
+			{
+			_m_root=new _parent_group((_parent_group const&)*list._m_root);
+			}
+		else
+			{
+			_m_root=new _item_group((_item_group const&)*list._m_root);
+			}
+		}
+	~_list_cluster() { delete _m_root; }
+
+private:
+	// Common
+	void update_root()
+		{
+		if(_m_root->get_child_count()==1&&_m_root->get_level()>0)
+			{
+			_parent_group* root=(_parent_group*)_m_root;
+			_m_root=root->get_child(0);
+			root->set_child_count(0);
+			delete root;
+			}
+		}
+	_group* _m_root;
+
+};
+
+
 //=====================
 // Iterator base-class
 //=====================
 
-template <typename _Tp, unsigned int _Groupsize>
+template <typename _Tp, unsigned int _Groupsize, bool _Const>
 class _list_iterator_base
 {
 protected:
 	// Using
-	using _base=_list_iterator_base<_Tp, _Groupsize>;
+	using _base=_list_iterator_base<_Tp, _Groupsize, _Const>;
 	using _group=_list_group<_Tp>;
 	using _item_group=_list_item_group<_Tp, _Groupsize>;
+	using _list=_list_cluster<_Tp, _Groupsize>;
+	using _list_ptr=typename std::conditional<_Const, _list const*, _list*>::type;
 	using _parent_group=_list_parent_group<_Tp, _Groupsize>;
 
 public:
@@ -545,6 +632,16 @@ public:
 		return pos;
 		}
 	inline bool has_current()const noexcept { return _m_current!=nullptr; }
+
+	// Assignment
+	_base& operator=(_base const& it)
+		{
+		_m_current=it._m_current;
+		_m_list=it._m_list;
+		set_level_count(it._m_level_count);
+		memcpy(_m_its, it._m_its, _m_level_count*sizeof(_it_struct));
+		return *this;
+		}
 
 	// Modification
 	bool move_next()noexcept
@@ -624,7 +721,7 @@ public:
 	void set_position(size_t position)
 		{
 		_m_current=nullptr;
-		_group* group=_m_root;
+		_group* group=_m_list->_m_root;
 		unsigned int levelcount=group->get_level()+1;
 		if(_m_level_count!=levelcount)
 			{
@@ -656,15 +753,14 @@ public:
 
 protected:
 	// Con-/Destructors
-	_list_iterator_base(_base& it):
-		_m_current(it._m_current), _m_its(nullptr), _m_level_count(it._m_level_count), _m_root(it._m_root)
+	_list_iterator_base(_base const& it):
+		_m_current(it._m_current), _m_its(nullptr), _m_level_count(it._m_level_count), _m_list(it._m_list)
 		{
 		_m_its=(_it_struct*)operator new(_m_level_count*sizeof(_it_struct));
-		for(unsigned int u=0; u<_m_level_count; u++)
-			_m_its[u]=it._m_its[u];
+		memcpy(_m_its, it._m_its, _m_level_count*sizeof(_it_struct));
 		}
-	_list_iterator_base(_group* root, size_t position):
-		_m_current(nullptr), _m_its(nullptr), _m_level_count(0), _m_root(root) { set_position(position); }
+	_list_iterator_base(_list_ptr list, size_t position):
+		_m_current(nullptr), _m_its(nullptr), _m_level_count(0), _m_list(list) { set_position(position); }
 	~_list_iterator_base() { if(_m_its!=nullptr)operator delete(_m_its); }
 
 	// Helper-struct
@@ -697,10 +793,18 @@ protected:
 			}
 		return _Groupsize;
 		}
+	void set_level_count(unsigned int levelcount)
+		{
+		if(_m_level_count==levelcount)
+			return;
+		operator delete(_m_its);
+		_m_its=(_it_struct*)operator new(levelcount*sizeof(_it_struct));
+		_m_level_count=levelcount;
+		}
 	_Tp* _m_current;
 	_it_struct* _m_its;
 	unsigned int _m_level_count;
-	_group* _m_root;
+	_list_ptr _m_list;
 };
 
 
@@ -709,33 +813,33 @@ protected:
 //==========
 
 template <typename _Tp, unsigned int _Groupsize>
-class _list_iterator: public _list_iterator_base<_Tp, _Groupsize>
+class _list_iterator: public _list_iterator_base<_Tp, _Groupsize, false>
 {
 private:
 	// Using
-	using _base=_list_iterator_base<_Tp, _Groupsize>;
-	using _group=_list_group<_Tp>;
+	using _base=_list_iterator_base<_Tp, _Groupsize, false>;
 	using _it=_list_iterator<_Tp, _Groupsize>;
+	using _list=_list_cluster<_Tp, _Groupsize>;
 
 public:
 	// Con-/Destructors
-	_list_iterator(_it& it): _base(it) {}
-	_list_iterator(_group* root, size_t position): _base(root, position) {}
+	_list_iterator(_it const& it): _base(it) {}
+	_list_iterator(_list* list, size_t position): _base(list, position) {}
 
 	// Modification
 	void remove_current()
 		{
-		if(_m_current==nullptr)
+		if(_base::_m_current==nullptr)
 			throw std::out_of_range("");
-		size_t pos=get_position();
-		_m_root->remove_at(pos);
-		set_position(pos);
+		size_t pos=_base::get_position();
+		_base::_m_list->remove_at(pos);
+		_base::set_position(pos);
 		}
 	void set_current(_Tp const& item)
 		{
-		if(_m_current==nullptr)
+		if(_base::_m_current==nullptr)
 			throw std::out_of_range("");
-		*_m_current=item;
+		*_base::_m_current=item;
 		}
 };
 
@@ -745,18 +849,18 @@ public:
 //================
 
 template <typename _Tp, unsigned int _Groupsize>
-class _list_const_iterator: public _list_iterator_base<_Tp, _Groupsize>
+class _list_const_iterator: public _list_iterator_base<_Tp, _Groupsize, true>
 {
 private:
 	// Using
-	using _base=_list_iterator_base<_Tp, _Groupsize>;
-	using _group=_list_group<_Tp>;
+	using _base=_list_iterator_base<_Tp, _Groupsize, true>;
 	using _it=_list_const_iterator<_Tp, _Groupsize>;
+	using _list=_list_cluster<_Tp, _Groupsize>;
 
 public:
 	// Con-/Destructors
-	_list_const_iterator(_it& it): _base(it) {}
-	_list_const_iterator(_group* root, size_t position): _base(root, position) {}
+	_list_const_iterator(_it const& it): _base(it) {}
+	_list_const_iterator(_list const* list, size_t position): _base(list, position) {}
 };
 
 
@@ -765,10 +869,11 @@ public:
 //======
 
 template <typename _Tp, unsigned int _Groupsize=100>
-class list
+class list: public _list_cluster<_Tp, _Groupsize>
 {
 private:
 	// Using
+	using _base=_list_cluster<_Tp, _Groupsize>;
 	using _const_it=_list_const_iterator<_Tp, _Groupsize>;
 	using _group=_list_group<_Tp>;
 	using _it=_list_iterator<_Tp, _Groupsize>;
@@ -777,74 +882,18 @@ private:
 
 public:
 	// Con-/Destructors
-	list(): _m_root(new _item_group()) {}
-	list(list const& list)
-		{
-		if(list._m_root->get_level()>1)
-			{
-			_m_root=new _parent_group((_parent_group const&)*list._m_root);
-			}
-		else
-			{
-			_m_root=new _item_group((_item_group const&)*list._m_root);
-			}
-		}
-	~list() { delete _m_root; }
-
-	// Access
-	inline _Tp operator[](size_t position)const { return _m_root->get_at(position); }
-	inline _Tp get_at(size_t position)const { return _m_root->get_at(position); }
-	inline size_t get_count()const noexcept { return _m_root->get_item_count(); }
+	list() {}
+	list(list const& list): _base(list) {}
 
 	// Iteration
-	inline _it at(size_t position) { return _it(_m_root, position); }
-	inline _const_it at(size_t position)const { return _const_it(_m_root, position); }
+	inline _it at(size_t position) { return _it(this, position); }
+	inline _const_it at(size_t position)const { return _const_it(this, position); }
 	inline _it at(_it const& it) { return _it(it); }
 	inline _const_it at(_const_it const& it)const { return _const_it(it); }
-	inline _it first() { return _it(_m_root, 0); }
-	inline _const_it first()const { return const_it(_m_root, 0); }
-	inline _it last() { return _it(_m_root, _m_root->get_item_count()-1); }
-	inline _const_it last()const { return _const_it(_m_root, _m_root->get_item_count()-1); }
-
-	// Modification
-	void append(_Tp const& item)
-		{
-		if(_m_root->append(item, false))
-			return;
-		_m_root=new _parent_group(_m_root);
-		_m_root->append(item, true);
-		}
-	void clear()
-		{
-		delete _m_root;
-		_m_root=new _item_group();
-		}
-	inline void insert_at(size_t position, _Tp const& item)
-		{
-		if(_m_root->insert_at(position, item, false))
-			return;
-		_m_root=new _parent_group(_m_root);
-		_m_root->insert_at(position, item, true);
-		}
-	void remove_at(size_t position)
-		{
-		_m_root->remove_at(position);
-		update_root();
-		}
-
-private:
-	// Common
-	void update_root()
-		{
-		if(_m_root->get_child_count()==1&&_m_root->get_level()>0)
-			{
-			_parent_group* root=(_parent_group*)_m_root;
-			_m_root=root->get_child(0);
-			root->set_child_count(0);
-			delete root;
-			}
-		}
-	_group* _m_root;
+	inline _it first() { return _it(this, 0); }
+	inline _const_it first()const { return _const_it(this, 0); }
+	inline _it last() { return _it(this, this->get_count()-1); }
+	inline _const_it last()const { return _const_it(this, this->get_count()-1); }
 };
 
 } // namespace
