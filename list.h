@@ -18,7 +18,7 @@
 //=======
 
 #include <cstring>
-#include <exception>
+#include <stdexcept>
 #include <utility>
 
 
