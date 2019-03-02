@@ -56,6 +56,7 @@ public:
 
 	// Modification
 	virtual bool append(_Tp const& item, bool again)=0;
+	virtual size_t append(_Tp const* append, size_t count)=0;
 	virtual bool insert_at(size_t position, _Tp const& item, bool again)=0;
 	virtual void remove_at(size_t position)=0;
 };
@@ -78,7 +79,7 @@ public:
 		for(unsigned int u=0; u<_m_item_count; u++)
 			new (&dst[u]) _Tp(src[u]);
 		}
-	~_list_item_group()
+	~_list_item_group()override
 		{
 		_Tp* items=get_items();
 		for(unsigned int u=0; u<_m_item_count; u++)
@@ -113,6 +114,19 @@ public:
 		new (&items[_m_item_count]) _Tp(item);
 		_m_item_count++;
 		return true;
+		}
+	size_t append(_Tp const* append, size_t count)override
+		{
+		if(count==0)
+			return 0;
+		unsigned int copy=_Groupsize-_m_item_count;
+		if(count<copy)
+			copy=(unsigned int)count;
+		_Tp* items=get_items();
+		for(unsigned int u=0; u<copy; u++)
+			new (&items[_m_item_count+u]) _Tp(append[u]);
+		_m_item_count+=copy;
+		return copy;
 		}
 	void append_items(unsigned int count, _Tp const* append)
 		{
@@ -252,10 +266,10 @@ public:
 				_m_item_count++;
 				return true;
 				}
-			unsigned int dst=get_nearest(group);
-			if(dst<_m_child_count)
+			unsigned int empty=get_nearest(group);
+			if(empty<_m_child_count)
 				{
-				move_children(group, dst, 1);
+				move_empty_slot(empty, group);
 				_m_children[group]->append(item, false);
 				_m_item_count++;
 				return true;
@@ -268,6 +282,49 @@ public:
 			return false;
 		_m_item_count++;
 		return true;
+		}
+	size_t append(_Tp const* append, size_t count)override
+		{
+		if(count==0)
+			return 0;
+		unsigned int dst=minimize_internal();
+		size_t pos=0;
+		for(; dst<_m_child_count; dst++)
+			{
+			size_t written=_m_children[dst]->append(&append[pos], count);
+			if(written>0)
+				{
+				_m_item_count+=written;
+				pos+=written;
+				count-=written;
+				if(count==0)
+					break;
+				}
+			}
+		if(count==0)
+			{
+			free_children(dst);
+			return pos;
+			}
+		while(count>0)
+			{
+			if(_m_child_count==_Groupsize)
+				break;
+			if(_m_level==1)
+				{
+				_m_children[_m_child_count]=new _item_group();
+				}
+			else
+				{
+				_m_children[_m_child_count]=new _parent_group(_m_level-1);
+				}
+			_m_child_count++;
+			size_t written=_m_children[_m_child_count-1]->append(&append[pos], count);
+			_m_item_count+=written;
+			pos+=written;
+			count-=written;
+			}
+		return pos;
 		}
 	void append_groups(unsigned int count, _group* const* groups)noexcept
 		{
@@ -320,12 +377,12 @@ public:
 					}
 				at=0;
 				}
-			unsigned int dst=get_nearest(group);
-			if(dst<_m_child_count)
+			unsigned int empty=get_nearest(group);
+			if(empty<_m_child_count)
 				{
-				if(inscount>1&&dst>group)
+				if(inscount>1&&empty>group)
 					group++;
-				move_children(group, dst, 1);
+				move_empty_slot(empty, group);
 				pos=position;
 				inscount=get_insert_pos(&pos, &group);
 				size_t at=pos;
@@ -361,20 +418,15 @@ public:
 			_m_item_count+=groups[u]->get_item_count();
 		_m_child_count+=count;
 		}
+	void minimize()
+		{
+		unsigned int u=minimize_internal();
+		free_internal(u);
+		}
 	void move_children(unsigned int source, unsigned int destination, unsigned int count)
 		{
 		if(count==0)
 			return;
-		while(source>destination+1)
-			{
-			move_children(destination+1, destination, count);
-			destination++;
-			}
-		while(source+1<destination)
-			{
-			move_children(destination-1, destination, count);
-			destination--;
-			}
 		if(_m_level>1)
 			{
 			_parent_group* src=(_parent_group*)_m_children[source];
@@ -407,6 +459,19 @@ public:
 				dst->insert_items(0, count, &srcitems[srccount-count]);
 				src->remove_items(srccount-count, count);
 				}
+			}
+		}
+	void move_empty_slot(unsigned int source, unsigned int destination)noexcept
+		{
+		if(source<destination)
+			{
+			for(unsigned int u=source; u<destination; u++)
+				move_children(u+1, u, 1);
+			}
+		else
+			{
+			for(unsigned int u=source; u>destination; u--)
+				move_children(u-1, u, 1);
 			}
 		}
 	void remove_at(size_t position)override
@@ -445,7 +510,7 @@ public:
 		}
 
 private:
-	// Common
+	// Access
 	unsigned int get_group(size_t* position)const noexcept
 		{
 		for(unsigned int u=0; u<_m_child_count; u++)
@@ -496,12 +561,54 @@ private:
 			}
 		return _Groupsize;
 		}
+
+	// Modification
+	void free_children(unsigned int count)noexcept
+		{
+		if(count>=_m_child_count)
+			return;
+		if(_m_children[count]->get_child_count()>0)
+			count++;
+		for(unsigned int u=count; u<_m_child_count; u++)
+			delete _m_children[u];
+		_m_child_count=count;
+		}
+	unsigned int minimize_internal()noexcept
+		{
+		unsigned int dst=0;
+		unsigned int src=1;
+		for(; dst<_m_child_count; dst++)
+			{
+			unsigned int free=_Groupsize-_m_children[dst]->get_child_count();
+			if(free==0)
+				continue;
+			if(src<=dst)
+				src=dst+1;
+			for(; src<_m_child_count; src++)
+				{
+				unsigned int count=_m_children[src]->get_child_count();
+				if(count==0)
+					continue;
+				unsigned int move=count<free? count: free;
+				move_children(src, dst, move);
+				free-=move;
+				if(free==0)
+					break;
+				}
+			if(src>=_m_child_count)
+				break;
+			}
+		return dst;
+		}
 	void remove_internal(unsigned int position)noexcept
 		{
-		for(unsigned int u=position; u+1<_m_child_count; u++)
-			_m_children[u]=_m_children[u+1];
+		delete _m_children[position];
+		if(position+1<_m_child_count)
+			memmove(&_m_children[position], &_m_children[position+1], (_m_child_count-position-1)*sizeof(void*));
 		_m_child_count--;
 		}
+
+	// Common
 	unsigned int _m_child_count;
 	_group* _m_children[_Groupsize];
 	size_t _m_item_count;
@@ -542,6 +649,20 @@ public:
 			return;
 		_m_root=new _parent_group(_m_root);
 		_m_root->append(item, true);
+		}
+	void append(_Tp const* items, size_t count)
+		{
+		size_t pos=0;
+		while(count>0)
+			{
+			size_t written=_m_root->append(&items[pos], count);
+			count-=written;
+			if(count>0)
+				{
+				_m_root=new _parent_group(_m_root);
+				pos+=written;
+				}
+			}
 		}
 	void clear()
 		{

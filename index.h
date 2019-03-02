@@ -123,7 +123,7 @@ public:
 		for(unsigned int u=0; u<_m_item_count; u++)
 			new (&dst[u]) _item(src[u]);
 		}
-	~_index_item_group()
+	~_index_item_group()override
 		{
 		_item* items=get_items();
 		for(unsigned int u=0; u<_m_item_count; u++)
@@ -458,16 +458,6 @@ public:
 		{
 		if(count==0)
 			return;
-		while(source>destination+1)
-			{
-			move_children(destination+1, destination, count);
-			destination++;
-			}
-		while(source+1<destination)
-			{
-			move_children(destination-1, destination, count);
-			destination--;
-			}
 		if(_m_level>1)
 			{
 			_parent_group* src=(_parent_group*)_m_children[source];
@@ -500,6 +490,19 @@ public:
 				dst->insert_items(0, count, &srcitems[srccount-count]);
 				src->remove_items(srccount-count, count);
 				}
+			}
+		}
+	void move_empty_slot(unsigned int source, unsigned int destination)noexcept
+		{
+		if(source<destination)
+			{
+			for(unsigned int u=source; u<destination; u++)
+				move_children(u+1, u, 1);
+			}
+		else
+			{
+			for(unsigned int u=source; u>destination; u--)
+				move_children(u-1, u, 1);
 			}
 		}
 	bool remove(_Tid const& id)override
@@ -571,12 +574,12 @@ private:
 				if(*exists)
 					return false;
 				}
-			unsigned int dst=get_nearest(group);
-			if(dst<_m_child_count)
+			unsigned int empty=get_nearest(group);
+			if(empty<_m_child_count)
 				{
-				if(count>1&&dst>group)
+				if(count>1&&empty>group)
 					group++;
-				move_children(group, dst, 1);
+				move_empty_slot(empty, group);
 				if(_m_children[group]->add(item, false, exists))
 					return true;
 				}
@@ -704,8 +707,9 @@ private:
 		}
 	void remove_internal(unsigned int position)noexcept
 		{
-		for(unsigned int u=position; u+1<_m_child_count; u++)
-			_m_children[u]=_m_children[u+1];
+		delete _m_children[position];
+		if(position+1<_m_child_count)
+			memmove(&_m_children[position], &_m_children[position+1], (_m_child_count-position-1)*sizeof(void*));
 		_m_child_count--;
 		}
 	void update_bounds()
