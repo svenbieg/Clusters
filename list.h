@@ -117,8 +117,6 @@ public:
 		}
 	size_t append(_Tp const* append, size_t count)override
 		{
-		if(count==0)
-			return 0;
 		unsigned int copy=_Groupsize-_m_item_count;
 		if(count<copy)
 			copy=(unsigned int)count;
@@ -285,13 +283,18 @@ public:
 		}
 	size_t append(_Tp const* append, size_t count)override
 		{
-		if(count==0)
-			return 0;
-		unsigned int dst=minimize_internal();
-		size_t pos=0;
-		for(; dst<_m_child_count; dst++)
+		size_t pos=_m_children[_m_child_count-1]->append(append, count);
+		if(pos>0)
 			{
-			size_t written=_m_children[dst]->append(&append[pos], count);
+			_m_item_count+=pos;
+			count-=pos;
+			if(count==0)
+				return pos;
+			}
+		unsigned int last=minimize_internal();
+		for(; last<_m_child_count; last++)
+			{
+			size_t written=_m_children[last]->append(&append[pos], count);
 			if(written>0)
 				{
 				_m_item_count+=written;
@@ -303,7 +306,7 @@ public:
 			}
 		if(count==0)
 			{
-			free_children(dst);
+			free_children(last);
 			return pos;
 			}
 		while(count>0)
@@ -1002,6 +1005,9 @@ private:
 	using _parent_group=_list_parent_group<_Tp, _Groupsize>;
 
 public:
+	// Typedefs
+	typedef _list_iterator<_Tp, _Groupsize> iterator;
+
 	// Con-/Destructors
 	list() {}
 	list(list const& list): _base(list) {}
