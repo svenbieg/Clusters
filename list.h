@@ -5,8 +5,8 @@
 // Implementation of an ordererd list.
 // Items can be inserted and removed in real-time.
 
-// Copyright 2018, Sven Bieg (svenbieg@web.de)
-// http://svenbieg.azurewebsites.net
+// Copyright 2019, Sven Bieg (svenbieg@web.de)
+// http://github.com/svenbieg/clusters
 
 
 #ifndef _CLUSTERS_LIST

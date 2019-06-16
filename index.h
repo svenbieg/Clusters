@@ -5,8 +5,8 @@
 // Implementation of a sorted index.
 // Ids and can be inserted, removed and looked-up in real-time.
 
-// Copyright 2018, Sven Bieg (svenbieg@web.de)
-// http://svenbieg.azurewebsites.net
+// Copyright 2019, Sven Bieg (svenbieg@web.de)
+// http://github.com/svenbieg/clusters
 
 
 #ifndef _CLUSTERS_INDEX
