@@ -12,7 +12,7 @@ Items can be added, removed and even kept sorted in real-time.
 <p>
 This is the standard-implentation. Do also have a look at<br />
 <a href="http://github.com/svenbieg/clusters-runtime">Clusters-Runtime</a>,
-the Windows Runtime Component of Clusters!
+the Windows-Runtime-Component of Clusters!
 </p>
 <br />
 
@@ -28,7 +28,7 @@ the Windows Runtime Component of Clusters!
 		<td>The size of the groups is limited and 100 by default.</td>
 	</tr><tr><td></td></tr><tr>
 		<td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="http://svenbieg.azurewebsites.net/Clusters"><img src="https://user-images.githubusercontent.com/12587394/47256737-f4a49b00-d484-11e8-9171-a40ef63c3ff1.png" /></a></td>
-		<td>If the group is full, a parentgroup is created.</td>
+		<td>If the group is full a parentgroup is created.</td>
 	</tr><tr><td></td></tr><tr>
 		<td>&nbsp;&nbsp;&nbsp;&nbsp;<a href="http://svenbieg.azurewebsites.net/Clusters"><img src="https://user-images.githubusercontent.com/12587394/47256739-ff5f3000-d484-11e8-9445-4443f52e228a.png" /></a></td>
 		<td>The first and the last entry can be moved to the neighbour-group.</td>
