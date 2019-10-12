@@ -49,6 +49,12 @@ public:
 	_index_item(_index_item const& item): Id(item.Id), Item(item.Item) {}
 	_index_item(_index_item && item): Id(std::move(item.Id)), Item(std::move(item.Item)) {}
 	_index_item(_tId const& id, _tItem const& item): Id(id), Item(item) {}
+	_index_item& operator=(_index_item const& item)
+		{
+		Id=item.Id;
+		Item=item.Item;
+		return *this;
+		}
 	_tId Id;
 	_tItem Item;
 };
@@ -61,6 +67,11 @@ public:
 	_index_item(_index_item const& item): Id(item.Id) {}
 	_index_item(_index_item && item): Id(std::move(item.Id)) {}
 	_index_item(_tId const& id): Id(id) {}
+	_index_item& operator=(_index_item const& item)
+		{
+		Id=item.Id;
+		return *this;
+		}
 	_tId Id;
 };
 
