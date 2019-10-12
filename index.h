@@ -47,7 +47,7 @@ class _index_item
 public:
 	_index_item()noexcept {}
 	_index_item(_index_item const& item): Id(item.Id), Item(item.Item) {}
-	_index_item(_index_item const&& item): Id(std::move(item.Id)), Item(std::move(item.Item)) {}
+	_index_item(_index_item && item): Id(std::move(item.Id)), Item(std::move(item.Item)) {}
 	_index_item(_tId const& id, _tItem const& item): Id(id), Item(item) {}
 	_tId Id;
 	_tItem Item;
@@ -59,7 +59,7 @@ class _index_item<_tId, void>
 public:
 	_index_item() {}
 	_index_item(_index_item const& item): Id(item.Id) {}
-	_index_item(_index_item const&& item): Id(std::move(item.Id)) {}
+	_index_item(_index_item && item): Id(std::move(item.Id)) {}
 	_index_item(_tId const& id): Id(id) {}
 	_tId Id;
 };
@@ -1196,6 +1196,7 @@ private:
 	using _const_it=_index_const_iterator<_tId, _tItem, _uGroupSize>;
 	using _group=_index_group<_tId, _tItem>;
 	using _it=_index_iterator<_tId, _tItem, _uGroupSize>;
+	using _item=_index_item<_tId, _tItem>;
 	using _item_group=_index_item_group<_tId, _tItem, _uGroupSize>;
 	using _parent_group=_index_parent_group<_tId, _tItem, _uGroupSize>;
 
@@ -1216,6 +1217,19 @@ protected:
 	// Con-/Destructors
 	_index_base() {}
 	_index_base(_index_base const& index): _base(index) {}
+
+	// Modification
+	bool add_internal(_item const& item)
+		{
+		bool exists=false;
+		if(this->_m_root->add(item, false, &exists))
+			return true;
+		if(exists)
+			return false;
+		this->_m_root=new _parent_group(this->_m_root);
+		return this->_m_root->add(item, true, &exists);
+		}
+
 };
 
 
@@ -1259,13 +1273,7 @@ public:
 	bool add(_tId const& id, _tItem const& item)
 		{
 		_item ii(id, item);
-		bool exists=false;
-		if(this->_m_root->add(ii, false, &exists))
-			return true;
-		if(exists)
-			return false;
-		this->_m_root=new _parent_group(this->_m_root);
-		return this->_m_root->add(ii, true, &exists);
+		return this->add_internal(ii);
 		}
 	void set(_tId const& id, _tItem const& item)
 		{
@@ -1315,14 +1323,8 @@ public:
 	// Modification
 	bool add(_tId const& id)
 		{
-		_item item(id);
-		bool exists=false;
-		if(this->_m_root->add(item, false, &exists))
-			return true;
-		if(exists)
-			return false;
-		this->_m_root=new _parent_group(this->_m_root);
-		return this->_m_root->add(item, true, &exists);
+		_item ii(id);
+		return this->add_internal(ii);
 		}
 };
 
