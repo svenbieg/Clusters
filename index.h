@@ -1072,31 +1072,31 @@ public:
 	// Access
 	_id_t get_current_id()const
 		{
-		if(_base::_m_current==nullptr)
+		if(this->_m_current==nullptr)
 			throw std::out_of_range("");
-		return _base::_m_current->id;
+		return this->_m_current->id;
 		}
 	_item_t get_current_item()const
 		{
-		if(_base::_m_current==nullptr)
+		if(this->_m_current==nullptr)
 			throw std::out_of_range("");
-		return _base::_m_current->item;
+		return this->_m_current->item;
 		}
 
 	// Modification
 	void remove_current()
 		{
-		if(_base::_m_current==nullptr)
+		if(this->_m_current==nullptr)
 			throw std::out_of_range("");
-		size_t pos=_base::get_position();
-		_base::_m_index->remove_at(pos);
-		_base::set_position(pos);
+		size_t pos=this->get_position();
+		this->_m_index->remove_at(pos);
+		this->set_position(pos);
 		}
 	void set_current_item(_item_t const& item)
 		{
-		if(_base::_m_current==nullptr)
+		if(this->_m_current==nullptr)
 			throw std::out_of_range("");
-		_base::_m_current->item=item;
+		this->_m_current->item=item;
 		}
 };
 
@@ -1118,19 +1118,19 @@ public:
 	// Access
 	inline _id_t get_current()const
 		{
-		if(_base::_m_current==nullptr)
+		if(this->_m_current==nullptr)
 			throw std::out_of_range("");
-		return _base::_m_current->id;
+		return this->_m_current->id;
 		}
 
 	// Modification
 	void remove_current()
 		{
-		if(_base::_m_current==nullptr)
+		if(this->_m_current==nullptr)
 			throw std::out_of_range("");
-		size_t pos=_base::get_position();
-		_base::_m_index->remove_at(pos);
-		_base::set_position(pos);
+		size_t pos=this->get_position();
+		this->_m_index->remove_at(pos);
+		this->set_position(pos);
 		}
 };
 
@@ -1157,15 +1157,15 @@ public:
 	// Access
 	inline _id_t get_current_id()const
 		{
-		if(_base::_m_current==nullptr)
+		if(this->_m_current==nullptr)
 			throw std::out_of_range("");
-		return _base::_m_current->id;
+		return this->_m_current->id;
 		}
 	inline _id_t get_current_item()const
 		{
-		if(_base::_m_current==nullptr)
+		if(this->_m_current==nullptr)
 			throw std::out_of_range("");
-		return _base::_m_current->item;
+		return this->_m_current->item;
 		}
 };
 
@@ -1187,9 +1187,9 @@ public:
 	// Access
 	inline _id_t get_current()const
 		{
-		if(_base::_m_current==nullptr)
+		if(this->_m_current==nullptr)
 			throw std::out_of_range("");
-		return _base::_m_current->id;
+		return this->_m_current->id;
 		}
 };
 

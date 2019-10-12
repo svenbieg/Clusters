@@ -953,17 +953,17 @@ public:
 	// Modification
 	void remove_current()
 		{
-		if(_base::_m_current==nullptr)
+		if(this->_m_current==nullptr)
 			throw std::out_of_range("");
-		size_t pos=_base::get_position();
-		_base::_m_list->remove_at(pos);
-		_base::set_position(pos);
+		size_t pos=this->get_position();
+		this->_m_list->remove_at(pos);
+		this->set_position(pos);
 		}
 	void set_current(_item_t const& item)
 		{
-		if(_base::_m_current==nullptr)
+		if(this->_m_current==nullptr)
 			throw std::out_of_range("");
-		*_base::_m_current=item;
+		*(this->_m_current)=item;
 		}
 };
 
@@ -998,29 +998,25 @@ class list: public _list_cluster<_item_t, _group_size>
 private:
 	// Using
 	using _base=_list_cluster<_item_t, _group_size>;
-	using _const_it=_list_const_iterator<_item_t, _group_size>;
-	using _group=_list_group<_item_t>;
-	using _it=_list_iterator<_item_t, _group_size>;
-	using _item_group=_list_item_group<_item_t, _group_size>;
-	using _parent_group=_list_parent_group<_item_t, _group_size>;
 
 public:
 	// Typedefs
 	typedef _list_iterator<_item_t, _group_size> iterator;
+	typedef _list_const_iterator<_item_t, _group_size> const_iterator;
 
 	// Con-/Destructors
 	list() {}
 	list(list const& list): _base(list) {}
 
 	// Iteration
-	inline _it at(size_t position) { return _it(this, position); }
-	inline _const_it at(size_t position)const { return _const_it(this, position); }
-	inline _it at(_it const& it) { return _it(it); }
-	inline _const_it at(_const_it const& it)const { return _const_it(it); }
-	inline _it first() { return _it(this, 0); }
-	inline _const_it first()const { return _const_it(this, 0); }
-	inline _it last() { return _it(this, this->get_count()-1); }
-	inline _const_it last()const { return _const_it(this, this->get_count()-1); }
+	inline iterator at(size_t position) { return iterator(this, position); }
+	inline const_iterator at(size_t position)const { return const_iterator(this, position); }
+	inline iterator at(iterator const& it) { return iterator(it); }
+	inline const_iterator at(const_iterator const& it)const { return const_iterator(it); }
+	inline iterator first() { return iterator(this, 0); }
+	inline const_iterator first()const { return const_iterator(this, 0); }
+	inline iterator last() { return iterator(this, this->get_count()-1); }
+	inline const_iterator last()const { return const_iterator(this, this->get_count()-1); }
 };
 
 } // namespace
