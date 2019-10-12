@@ -1295,7 +1295,22 @@ public:
 
 	// Access
 	inline _tId operator[](size_t position)const { return this->_m_root->get_at(position)->Id; }
+	_tId get(_tId const& id)const
+		{
+		_item* item=this->_m_root->get(id);
+		if(item==nullptr)
+			throw std::invalid_argument("");
+		return item->Id;
+		}
 	inline _tId get_at(size_t position)const { return this->_m_root->get_at(position)->Id; }
+	bool try_get(_tId const& id, _tId* idret)const noexcept
+		{
+		_item* ii=this->_m_root->get(id);
+		if(ii==nullptr)
+			return false;
+		*idret=ii->Id;
+		return true;
+		}
 
 	// Modification
 	bool add(_tId const& id)
