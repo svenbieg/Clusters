@@ -17,7 +17,6 @@
 // Using
 //=======
 
-#include <cerrno>
 #include <cstring>
 #include <type_traits>
 #include <utility>
@@ -46,10 +45,10 @@ class _slist_item
 {
 public:
 	_slist_item()noexcept {}
-	_slist_item(_slist_item const& item): id(item.id), item(item.item) {}
+	_slist_item(_slist_item const& item)noexcept: id(item.id), item(item.item) {}
 	_slist_item(_slist_item && item)noexcept: id(std::move(item.id)), item(std::move(item.item)) {}
-	_slist_item(_id_t id, _item_t item): id(id), item(item) {}
-	_slist_item& operator=(_slist_item const& ii)
+	_slist_item(_id_t id, _item_t item)noexcept: id(id), item(item) {}
+	_slist_item& operator=(_slist_item const& ii)noexcept
 		{
 		id=ii.id;
 		item=ii.item;
@@ -63,11 +62,11 @@ template <typename _id_t>
 class _slist_item<_id_t, void>
 {
 public:
-	_slist_item() {}
-	_slist_item(_slist_item const& item): id(item.id) {}
-	_slist_item(_slist_item && item): id(std::move(item.id)) {}
-	_slist_item(_id_t id): id(id) {}
-	_slist_item& operator=(_slist_item const& item)
+	_slist_item()noexcept {}
+	_slist_item(_slist_item const& item)noexcept: id(item.id) {}
+	_slist_item(_slist_item && item)noexcept: id(std::move(item.id)) {}
+	_slist_item(_id_t id)noexcept: id(id) {}
+	_slist_item& operator=(_slist_item const& item)noexcept
 		{
 		id=item.id;
 		return *this;
@@ -89,15 +88,15 @@ private:
 
 public:
 	// Con-Destructors
-	virtual ~_slist_group() {}
+	virtual ~_slist_group()noexcept {}
 
 	// Access
 	virtual bool contains(_id_t id)const noexcept=0;
 	virtual int find(_id_t id)const noexcept=0;
 	virtual _slist_item_t* get(_id_t id)noexcept=0;
 	virtual _slist_item_t const* get(_id_t id)const noexcept=0;
-	virtual _slist_item_t& get_at(size_t position)=0;
-	virtual _slist_item_t const& get_at(size_t position)const=0;
+	virtual _slist_item_t* get_at(size_t position)noexcept=0;
+	virtual _slist_item_t const* get_at(size_t position)const noexcept=0;
 	virtual unsigned int get_child_count()const noexcept=0;
 	virtual _slist_item_t* get_first()noexcept=0;
 	virtual _slist_item_t const* get_first()const noexcept=0;
@@ -107,9 +106,9 @@ public:
 	virtual unsigned int get_level()const noexcept=0;
 
 	// Modification
-	virtual bool add(_slist_item_t const& item, bool again, bool once, bool* exists)=0;
-	virtual bool remove(_id_t id)=0;
-	virtual void remove_at(size_t position)=0;
+	virtual bool add(_slist_item_t const& item, bool again, bool once, bool* exists)noexcept=0;
+	virtual bool remove(_id_t id)noexcept=0;
+	virtual void remove_at(size_t position)noexcept=0;
 };
 
 
@@ -127,14 +126,14 @@ private:
 public:
 	// Con-/Destructors
 	_slist_item_group()noexcept: _m_item_count(0) {}
-	_slist_item_group(_slist_item_group const& group): _m_item_count(group._m_item_count)
+	_slist_item_group(_slist_item_group const& group)noexcept: _m_item_count(group._m_item_count)
 		{
 		_slist_item_t* dst=get_items();
 		_slist_item_t const* src=group.get_items();
 		for(unsigned int u=0; u<_m_item_count; u++)
 			new (&dst[u]) _slist_item_t(src[u]);
 		}
-	~_slist_item_group()override
+	~_slist_item_group()noexcept override
 		{
 		_slist_item_t* items=get_items();
 		for(unsigned int u=0; u<_m_item_count; u++)
@@ -158,17 +157,17 @@ public:
 			return nullptr;
 		return &get_items()[ipos];
 		}
-	_slist_item_t& get_at(size_t position)override
+	_slist_item_t* get_at(size_t position)noexcept override
 		{
 		if(position>=_m_item_count)
-			throw EINVAL;
-		return get_items()[position];
+			return nullptr;
+		return &get_items()[position];
 		}
-	_slist_item_t const& get_at(size_t position)const override
+	_slist_item_t const* get_at(size_t position)const noexcept override
 		{
 		if(position>=_m_item_count)
-			throw EINVAL;
-		return get_items()[position];
+			return nullptr;
+		return &get_items()[position];
 		}
 	inline unsigned int get_child_count()const noexcept override { return _m_item_count; }
 	_slist_item_t* get_first()noexcept
@@ -201,7 +200,7 @@ public:
 	inline unsigned int get_level()const noexcept override { return 0; }
 
 	// Modification
-	bool add(_slist_item_t const& item, bool again, bool once, bool* exists)override
+	bool add(_slist_item_t const& item, bool again, bool once, bool* exists)noexcept override
 		{
 		int pos=get_insert_pos(item.id, exists);
 		if(once&&*exists)
@@ -215,14 +214,14 @@ public:
 		_m_item_count++;
 		return true;
 		}
-	void append_items(unsigned int count, _slist_item_t const* append)
+	void append_items(unsigned int count, _slist_item_t const* append)noexcept
 		{
 		_slist_item_t* items=get_items();
 		for(unsigned int u=0; u<count; u++)
 			new (&items[_m_item_count+u]) _slist_item_t(std::move(append[u]));
 		_m_item_count+=count;
 		}
-	void insert_items(unsigned int position, unsigned int count, _slist_item_t const* insert)
+	void insert_items(unsigned int position, unsigned int count, _slist_item_t const* insert)noexcept
 		{
 		if(position==_m_item_count)
 			{
@@ -236,7 +235,7 @@ public:
 			new (&items[position+u]) _slist_item_t(std::move(insert[u]));
 		_m_item_count+=count;
 		}
-	bool remove(_id_t id)override
+	bool remove(_id_t id)noexcept override
 		{
 		int pos=get_item_pos(id);
 		if(pos<0)
@@ -244,17 +243,17 @@ public:
 		remove_at(pos);
 		return true;
 		}
-	void remove_at(size_t position)override
+	void remove_at(size_t position)noexcept override
 		{
 		if(position>=_m_item_count)
-			throw EINVAL;
+			return;
 		_slist_item_t* items=get_items();
 		items[position].~_slist_item_t();
 		for(unsigned int u=(unsigned int)position; u+1<_m_item_count; u++)
 			new (&items[u]) _slist_item_t(std::move(items[u+1]));
 		_m_item_count--;
 		}
-	void remove_items(unsigned int position, unsigned int count)
+	void remove_items(unsigned int position, unsigned int count)noexcept
 		{
 		_slist_item_t* items=get_items();
 		for(unsigned int u=position; u+count<_m_item_count; u++)
@@ -347,7 +346,7 @@ public:
 		{
 		_m_children[0]=child;
 		}
-	_slist_parent_group(_parent_group_t const& group):
+	_slist_parent_group(_parent_group_t const& group)noexcept:
 		_m_child_count(group._m_child_count), _m_item_count(group._m_item_count), _m_level(group._m_level)
 		{
 		if(_m_level>1)
@@ -363,7 +362,7 @@ public:
 		_m_first=_m_children[0]->get_first();
 		_m_last=_m_children[_m_child_count-1]->get_last();
 		}
-	~_slist_parent_group()override
+	~_slist_parent_group()noexcept override
 		{
 		for(unsigned int u=0; u<_m_child_count; u++)
 				delete _m_children[u];
@@ -386,24 +385,24 @@ public:
 			return nullptr;
 		return _m_children[ipos]->get(id);
 		}
-	_slist_item_t& get_at(size_t position)override
+	_slist_item_t* get_at(size_t position)noexcept override
 		{
 		unsigned int group=get_group(&position);
 		if(group>=_group_size)
-			throw EINVAL;
+			return nullptr;
 		return _m_children[group]->get_at(position);
 		}
-	_slist_item_t const& get_at(size_t position)const override
+	_slist_item_t const* get_at(size_t position)const noexcept override
 		{
 		unsigned int group=get_group(&position);
 		if(group>=_group_size)
-			throw EINVAL;
+			return nullptr;
 		return _m_children[group]->get_at(position);
 		}
-	_group_t* get_child(unsigned int position)
+	_group_t* get_child(unsigned int position)const noexcept
 		{
 		if(position>=_m_child_count)
-			throw EINVAL;
+			return nullptr;
 		return _m_children[position];
 		}
 	inline unsigned int get_child_count()const noexcept override { return _m_child_count; }
@@ -415,7 +414,7 @@ public:
 	inline unsigned int get_level()const noexcept override { return _m_level; }
 
 	// Modification
-	bool add(_slist_item_t const& item, bool again, bool once, bool* exists)override
+	bool add(_slist_item_t const& item, bool again, bool once, bool* exists)noexcept override
 		{
 		if(!add_internal(item, again, once, exists))
 			return false;
@@ -463,7 +462,7 @@ public:
 		_m_child_count+=count;
 		update_bounds();
 		}
-	void move_children(unsigned int source, unsigned int destination, unsigned int count)
+	void move_children(unsigned int source, unsigned int destination, unsigned int count)noexcept
 		{
 		if(count==0)
 			return;
@@ -514,7 +513,7 @@ public:
 				move_children(u-1, u, 1);
 			}
 		}
-	bool remove(_id_t id)override
+	bool remove(_id_t id)noexcept override
 		{
 		int pos=get_item_pos(id);
 		if(pos<0)
@@ -526,10 +525,10 @@ public:
 		update_bounds();
 		return true;
 		}
-	void remove_at(size_t position)override
+	void remove_at(size_t position)noexcept override
 		{
 		if(position>=_m_item_count)
-			throw EINVAL;
+			return;
 		unsigned int group=get_group(&position);
 		_m_children[group]->remove_at(position);
 		_m_item_count--;
@@ -545,7 +544,7 @@ public:
 		update_bounds();
 		}
 	inline void set_child_count(unsigned int count)noexcept { _m_child_count=count; }
-	bool split(unsigned int position)
+	bool split(unsigned int position)noexcept
 		{
 		if(_m_child_count==_group_size)
 			return false;
@@ -565,7 +564,7 @@ public:
 
 private:
 	// Common
-	bool add_internal(_slist_item_t const& item, bool again, bool once, bool* exists)
+	bool add_internal(_slist_item_t const& item, bool again, bool once, bool* exists)noexcept
 		{
 		unsigned int group=0;
 		unsigned int count=get_insert_pos(item.id, &group, exists);
@@ -616,7 +615,7 @@ private:
 			}
 		return _group_size;
 		}
-	int get_item_pos(_id_t id)const
+	int get_item_pos(_id_t id)const noexcept
 		{
 		if(!_m_child_count)
 			return -1;
@@ -646,7 +645,7 @@ private:
 			u--;
 		return -(INT)u-1;
 		}
-	unsigned int get_insert_pos(_id_t id, unsigned int* group, bool* exists)const
+	unsigned int get_insert_pos(_id_t id, unsigned int* group, bool* exists)const noexcept
 		{
 		if(!_m_child_count)
 			return 0;
@@ -696,7 +695,7 @@ private:
 			}
 		return 1;
 		}
-	unsigned int get_nearest(unsigned int position)noexcept
+	unsigned int get_nearest(unsigned int position)const noexcept
 		{
 		int before=position-1;
 		unsigned int after=position+1;
@@ -724,7 +723,7 @@ private:
 			memmove(&_m_children[position], &_m_children[position+1], (_m_child_count-position-1)*sizeof(void*));
 		_m_child_count--;
 		}
-	void update_bounds()
+	void update_bounds()noexcept
 		{
 		if(!_m_child_count)
 			return;
@@ -766,12 +765,12 @@ public:
 	inline size_t get_count()const noexcept { return _m_root->get_item_count(); }
 
 	// Modification
-	void clear()
+	void clear()noexcept
 		{
 		delete _m_root;
 		_m_root=new _item_group_t();
 		}
-	bool remove(_id_t id)
+	bool remove(_id_t id)noexcept
 		{
 		if(_m_root->remove(id))
 			{
@@ -780,7 +779,7 @@ public:
 			}
 		return false;
 		}
-	void remove_at(size_t position)
+	void remove_at(size_t position)noexcept
 		{
 		_m_root->remove_at(position);
 		update_root();
@@ -788,8 +787,8 @@ public:
 
 protected:
 	// Con-/Destructors
-	_slist_cluster(): _m_root(new _item_group_t()) {}
-	_slist_cluster(_slist_cluster const& slist)
+	_slist_cluster()noexcept: _m_root(new _item_group_t()) {}
+	_slist_cluster(_slist_cluster const& slist)noexcept
 		{
 		if(slist._m_root->get_level()>0)
 			{
@@ -800,10 +799,10 @@ protected:
 			_m_root=new _item_group_t((_item_group_t const&)*slist._m_root);
 			}
 		}
-	~_slist_cluster() { delete _m_root; }
+	~_slist_cluster()noexcept { delete _m_root; }
 
 	// Common
-	void update_root()
+	void update_root()noexcept
 		{
 		if(_m_root->get_child_count()==1&&_m_root->get_level()>0)
 			{
@@ -852,7 +851,7 @@ public:
 	inline bool has_current()const noexcept { return _m_current!=nullptr; }
 
 	// Assignment
-	_base_t& operator=(_base_t const& it)
+	_base_t& operator=(_base_t const& it)noexcept
 		{
 		_m_current=it._m_current;
 		_m_slist=it._m_slist;
@@ -862,7 +861,7 @@ public:
 		}
 
 	// Modification
-	bool find(_id_t id)
+	bool find(_id_t id)noexcept
 		{
 		_m_current=nullptr;
 		bool bfound=true;
@@ -893,7 +892,7 @@ public:
 			}
 		_m_its[levelcount-1].group=group;
 		_m_its[levelcount-1].position=pos;
-		_m_current=&itemgroup->get_at(pos);
+		_m_current=itemgroup->get_at(pos);
 		return bfound;
 		}
 	bool move_next()noexcept
@@ -906,7 +905,7 @@ public:
 		if(it->position+1<count)
 			{
 			it->position++;
-			_m_current=&itemgroup->get_at(it->position);
+			_m_current=itemgroup->get_at(it->position);
 			return true;
 			}
 		for(unsigned int u=_m_level_count-1; u>0; u--)
@@ -927,7 +926,7 @@ public:
 				it->position=0;
 				}
 			itemgroup=(_item_group_t*)group;
-			_m_current=&itemgroup->get_at(0);
+			_m_current=itemgroup->get_at(0);
 			return true;
 			}
 		_m_current=nullptr;
@@ -970,7 +969,7 @@ public:
 		_m_current=nullptr;
 		return false;
 		}
-	void set_position(size_t position)
+	void set_position(size_t position)noexcept
 		{
 		_m_current=nullptr;
 		_group_t* group=_m_slist->_m_root;
@@ -990,21 +989,21 @@ public:
 		if(pos<group->get_child_count())
 			{
 			_item_group_t* itemgroup=(_item_group_t*)group;
-			_m_current=&itemgroup->get_at(pos);
+			_m_current=itemgroup->get_at(pos);
 			}
 		}
 
 protected:
 	// Con-/Destructors
-	_slist_iterator_base(_base_t const& it):
+	_slist_iterator_base(_base_t const& it)noexcept:
 		_m_current(it._m_current), _m_slist(it._m_slist), _m_its(nullptr), _m_level_count(it._m_level_count)
 		{
 		_m_its=(_it_struct*)operator new(_m_level_count*sizeof(_it_struct));
 		memcpy(_m_its, it._m_its, _m_level_count*sizeof(_it_struct));
 		}
-	_slist_iterator_base(_slist_ptr_t slist):
+	_slist_iterator_base(_slist_ptr_t slist)noexcept:
 		_m_slist(slist), _m_its(nullptr), _m_level_count(0) {}
-	~_slist_iterator_base() { if(_m_its!=nullptr)operator delete(_m_its); }
+	~_slist_iterator_base()noexcept { if(_m_its!=nullptr)operator delete(_m_its); }
 
 	// Helper-struct
 	typedef struct
@@ -1014,7 +1013,7 @@ protected:
 		}_it_struct;
 
 	// Common
-	unsigned int get_position_internal(_group_t* group, size_t* pos)
+	unsigned int get_position_internal(_group_t* group, size_t* pos)const noexcept
 		{
 		unsigned int count=group->get_child_count();
 		unsigned int level=group->get_level();
@@ -1036,7 +1035,7 @@ protected:
 			}
 		return _group_size;
 		}
-	void set_level_count(unsigned int levelcount)
+	void set_level_count(unsigned int levelcount)noexcept
 		{
 		if(_m_level_count==levelcount)
 			return;
@@ -1067,37 +1066,37 @@ private:
 
 public:
 	// Con-/Destructors
-	_slist_iterator(_it_t const& it): _base_t(it) {}
-	_slist_iterator(_slist_t* slist, size_t position): _base_t(slist) { this->set_position(position); }
-	_slist_iterator(_slist_t* slist, size_t, _id_t id): _base_t(slist) { this->find(id); }
+	_slist_iterator(_it_t const& it)noexcept: _base_t(it) {}
+	_slist_iterator(_slist_t* slist, size_t position)noexcept: _base_t(slist) { this->set_position(position); }
+	_slist_iterator(_slist_t* slist, size_t, _id_t id)noexcept: _base_t(slist) { this->find(id); }
 
 	// Access
-	_id_t get_current_id()const
+	_id_t get_current_id()const noexcept
 		{
 		if(this->_m_current==nullptr)
-			throw EFAULT;
+			return _id_t();
 		return this->_m_current->id;
 		}
-	_item_t get_current_item()const
+	_item_t get_current_item()const noexcept
 		{
 		if(this->_m_current==nullptr)
-			throw EFAULT;
+			return _item_t();
 		return this->_m_current->item;
 		}
 
 	// Modification
-	void remove_current()
+	void remove_current()noexcept
 		{
 		if(this->_m_current==nullptr)
-			throw EFAULT;
+			return;
 		size_t pos=this->get_position();
 		this->_m_slist->remove_at(pos);
 		this->set_position(pos);
 		}
-	void set_current_item(_item_t item)
+	void set_current_item(_item_t item)noexcept
 		{
 		if(this->_m_current==nullptr)
-			throw EFAULT;
+			return;
 		this->_m_current->item=item;
 		}
 };
@@ -1113,23 +1112,23 @@ private:
 
 public:
 	// Con-/Destructors
-	_slist_iterator(_it_t const& it): _base_t(it) {}
-	_slist_iterator(_slist_t* slist, size_t position): _base_t(slist) { this->set_position(position); }
-	_slist_iterator(_slist_t* slist, size_t, _id_t id): _base_t(slist) { this->find(id); }
+	_slist_iterator(_it_t const& it)noexcept: _base_t(it) {}
+	_slist_iterator(_slist_t* slist, size_t position)noexcept: _base_t(slist) { this->set_position(position); }
+	_slist_iterator(_slist_t* slist, size_t, _id_t id)noexcept: _base_t(slist) { this->find(id); }
 
 	// Access
-	inline _id_t get_current()const
+	inline _id_t get_current()const noexcept
 		{
 		if(this->_m_current==nullptr)
-			throw EFAULT;
+			return _id_t();
 		return this->_m_current->id;
 		}
 
 	// Modification
-	void remove_current()
+	void remove_current()noexcept
 		{
 		if(this->_m_current==nullptr)
-			throw EFAULT;
+			return;
 		size_t pos=this->get_position();
 		this->_m_slist->remove_at(pos);
 		this->set_position(pos);
@@ -1152,21 +1151,21 @@ private:
 
 public:
 	// Con-/Destructors
-	_slist_const_iterator(_it_t const& it): _base_t(it) {}
-	_slist_const_iterator(_slist_t const* slist, size_t position): _base_t(slist) { this->set_position(position); }
-	_slist_const_iterator(_slist_t const* slist, size_t, _id_t id): _base_t(slist) { this->find(id); }
+	_slist_const_iterator(_it_t const& it)noexcept: _base_t(it) {}
+	_slist_const_iterator(_slist_t const* slist, size_t position)noexcept: _base_t(slist) { this->set_position(position); }
+	_slist_const_iterator(_slist_t const* slist, size_t, _id_t id)noexcept: _base_t(slist) { this->find(id); }
 
 	// Access
-	inline _id_t get_current_id()const
+	inline _id_t get_current_id()const noexcept
 		{
 		if(this->_m_current==nullptr)
-			throw EFAULT;
+			return _id_t();
 		return this->_m_current->id;
 		}
-	inline _id_t get_current_item()const
+	inline _item_t get_current_item()const noexcept
 		{
 		if(this->_m_current==nullptr)
-			throw EFAULT;
+			return _item_t();
 		return this->_m_current->item;
 		}
 };
@@ -1182,15 +1181,15 @@ private:
 
 public:
 	// Con-/Destructors
-	_slist_const_iterator(_it_t const& it): _base_t(it) {}
-	_slist_const_iterator(_slist_t const* slist, size_t position): _base_t(slist) { this->set_position(position); }
-	_slist_const_iterator(_slist_t const* slist, size_t, _id_t id): _base_t(slist) { this->find(id); }
+	_slist_const_iterator(_it_t const& it)noexcept: _base_t(it) {}
+	_slist_const_iterator(_slist_t const* slist, size_t position)noexcept: _base_t(slist) { this->set_position(position); }
+	_slist_const_iterator(_slist_t const* slist, size_t, _id_t id)noexcept: _base_t(slist) { this->find(id); }
 
 	// Access
-	inline _id_t get_current()const
+	inline _id_t get_current()const noexcept
 		{
 		if(this->_m_current==nullptr)
-			throw EFAULT;
+			return _id_t();
 		return this->_m_current->id;
 		}
 };
@@ -1215,24 +1214,24 @@ private:
 
 public:
 	// Iteration
-	inline _it_t at(size_t position) { return _it_t(this, position); }
-	inline _const_it_t at(size_t position)const { return _const_it_t(this, position); }
-	inline _it_t at(_it_t const& it) { return _it_t(it); }
-	inline _const_it_t at(_const_it_t const& it)const { return _const_it_t(it); }
-	inline _it_t find(_id_t id) { return _it_t(this, 0, id); }
-	inline _const_it_t find(_id_t id)const { return _const_it_t(this, 0, id); }
-	inline _it_t first() { return _it_t(this, 0); }
-	inline _const_it_t first()const { return _const_it_t(this, 0); }
-	inline _it_t last() { return _it_t(this, this->get_count()-1); }
-	inline _const_it_t last()const { return _const_it_t(this, this->get_count()-1); }
+	inline _it_t at(size_t position)noexcept { return _it_t(this, position); }
+	inline _const_it_t at(size_t position)const noexcept { return _const_it_t(this, position); }
+	inline _it_t at(_it_t const& it)noexcept { return _it_t(it); }
+	inline _const_it_t at(_const_it_t const& it)const noexcept { return _const_it_t(it); }
+	inline _it_t find(_id_t id)noexcept { return _it_t(this, 0, id); }
+	inline _const_it_t find(_id_t id)const noexcept { return _const_it_t(this, 0, id); }
+	inline _it_t first()noexcept { return _it_t(this, 0); }
+	inline _const_it_t first()const noexcept { return _const_it_t(this, 0); }
+	inline _it_t last()noexcept { return _it_t(this, this->get_count()-1); }
+	inline _const_it_t last()const noexcept { return _const_it_t(this, this->get_count()-1); }
 
 protected:
 	// Con-/Destructors
-	_slist_base() {}
-	_slist_base(_slist_base const& slist): _base_t(slist) {}
+	_slist_base()noexcept {}
+	_slist_base(_slist_base const& slist)noexcept: _base_t(slist) {}
 
 	// Modification
-	bool add_internal(_slist_item_t const& item, bool once=true)
+	bool add_internal(_slist_item_t const& item, bool once=true)noexcept
 		{
 		bool exists=false;
 		if(this->_m_root->add(item, false, once, &exists))
@@ -1261,8 +1260,8 @@ private:
 
 public:
 	// Con-/Destructors
-	_slist_typed() {}
-	_slist_typed(_base_t const& base): _base_t(base) {}
+	_slist_typed()noexcept {}
+	_slist_typed(_base_t const& base)noexcept: _base_t(base) {}
 
 	// Access
 	inline _item_t operator[](_id_t id)const { return get(id); }
@@ -1270,33 +1269,33 @@ public:
 		{
 		_slist_item_t* item=this->_m_root->get(id);
 		if(item==nullptr)
-			throw EINVAL;
+			return _item_t();
 		return item->item;
 		}
 	bool try_get(_id_t id, _item_t* item)const noexcept
 		{
-		_slist_item_t* ii=this->_m_root->get(id);
-		if(ii==nullptr)
+		_slist_item_t* sli=this->_m_root->get(id);
+		if(sli==nullptr)
 			return false;
-		*item=ii->item;
+		*item=sli->item;
 		return true;
 		}
 
 	// Modification
 	bool add(_id_t id, _item_t item, bool once=true)
 		{
-		_slist_item_t ii(id, item);
-		return this->add_internal(ii, once);
+		_slist_item_t sli(id, item);
+		return this->add_internal(sli, once);
 		}
 	void set(_id_t id, _item_t item)
 		{
-		_slist_item_t* p=this->_m_root->get(id);
-		if(p==nullptr)
+		_slist_item_t* sli=this->_m_root->get(id);
+		if(sli==nullptr)
 			{
 			add(id, item);
 			return;
 			}
-		p->item=item;
+		sli->item=item;
 		}
 };
 
@@ -1311,25 +1310,31 @@ private:
 
 public:
 	// Con-/Destructors
-	_slist_typed() {}
-	_slist_typed(_base_t const& base): _base_t(base) {}
+	_slist_typed()noexcept {}
+	_slist_typed(_base_t const& base)noexcept: _base_t(base) {}
 
 	// Access
-	inline _id_t operator[](size_t position)const { return this->_m_root->get_at(position)->id; }
-	_id_t get(_id_t id)const
+	inline _id_t operator[](size_t position)const noexcept { return get_at(position); }
+	_id_t get(_id_t id)const noexcept
 		{
 		_slist_item_t* item=this->_m_root->get(id);
 		if(item==nullptr)
-			throw EINVAL;
+			return _id_t();
 		return item->id;
 		}
-	inline _id_t get_at(size_t position)const { return this->_m_root->get_at(position)->id; }
+	_id_t get_at(size_t position)const
+		{
+		_slist_item_t* item=this->_m_root->get_at(position);
+		if(item==nullptr)
+			return _id_t();
+		return item->id;
+		}
 	bool try_get(_id_t id, _id_t* idret)const noexcept
 		{
-		_slist_item_t* ii=this->_m_root->get(id);
-		if(ii==nullptr)
+		_slist_item_t* sli=this->_m_root->get(id);
+		if(sli==nullptr)
 			return false;
-		*idret=ii->id;
+		*idret=sli->id;
 		return true;
 		}
 
@@ -1360,8 +1365,8 @@ public:
 	typedef _slist_iterator<_id_t, _item_t, _group_size> iterator;
 
 	// Con-/Destructors
-	slist() {}
-	slist(slist const& slist): _base_t(slist) {}
+	slist()noexcept {}
+	slist(slist const& slist)noexcept: _base_t(slist) {}
 };
 
 } // namespace
