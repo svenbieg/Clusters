@@ -118,6 +118,8 @@ public:
 	size_t append(_item_t const* append, size_t count)override
 		{
 		unsigned int copy=_group_size-_m_item_count;
+		if(copy==0)
+			return 0;
 		if(count<copy)
 			copy=(unsigned int)count;
 		_item_t* items=get_items();
@@ -283,13 +285,17 @@ public:
 		}
 	size_t append(_item_t const* append, size_t count)override
 		{
-		size_t pos=_m_children[_m_child_count-1]->append(append, count);
-		if(pos>0)
+		size_t pos=0;
+		if(_m_child_count>0)
 			{
-			_m_item_count+=pos;
-			count-=pos;
-			if(count==0)
-				return pos;
+			pos+=_m_children[_m_child_count-1]->append(append, count);
+			if(pos>0)
+				{
+				_m_item_count+=pos;
+				count-=pos;
+				if(count==0)
+					return pos;
+				}
 			}
 		unsigned int last=minimize_internal();
 		for(; last<_m_child_count; last++)
@@ -420,11 +426,6 @@ public:
 		for(unsigned int u=0; u<count; u++)
 			_m_item_count+=groups[u]->get_item_count();
 		_m_child_count+=count;
-		}
-	void minimize()
-		{
-		unsigned int u=minimize_internal();
-		free_internal(u);
 		}
 	void move_children(unsigned int source, unsigned int destination, unsigned int count)
 		{
@@ -847,12 +848,7 @@ public:
 		_m_current=nullptr;
 		_group* group=_m_list->_m_root;
 		unsigned int levelcount=group->get_level()+1;
-		if(_m_level_count!=levelcount)
-			{
-			operator delete(_m_its);
-			_m_its=(_it_struct*)operator new(levelcount*sizeof(_it_struct));
-			_m_level_count=levelcount;
-			}
+		set_level_count(levelcount);
 		unsigned int pos=get_position_internal(group, &position);
 		if(pos==_group_size)
 			return;
@@ -921,7 +917,8 @@ protected:
 		{
 		if(_m_level_count==levelcount)
 			return;
-		operator delete(_m_its);
+		if(_m_its!=nullptr)
+			operator delete(_m_its);
 		_m_its=(_it_struct*)operator new(levelcount*sizeof(_it_struct));
 		_m_level_count=levelcount;
 		}

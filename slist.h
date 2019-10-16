@@ -47,7 +47,7 @@ class _slist_item
 public:
 	_slist_item()noexcept {}
 	_slist_item(_slist_item const& item): id(item.id), item(item.item) {}
-	_slist_item(_slist_item && item): id(std::move(item.id)), item(std::move(item.item)) {}
+	_slist_item(_slist_item && item)noexcept: id(std::move(item.id)), item(std::move(item.item)) {}
 	_slist_item(_id_t const& id, _item_t const& item): id(id), item(item) {}
 	_slist_item& operator=(_slist_item const& ii)
 		{
@@ -107,7 +107,7 @@ public:
 	virtual unsigned int get_level()const noexcept=0;
 
 	// Modification
-	virtual bool add(_item const& item, bool again, bool* exists)=0;
+	virtual bool add(_item const& item, bool again, bool once, bool* exists)=0;
 	virtual bool remove(_id_t const& id)=0;
 	virtual void remove_at(size_t position)=0;
 };
@@ -201,14 +201,11 @@ public:
 	inline unsigned int get_level()const noexcept override { return 0; }
 
 	// Modification
-	bool add(_item const& item, bool again, bool* exists)override
+	bool add(_item const& item, bool again, bool once, bool* exists)override
 		{
-		int pos=get_insert_pos(item.id);
-		if(pos<0)
-			{
-			*exists=true;
+		int pos=get_insert_pos(item.id, exists);
+		if(once&&*exists)
 			return false;
-			}
 		if(_m_item_count==_group_size)
 			return false;
 		_item* items=get_items();
@@ -267,7 +264,7 @@ public:
 
 private:
 	// Common
-	int get_insert_pos(_id_t const& id)const noexcept
+	int get_insert_pos(_id_t const& id, bool* exists)const noexcept
 		{
 		_item const* items=get_items();
 		unsigned int start=0;
@@ -285,7 +282,8 @@ private:
 				start=u+1;
 				continue;
 				}
-			return -1;
+			*exists=true;
+			return u;
 			}
 		return start;
 		}
@@ -417,9 +415,9 @@ public:
 	inline unsigned int get_level()const noexcept override { return _m_level; }
 
 	// Modification
-	bool add(_item const& item, bool again, bool* exists)override
+	bool add(_item const& item, bool again, bool once, bool* exists)override
 		{
-		if(!add_internal(item, again, exists))
+		if(!add_internal(item, again, once, exists))
 			return false;
 		_m_item_count++;
 		update_bounds();
@@ -567,22 +565,19 @@ public:
 
 private:
 	// Common
-	bool add_internal(_item const& item, bool again, bool* exists)
+	bool add_internal(_item const& item, bool again, bool once, bool* exists)
 		{
 		unsigned int group=0;
-		unsigned int count=get_insert_pos(item.id, &group);
-		if(count==_group_size)
-			{
-			*exists=true;
+		unsigned int count=get_insert_pos(item.id, &group, exists);
+		if(once&&*exists)
 			return false;
-			}
 		if(!again)
 			{
 			for(unsigned int u=0; u<count; u++)
 				{
-				if(_m_children[group+u]->add(item, false, exists))
+				if(_m_children[group+u]->add(item, false, once, exists))
 					return true;
-				if(*exists)
+				if(once&&*exists)
 					return false;
 				}
 			unsigned int empty=get_nearest(group);
@@ -591,18 +586,24 @@ private:
 				if(count>1&&empty>group)
 					group++;
 				move_empty_slot(empty, group);
-				if(_m_children[group]->add(item, false, exists))
+				if(_m_children[group]->add(item, false, once, exists))
 					return true;
 				}
 			}
 		if(!split(group))
 			return false;
 		move_children(group, group+1, 1);
-		_item* last=_m_children[group]->get_last();
-		if(last->id<item.id)
-			group++;
-		_m_children[group]->add(item, again, exists);
-		return true;
+		count=get_insert_pos(item.id, &group, exists);
+		if(once&&*exists)
+			return false;
+		for(unsigned int u=0; u<count; u++)
+			{
+			if(_m_children[group+u]->add(item, false, once, exists))
+				return true;
+			if(once&&*exists)
+				return false;
+			}
+		return false;
 		}
 	unsigned int get_group(size_t* position)const noexcept
 		{
@@ -645,7 +646,7 @@ private:
 			u--;
 		return -(INT)u-1;
 		}
-	unsigned int get_insert_pos(_id_t const& id, unsigned int* group)const
+	unsigned int get_insert_pos(_id_t const& id, unsigned int* group, bool* exists)const
 		{
 		if(!_m_child_count)
 			return 0;
@@ -658,17 +659,17 @@ private:
 			unsigned int u=start+(end-start)/2;
 			first=_m_children[u]->get_first();
 			last=_m_children[u]->get_last();
-			if(first->id==id)
-				return _group_size;
-			if(last->id==id)
-				return _group_size;
-			if(first->id>id)
+			if(first->id>=id)
 				{
+				if(first->id==id)
+					*exists=true;
 				end=u;
 				continue;
 				}
-			if(last->id<id)
+			if(last->id<=id)
 				{
+				if(last->id==id)
+					*exists=true;
 				start=u+1;
 				continue;
 				}
@@ -681,7 +682,7 @@ private:
 		if(start>0)
 			{
 			first=_m_children[start]->get_first();
-			if(first->id>id)
+			if(first->id>=id)
 				{
 				*group=start-1;
 				return 2;
@@ -690,7 +691,7 @@ private:
 		if(start+1<_m_child_count)
 			{
 			last=_m_children[start]->get_last();
-			if(last->id<id)
+			if(last->id<=id)
 				return 2;
 			}
 		return 1;
@@ -1039,7 +1040,8 @@ protected:
 		{
 		if(_m_level_count==levelcount)
 			return;
-		operator delete(_m_its);
+		if(_m_its!=nullptr)
+			operator delete(_m_its);
 		_m_its=(_it_struct*)operator new(levelcount*sizeof(_it_struct));
 		_m_level_count=levelcount;
 		}
@@ -1230,15 +1232,15 @@ protected:
 	_slist_base(_slist_base const& slist): _base(slist) {}
 
 	// Modification
-	bool add_internal(_item const& item)
+	bool add_internal(_item const& item, bool once=true)
 		{
 		bool exists=false;
-		if(this->_m_root->add(item, false, &exists))
+		if(this->_m_root->add(item, false, once, &exists))
 			return true;
-		if(exists)
+		if(once&&exists)
 			return false;
 		this->_m_root=new _parent_group(this->_m_root);
-		return this->_m_root->add(item, true, &exists);
+		return this->_m_root->add(item, true, once, &exists);
 		}
 
 };
@@ -1281,10 +1283,10 @@ public:
 		}
 
 	// Modification
-	bool add(_id_t const& id, _item_t const& item)
+	bool add(_id_t const& id, _item_t const& item, bool once=true)
 		{
 		_item ii(id, item);
-		return this->add_internal(ii);
+		return this->add_internal(ii, once);
 		}
 	void set(_id_t const& id, _item_t const& item)
 		{
@@ -1332,10 +1334,10 @@ public:
 		}
 
 	// Modification
-	bool add(_id_t const& id)
+	bool add(_id_t const& id, bool once=true)
 		{
 		_item ii(id);
-		return this->add_internal(ii);
+		return this->add_internal(ii, once);
 		}
 };
 
