@@ -26,7 +26,7 @@
 // Namespace
 //===========
 
-namespace clusters {
+namespace Clusters {
 
 
 //======================
