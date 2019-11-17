@@ -18,6 +18,7 @@
 //=======
 
 #include <cstring>
+#include <exception>
 #include <utility>
 
 
@@ -54,9 +55,9 @@ public:
 	virtual unsigned int get_level()const noexcept=0;
 
 	// Modification
-	virtual bool append(_item_t item, bool again)noexcept=0;
+	virtual bool append(_item_t const& item, bool again)noexcept=0;
 	virtual size_t append(_item_t const* append, size_t count)noexcept=0;
-	virtual bool insert_at(size_t position, _item_t item, bool again)noexcept=0;
+	virtual bool insert_at(size_t position, _item_t const& item, bool again)noexcept=0;
 	virtual void remove_at(size_t position)noexcept=0;
 };
 
@@ -105,7 +106,7 @@ public:
 	inline unsigned int get_level()const noexcept override { return 0; }
 
 	// Modification
-	bool append(_item_t item, bool)noexcept override
+	bool append(_item_t const& item, bool)noexcept override
 		{
 		if(_m_item_count==_group_size)
 			return false;
@@ -134,7 +135,7 @@ public:
 			new (&items[_m_item_count+u]) _item_t(std::move(append[u]));
 		_m_item_count+=count;
 		}
-	bool insert_at(size_t position, _item_t item, bool)noexcept override
+	bool insert_at(size_t position, _item_t const& item, bool)noexcept override
 		{
 		if(position>_m_item_count)
 			return false;
@@ -255,7 +256,7 @@ public:
 	inline unsigned int get_level()const noexcept override { return _m_level; }
 
 	// Modification
-	bool append(_item_t item, bool again)noexcept override
+	bool append(_item_t const& item, bool again)noexcept override
 		{
 		unsigned int group=_m_child_count-1;
 		if(!again)
@@ -364,7 +365,7 @@ public:
 			}
 		return false;
 		}
-	bool insert_at(size_t position, _item_t item, bool again)noexcept
+	bool insert_at(size_t position, _item_t const& item, bool again)noexcept
 		{
 		if(position>_m_item_count)
 			return false;
@@ -641,18 +642,18 @@ public:
 	friend class _list_iterator_base<_item_t, _group_size, false>;
 
 	// Access
-	inline _item_t operator[](size_t position)const noexcept { return get_at(position); }
-	_item_t get_at(size_t position)const noexcept
+	inline _item_t& operator[](size_t position)const { return get_at(position); }
+	_item_t& get_at(size_t position)const
 		{
 		_item_t* item=_m_root->get_at(position);
 		if(item==nullptr)
-			return _item_t();
+			throw std::exception();
 		return *item;
 		}
 	inline size_t get_count()const noexcept { return _m_root->get_item_count(); }
 
 	// Modification
-	void append(_item_t item)noexcept
+	void append(_item_t const& item)noexcept
 		{
 		if(_m_root->append(item, false))
 			return;
@@ -678,7 +679,7 @@ public:
 		delete _m_root;
 		_m_root=new _item_group_t();
 		}
-	inline void insert_at(size_t position, _item_t item)noexcept
+	inline void insert_at(size_t position, _item_t const& item)noexcept
 		{
 		if(_m_root->insert_at(position, item, false))
 			return;
@@ -742,10 +743,10 @@ protected:
 
 public:
 	// Access
-	inline _item_t get_current()const noexcept
+	inline _item_t& get_current()const
 		{
 		if(_m_current==nullptr)
-			return _item_t();
+			throw std::exception();
 		return *_m_current;
 		}
 	size_t get_position()const noexcept
@@ -961,7 +962,7 @@ public:
 		this->_m_list->remove_at(pos);
 		this->set_position(pos);
 		}
-	void set_current(_item_t item)noexcept
+	void set_current(_item_t const& item)noexcept
 		{
 		if(this->_m_current==nullptr)
 			return;
