@@ -45,16 +45,9 @@ template <typename _id_t, typename _item_t>
 class _slist_item
 {
 public:
-	//_slist_item()noexcept {}
 	_slist_item(_slist_item const& item)noexcept: id(item.id), item(item.item) {}
 	_slist_item(_slist_item && item)noexcept: id(std::move(item.id)), item(std::move(item.item)) {}
 	_slist_item(_id_t const& id, _item_t const* item)noexcept: id(id), item(*item) {}
-	/*_slist_item& operator=(_slist_item const& ii)noexcept
-		{
-		id=ii.id;
-		item=ii.item;
-		return *this;
-		}*/
 	_id_t id;
 	_item_t item;
 };
@@ -63,15 +56,9 @@ template <typename _id_t>
 class _slist_item<_id_t, void>
 {
 public:
-	//_slist_item()noexcept {}
 	_slist_item(_slist_item const& item)noexcept: id(item.id) {}
 	_slist_item(_slist_item && item)noexcept: id(std::move(item.id)) {}
 	_slist_item(_id_t const& id, void const*)noexcept: id(id) {}
-	/*_slist_item& operator=(_slist_item const& item)noexcept
-		{
-		id=item.id;
-		return *this;
-		}*/
 	_id_t id;
 };
 
@@ -584,8 +571,12 @@ private:
 				if(count>1&&empty>group)
 					group++;
 				move_empty_slot(empty, group);
-				if(_m_children[group]->add(id, item, false, once, exists))
-					return true;
+				count=get_insert_pos(id, &group, exists);
+				for(unsigned int u=0; u<count; u++)
+					{
+					if(_m_children[group+u]->add(id, item, false, once, exists))
+						return true;
+					}
 				}
 			}
 		if(!split(group))
