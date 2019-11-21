@@ -272,7 +272,7 @@ public:
 		if(!split(group))
 			return false;
 		move_children(group, group+1, 1);
-		if(!_m_children[group+1]->append(item, again))
+		if(!_m_children[group+1]->append(item, false))
 			return false;
 		_m_item_count++;
 		return true;
