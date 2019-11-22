@@ -587,7 +587,7 @@ private:
 			return false;
 		for(unsigned int u=0; u<count; u++)
 			{
-			if(_m_children[group+u]->add(id, item, false, once, exists))
+			if(_m_children[group+u]->add(id, item, again, once, exists))
 				return true;
 			if(once&&*exists)
 				return false;
