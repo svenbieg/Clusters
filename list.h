@@ -409,7 +409,7 @@ public:
 			group++;
 			pos-=count;
 			}
-		_m_children[group]->insert_at(pos, item, again);
+		_m_children[group]->insert_at(pos, item, false);
 		_m_item_count++;
 		return true;
 		}
