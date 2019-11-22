@@ -582,17 +582,10 @@ private:
 		if(!split(group))
 			return false;
 		move_children(group, group+1, 1);
-		count=get_insert_pos(id, &group, exists);
+		get_insert_pos(id, &group, exists);
 		if(once&&*exists)
 			return false;
-		for(unsigned int u=0; u<count; u++)
-			{
-			if(_m_children[group+u]->add(id, item, again, once, exists))
-				return true;
-			if(once&&*exists)
-				return false;
-			}
-		return false;
+		return _m_children[group]->add(id, item, true, once, exists);
 		}
 	unsigned int get_group(size_t* position)const noexcept
 		{

@@ -272,7 +272,7 @@ public:
 		if(!split(group))
 			return false;
 		move_children(group, group+1, 1);
-		if(!_m_children[group+1]->append(item, again))
+		if(!_m_children[group+1]->append(item, true))
 			return false;
 		_m_item_count++;
 		return true;
@@ -409,7 +409,7 @@ public:
 			group++;
 			pos-=count;
 			}
-		_m_children[group]->insert_at(pos, item, again);
+		_m_children[group]->insert_at(pos, item, true);
 		_m_item_count++;
 		return true;
 		}
