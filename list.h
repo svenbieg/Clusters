@@ -269,9 +269,8 @@ public:
 				return true;
 				}
 			}
-		if(!split(group))
+		if(!split_child(group))
 			return false;
-		move_children(group, group+1, 1);
 		if(!_m_children[group+1]->append(item, true))
 			return false;
 		_m_item_count++;
@@ -336,29 +335,6 @@ public:
 			_m_item_count+=groups[u]->get_item_count();
 		_m_child_count+=count;
 		}
-	bool combine(unsigned int position)noexcept
-		{
-		unsigned int countat=_m_children[position]->get_child_count();
-		if(position>0)
-			{
-			if(countat+_m_children[position-1]->get_child_count()<=_group_size)
-				{
-				move_children(position, position-1, countat);
-				remove_internal(position);
-				return true;
-				}
-			}
-		if(position+1<_m_child_count)
-			{
-			if(countat+_m_children[position+1]->get_child_count()<=_group_size)
-				{
-				move_children(position, position+1, countat);
-				remove_internal(position);
-				return true;
-				}
-			}
-		return false;
-		}
 	bool insert_at(size_t position, _item_t const& item, bool again)noexcept
 		{
 		if(position>_m_item_count)
@@ -400,9 +376,8 @@ public:
 					}
 				}
 			}
-		if(!split(group))
+		if(!split_child(group))
 			return false;
-		move_children(group, group+1, 1);
 		size_t count=_m_children[group]->get_item_count();
 		if(pos>=count)
 			{
@@ -480,7 +455,7 @@ public:
 		unsigned int group=get_group(&position);
 		_m_children[group]->remove_at(position);
 		_m_item_count--;
-		combine(group);
+		combine_children(group);
 		return true;
 		}
 	void remove_groups(unsigned int position, unsigned int count)noexcept
@@ -492,23 +467,6 @@ public:
 		_m_child_count-=count;
 		}
 	inline void set_child_count(unsigned int count)noexcept { _m_child_count=count; }
-	bool split(unsigned int position)noexcept
-		{
-		if(_m_child_count==_group_size)
-			return false;
-		for(unsigned int u=_m_child_count; u>position+1; u--)
-			_m_children[u]=_m_children[u-1];
-		if(_m_level>1)
-			{
-			_m_children[position+1]=new _parent_group_t(_m_level-1);
-			}
-		else
-			{
-			_m_children[position+1]=new _item_group_t();
-			}
-		_m_child_count++;
-		return true;
-		}
 
 private:
 	// Access
@@ -564,6 +522,29 @@ private:
 		}
 
 	// Modification
+	bool combine_children(unsigned int position)noexcept
+		{
+		unsigned int countat=_m_children[position]->get_child_count();
+		if(position>0)
+			{
+			if(countat+_m_children[position-1]->get_child_count()<=_group_size)
+				{
+				move_children(position, position-1, countat);
+				remove_internal(position);
+				return true;
+				}
+			}
+		if(position+1<_m_child_count)
+			{
+			if(countat+_m_children[position+1]->get_child_count()<=_group_size)
+				{
+				move_children(position, position+1, countat);
+				remove_internal(position);
+				return true;
+				}
+			}
+		return false;
+		}
 	void free_children()noexcept
 		{
 		for(unsigned int u=_m_child_count; u>0; u--)
@@ -607,6 +588,24 @@ private:
 		for(unsigned int u=position; u+1<_m_child_count; u++)
 			_m_children[u]=_m_children[u+1];
 		_m_child_count--;
+		}
+	bool split_child(unsigned int position)noexcept
+		{
+		if(_m_child_count==_group_size)
+			return false;
+		for(unsigned int u=_m_child_count; u>position+1; u--)
+			_m_children[u]=_m_children[u-1];
+		if(_m_level>1)
+			{
+			_m_children[position+1]=new _parent_group_t(_m_level-1);
+			}
+		else
+			{
+			_m_children[position+1]=new _item_group_t();
+			}
+		_m_child_count++;
+		move_children(position, position+1, 1);
+		return true;
 		}
 
 	// Common
@@ -761,7 +760,7 @@ public:
 		}
 	inline bool has_current()const noexcept { return _m_current!=nullptr; }
 
-	// Assignment
+	// Modification
 	_base_t& operator=(_base_t const& it)
 		{
 		_m_current=it._m_current;
@@ -770,8 +769,6 @@ public:
 		memcpy(_m_its, it._m_its, _m_level_count*sizeof(_it_struct));
 		return *this;
 		}
-
-	// Modification
 	bool move_next()noexcept
 		{
 		if(_m_current==nullptr)
