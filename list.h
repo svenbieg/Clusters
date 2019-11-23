@@ -128,7 +128,7 @@ public:
 		_m_item_count+=copy;
 		return copy;
 		}
-	void append_items(_item_t const* append, unsigned int count)noexcept
+	void append_items(_item_t* append, unsigned int count)noexcept
 		{
 		_item_t* items=get_items();
 		for(unsigned int u=0; u<count; u++)
@@ -148,7 +148,7 @@ public:
 		_m_item_count++;
 		return true;
 		}
-	void insert_items(unsigned int position, _item_t const* insert, unsigned int count)noexcept
+	void insert_items(unsigned int position, _item_t* insert, unsigned int count)noexcept
 		{
 		_item_t* items=get_items();
 		for(unsigned int u=_m_item_count+count-1; u>=position+count; u--)
@@ -453,7 +453,7 @@ public:
 				}
 			else
 				{
-				_item_t const* srcitems=src->get_items();
+				_item_t* srcitems=src->get_items();
 				unsigned int srccount=src->get_child_count();
 				dst->insert_items(0, &srcitems[srccount-count], count);
 				src->remove_items(srccount-count, count);

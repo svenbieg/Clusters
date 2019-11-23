@@ -202,14 +202,14 @@ public:
 		_m_item_count++;
 		return true;
 		}
-	void append_items(_slist_item_t const* append, unsigned int count)noexcept
+	void append_items(_slist_item_t* append, unsigned int count)noexcept
 		{
 		_slist_item_t* items=get_items();
 		for(unsigned int u=0; u<count; u++)
 			new (&items[_m_item_count+u]) _slist_item_t(std::move(append[u]));
 		_m_item_count+=count;
 		}
-	void insert_items(unsigned int position, _slist_item_t const* insert, unsigned int count)noexcept
+	void insert_items(unsigned int position, _slist_item_t* insert, unsigned int count)noexcept
 		{
 		_slist_item_t* items=get_items();
 		for(unsigned int u=_m_item_count+count-1; u>=position+count; u--)
@@ -477,7 +477,7 @@ public:
 				}
 			else
 				{
-				_slist_item_t const* srcitems=src->get_items();
+				_slist_item_t* srcitems=src->get_items();
 				unsigned int srccount=src->get_child_count();
 				dst->insert_items(0, &srcitems[srccount-count], count);
 				src->remove_items(srccount-count, count);
@@ -583,8 +583,6 @@ private:
 			return false;
 		move_children(group, group+1, 1);
 		get_insert_pos(id, &group, exists);
-		if(once&&*exists)
-			return false;
 		return _m_children[group]->add(id, item, true, once, exists);
 		}
 	unsigned int get_group(size_t* position)const noexcept
