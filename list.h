@@ -18,6 +18,7 @@
 //=======
 
 #include <cstring>
+#include <new>
 #include <type_traits>
 #include <utility>
 
@@ -887,8 +888,10 @@ protected:
 			_m_current=it._m_current;
 			}
 		}
+	_list_iterator_base(_list_ptr_t list)noexcept:
+		_m_current(nullptr), _m_its(nullptr), _m_level_count(0), _m_list(list) {}
 	_list_iterator_base(_list_ptr_t list, std::size_t position)noexcept:
-		_m_current(nullptr), _m_its(nullptr), _m_level_count(0), _m_list(list) { set_position(position); }
+		_list_iterator_base(list) { set_position(position); }
 	~_list_iterator_base()noexcept
 		{
 		if(_m_its!=nullptr)
@@ -958,6 +961,7 @@ private:
 public:
 	// Con-/Destructors
 	_list_iterator(_it_t const& it)noexcept: _base_t(it) {}
+	_list_iterator(_list_t* list)noexcept: _base_t(list) {}
 	_list_iterator(_list_t* list, std::size_t position)noexcept: _base_t(list, position) {}
 
 	// Modification
@@ -995,6 +999,7 @@ private:
 public:
 	// Con-/Destructors
 	_list_const_iterator(_it_t const& it)noexcept: _base_t(it) {}
+	_list_const_iterator(_list_t const* list)noexcept: _base_t(list) {}
 	_list_const_iterator(_list_t const* list, std::size_t position)noexcept: _base_t(list, position) {}
 };
 

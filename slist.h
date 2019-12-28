@@ -1130,6 +1130,7 @@ private:
 public:
 	// Con-/Destructors
 	_slist_iterator(_it_t const& it)noexcept: _base_t(it) {}
+	_slist_iterator(_slist_t* slist)noexcept: _base_t(slist) {}
 	_slist_iterator(_slist_t* slist, std::size_t position)noexcept: _base_t(slist) { this->set_position(position); }
 	_slist_iterator(_slist_t* slist, std::size_t, _id_t const& id)noexcept: _base_t(slist) { this->find(id); }
 
@@ -1177,6 +1178,7 @@ private:
 public:
 	// Con-/Destructors
 	_slist_iterator(_it_t const& it)noexcept: _base_t(it) {}
+	_slist_iterator(_slist_t* slist)noexcept: _base_t(slist) {}
 	_slist_iterator(_slist_t* slist, std::size_t position)noexcept: _base_t(slist) { this->set_position(position); }
 	_slist_iterator(_slist_t* slist, std::size_t, _id_t const& id)noexcept: _base_t(slist) { this->find(id); }
 
@@ -1217,6 +1219,7 @@ private:
 public:
 	// Con-/Destructors
 	_slist_const_iterator(_it_t const& it)noexcept: _base_t(it) {}
+	_slist_const_iterator(_slist_t const* slist)noexcept: _base_t(slist) {}
 	_slist_const_iterator(_slist_t const* slist, std::size_t position)noexcept: _base_t(slist) { this->set_position(position); }
 	_slist_const_iterator(_slist_t const* slist, std::size_t, _id_t const& id)noexcept: _base_t(slist) { this->find(id); }
 
@@ -1247,6 +1250,7 @@ private:
 public:
 	// Con-/Destructors
 	_slist_const_iterator(_it_t const& it)noexcept: _base_t(it) {}
+	_slist_const_iterator(_slist_t const* slist)noexcept: _base_t(slist) {}
 	_slist_const_iterator(_slist_t const* slist, std::size_t position)noexcept: _base_t(slist) { this->set_position(position); }
 	_slist_const_iterator(_slist_t const* slist, std::size_t, _id_t const& id)noexcept: _base_t(slist) { this->find(id); }
 
@@ -1389,7 +1393,6 @@ public:
 
 	// Modification
 	inline bool add(_id_t const& id)noexcept { return this->add_internal(id, nullptr); }
-	inline bool set(_id_t const& id)noexcept { return this->set_internal(id, nullptr); }
 };
 
 
