@@ -584,7 +584,7 @@ private:
 			}
 		if(u>0&&first->id>id)
 			u--;
-		return -(INT)u-1;
+		return -(int)u-1;
 		}
 	unsigned int get_insert_pos(_id_t const& id, unsigned int* group, bool* exists)const noexcept
 		{
@@ -1412,7 +1412,7 @@ public:
 // SList
 //=======
 
-template <typename _id_t, typename _item_t=void, unsigned int _group_size=100>
+template <typename _id_t, typename _item_t=void, unsigned int _group_size=10>
 class slist: public _slist_typed<_id_t, _item_t, _group_size>
 {
 private:

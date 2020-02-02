@@ -1008,7 +1008,7 @@ public:
 // List
 //======
 
-template <typename _item_t, unsigned int _group_size=100>
+template <typename _item_t, unsigned int _group_size=10>
 class list: public _list_cluster<_item_t, _group_size>
 {
 private:
