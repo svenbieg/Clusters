@@ -25,7 +25,7 @@ the Windows-Runtime-Component of Clusters!
 		<td>The entries are stored in groups.</td>
 	</tr><tr><td></td></tr><tr>
 		<td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="http://svenbieg.azurewebsites.net/Clusters"><img src="https://user-images.githubusercontent.com/12587394/47256729-e48cbb80-d484-11e8-833e-846bb4a70b0c.png" /></a></td>
-		<td>The size of the groups is limited and 100 by default.</td>
+		<td>The size of the groups is limited and 10 by default.</td>
 	</tr><tr><td></td></tr><tr>
 		<td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="http://svenbieg.azurewebsites.net/Clusters"><img src="https://user-images.githubusercontent.com/12587394/47256737-f4a49b00-d484-11e8-9171-a40ef63c3ff1.png" /></a></td>
 		<td>If the group is full a parentgroup is created.</td>
