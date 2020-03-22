@@ -525,21 +525,26 @@ private:
 	// Modification
 	bool combine_children(unsigned int position)noexcept
 		{
-		unsigned int countat=m_children[position]->get_child_count();
+		unsigned int count=m_children[position]->get_child_count();
+		if(count==0)
+			{
+			remove_internal(position);
+			return true;
+			}
 		if(position>0)
 			{
-			if(countat+m_children[position-1]->get_child_count()<=_group_size)
+			if(count+m_children[position-1]->get_child_count()<=_group_size)
 				{
-				move_children(position, position-1, countat);
+				move_children(position, position-1, count);
 				remove_internal(position);
 				return true;
 				}
 			}
 		if(position+1<m_child_count)
 			{
-			if(countat+m_children[position+1]->get_child_count()<=_group_size)
+			if(count+m_children[position+1]->get_child_count()<=_group_size)
 				{
-				move_children(position, position+1, countat);
+				move_children(position, position+1, count);
 				remove_internal(position);
 				return true;
 				}

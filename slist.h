@@ -65,7 +65,6 @@ public:
 	_slist_item(_slist_item && item)noexcept: m_id(std::move(item.m_id)) {}
 	_slist_item(_id_t const& id, void const*)noexcept: m_id(id) {}
 	_id_t const& get_id()const { return m_id; }
-	void set(void const*) {}
 
 private:
 	_id_t m_id;
@@ -519,6 +518,10 @@ public:
 		{
 		if(position>=m_item_count)
 			return false;
+		if(m_item_count==1)
+			{
+			int i=0;
+			}
 		unsigned int group=get_group(&position);
 		m_children[group]->remove_at(position);
 		m_item_count--;
@@ -705,6 +708,11 @@ private:
 	bool combine_children(unsigned int position)noexcept
 		{
 		unsigned int count=m_children[position]->get_child_count();
+		if(count==0)
+			{
+			remove_internal(position);
+			return true;
+			}
 		if(position>0)
 			{
 			if(count+m_children[position-1]->get_child_count()<=_group_size)
@@ -792,6 +800,8 @@ private:
 			return;
 		m_first=m_children[0]->get_first();
 		m_last=m_children[m_child_count-1]->get_last();
+		if(!m_first)
+			throw 0;
 		}
 	
 	// Common
