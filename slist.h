@@ -518,10 +518,6 @@ public:
 		{
 		if(position>=m_item_count)
 			return false;
-		if(m_item_count==1)
-			{
-			int i=0;
-			}
 		unsigned int group=get_group(&position);
 		m_children[group]->remove_at(position);
 		m_item_count--;
@@ -800,8 +796,6 @@ private:
 			return;
 		m_first=m_children[0]->get_first();
 		m_last=m_children[m_child_count-1]->get_last();
-		if(!m_first)
-			throw 0;
 		}
 	
 	// Common
