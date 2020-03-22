@@ -65,6 +65,7 @@ public:
 	_slist_item(_slist_item && item)noexcept: m_id(std::move(item.m_id)) {}
 	_slist_item(_id_t const& id, void const*)noexcept: m_id(id) {}
 	_id_t const& get_id()const { return m_id; }
+	void set(void const*) {}
 
 private:
 	_id_t m_id;
