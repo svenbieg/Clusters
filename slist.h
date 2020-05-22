@@ -1184,7 +1184,7 @@ public:
 		{
 		if(this->m_current==nullptr)
 			return;
-		this->m_current->set(item);
+		this->m_current->set(&item);
 		}
 };
 
