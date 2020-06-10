@@ -60,6 +60,7 @@ public:
 	virtual std::size_t append(_item_t const* append, std::size_t count)noexcept=0;
 	virtual bool insert_at(std::size_t position, _item_t const& item, bool again)noexcept=0;
 	virtual bool remove_at(std::size_t position)noexcept=0;
+	virtual void set_at(std::size_t position, _item_t const& item)noexcept=0;
 };
 
 
@@ -175,6 +176,13 @@ public:
 		for(unsigned int u=position; u+count<m_item_count; u++)
 			new (&items[u]) _item_t(std::move(items[u+count]));
 		m_item_count-=count;
+		}
+	void set_at(std::size_t position, _item_t const& item)noexcept override
+		{
+		if(position>=m_item_count)
+			return;
+		_item_t* items=get_items();
+		items[position]=item;
 		}
 
 private:
@@ -467,6 +475,13 @@ public:
 			m_children[u]=m_children[u+count];
 		m_child_count-=count;
 		}
+	void set_at(std::size_t position, _item_t const& item)noexcept override
+		{
+		unsigned int group=get_group(&position);
+		if(group>=_group_size)
+			return;
+		m_children[group]->set_at(position, item);
+		}
 	inline void set_child_count(unsigned int count)noexcept { m_child_count=count; }
 
 private:
@@ -692,6 +707,10 @@ public:
 		{
 		if(m_root->remove_at(position))
 			update_root();
+		}
+	void set_at(std::size_t position, _item_t const& item)noexcept
+		{
+		m_root->set_at(position, item);
 		}
 
 protected:
