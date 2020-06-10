@@ -140,7 +140,7 @@ public:
 	bool insert_at(std::size_t position, _item_t const& item, bool)noexcept override
 		{
 		if(position>m_item_count)
-			return false;
+			return true;
 		if(m_item_count==_group_size)
 			return false;
 		_item_t* items=get_items();
@@ -347,7 +347,7 @@ public:
 	bool insert_at(std::size_t position, _item_t const& item, bool again)noexcept
 		{
 		if(position>m_item_count)
-			return false;
+			return true;
 		std::size_t pos=position;
 		unsigned int group=0;
 		unsigned int inscount=get_insert_pos(&pos, &group);
@@ -696,7 +696,7 @@ public:
 		delete m_root;
 		m_root=new _item_group_t();
 		}
-	inline void insert_at(std::size_t position, _item_t const& item)noexcept
+	void insert_at(std::size_t position, _item_t const& item)noexcept
 		{
 		if(m_root->insert_at(position, item, false))
 			return;
