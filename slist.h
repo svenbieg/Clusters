@@ -674,14 +674,10 @@ private:
 			if(shift_children(group, count))
 				{
 				count=get_insert_pos(id, &group, exists);
-				if(*exists)
-					return false;
 				for(unsigned int u=0; u<count; u++)
 					{
 					if(m_children[group+u]->add(id, item, false, exists))
 						return true;
-					if(*exists)
-						return false;
 					}
 				}
 			}
