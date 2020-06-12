@@ -201,8 +201,6 @@ public:
 	bool add(_id_t const& id, _item_t const* item, bool again, bool* exists)noexcept override
 		{
 		int pos=get_insert_pos(id, exists);
-		if(*exists)
-			return false;
 		return add_internal(id, item, pos);
 		}
 	void append_items(_slist_item_t* append, unsigned int count)noexcept
@@ -375,7 +373,7 @@ public:
 	~_slist_parent_group()noexcept override
 		{
 		for(unsigned int u=0; u<m_child_count; u++)
-				delete m_children[u];
+			delete m_children[u];
 		}
 
 	// Access
@@ -454,8 +452,6 @@ public:
 		}
 	void move_children(unsigned int source, unsigned int destination, unsigned int count)noexcept
 		{
-		if(count==0)
-			return;
 		if(m_level>1)
 			{
 			_parent_group_t* src=(_parent_group_t*)m_children[source];
@@ -565,8 +561,6 @@ private:
 		}
 	int get_item_pos(_id_t const& id)const noexcept
 		{
-		if(!m_child_count)
-			return -1;
 		unsigned int start=0;
 		unsigned int end=m_child_count;
 		unsigned int u=0;
@@ -606,20 +600,20 @@ private:
 			unsigned int u=start+(end-start)/2;
 			first=m_children[u]->get_first();
 			last=m_children[u]->get_last();
-			if(first->get_id()>=id)
+			if(first->get_id()>id)
 				{
-				if(first->get_id()==id)
-					*exists=true;
 				end=u;
 				continue;
 				}
-			if(last->get_id()<=id)
+			if(last->get_id()<id)
 				{
-				if(last->get_id()==id)
-					*exists=true;
 				start=u+1;
 				continue;
 				}
+			if(first->get_id()==id)
+				*exists=true;
+			if(last->get_id()==id)
+				*exists=true;
 			start=u;
 			break;
 			}
@@ -670,16 +664,12 @@ private:
 		{
 		unsigned int group=0;
 		unsigned int count=get_insert_pos(id, &group, exists);
-		if(*exists)
-			return false;
 		if(!again)
 			{
 			for(unsigned int u=0; u<count; u++)
 				{
 				if(m_children[group+u]->add(id, item, false, exists))
 					return true;
-				if(*exists)
-					return false;
 				}
 			if(shift_children(group, count))
 				{
@@ -697,10 +687,13 @@ private:
 			}
 		if(!split_child(group))
 			return false;
-		get_insert_pos(id, &group, exists);
-		if(*exists)
-			return false;
-		return m_children[group]->add(id, item, true, exists);
+		count=get_insert_pos(id, &group, exists);
+		for(unsigned int u=0; u<count; u++)
+			{
+			if(m_children[group+u]->add(id, item, true, exists))
+				return true;
+			}
+		return false;
 		}
 	bool combine_children(unsigned int position)noexcept
 		{
@@ -1327,8 +1320,6 @@ protected:
 		bool exists=false;
 		if(this->m_root->add(id, item, false, &exists))
 			return true;
-		if(exists)
-			return false;
 		this->m_root=new _parent_group_t(this->m_root);
 		return this->m_root->add(id, item, true, &exists);
 		}
