@@ -103,7 +103,7 @@ public:
 	virtual unsigned int get_level()const noexcept=0;
 
 	// Modification
-	virtual bool add(_id_t const& id, _item_t const* item, bool again, bool* exists)noexcept=0;
+	virtual bool add(_id_t const& id, _item_t const* item, bool again)noexcept=0;
 	virtual bool remove(_id_t const& id)noexcept=0;
 	virtual bool remove_at(std::size_t position)noexcept=0;
 	virtual bool set(_id_t const& id, _item_t const* item, bool again, bool* exists)noexcept=0;
@@ -198,9 +198,10 @@ public:
 	inline unsigned int get_level()const noexcept override { return 0; }
 
 	// Modification
-	bool add(_id_t const& id, _item_t const* item, bool again, bool* exists)noexcept override
+	bool add(_id_t const& id, _item_t const* item, bool again)noexcept override
 		{
-		int pos=get_insert_pos(id, exists);
+		bool exists=false;
+		int pos=get_insert_pos(id, &exists);
 		return add_internal(id, item, pos);
 		}
 	void append_items(_slist_item_t* append, unsigned int count)noexcept
@@ -422,9 +423,9 @@ public:
 	inline unsigned int get_level()const noexcept override { return m_level; }
 
 	// Modification
-	bool add(_id_t const& id, _item_t const* item, bool again, bool* exists)noexcept override
+	bool add(_id_t const& id, _item_t const* item, bool again)noexcept override
 		{
-		if(add_internal(id, item, again, exists))
+		if(add_internal(id, item, again))
 			{
 			m_item_count++;
 			update_bounds();
@@ -587,7 +588,7 @@ private:
 			u--;
 		return -(int)u-1;
 		}
-	unsigned int get_insert_pos(_id_t const& id, unsigned int* group, bool* exists)const noexcept
+	unsigned int get_insert_pos(_id_t const& id, unsigned int* group)const noexcept
 		{
 		if(!m_child_count)
 			return 0;
@@ -610,10 +611,6 @@ private:
 				start=u+1;
 				continue;
 				}
-			if(first->get_id()==id)
-				*exists=true;
-			if(last->get_id()==id)
-				*exists=true;
 			start=u;
 			break;
 			}
@@ -660,33 +657,33 @@ private:
 		}
 
 	// Modification
-	bool add_internal(_id_t const& id, _item_t const* item, bool again, bool* exists)noexcept
+	bool add_internal(_id_t const& id, _item_t const* item, bool again)noexcept
 		{
 		unsigned int group=0;
-		unsigned int count=get_insert_pos(id, &group, exists);
+		unsigned int count=get_insert_pos(id, &group);
 		if(!again)
 			{
 			for(unsigned int u=0; u<count; u++)
 				{
-				if(m_children[group+u]->add(id, item, false, exists))
+				if(m_children[group+u]->add(id, item, false))
 					return true;
 				}
 			if(shift_children(group, count))
 				{
-				count=get_insert_pos(id, &group, exists);
+				count=get_insert_pos(id, &group);
 				for(unsigned int u=0; u<count; u++)
 					{
-					if(m_children[group+u]->add(id, item, false, exists))
+					if(m_children[group+u]->add(id, item, false))
 						return true;
 					}
 				}
 			}
 		if(!split_child(group))
 			return false;
-		count=get_insert_pos(id, &group, exists);
+		count=get_insert_pos(id, &group);
 		for(unsigned int u=0; u<count; u++)
 			{
-			if(m_children[group+u]->add(id, item, true, exists))
+			if(m_children[group+u]->add(id, item, true))
 				return true;
 			}
 		return false;
@@ -728,29 +725,13 @@ private:
 		}
 	bool set_internal(_id_t const& id, _item_t const* item, bool again, bool* exists)noexcept
 		{
-		unsigned int group=0;
-		unsigned int count=get_insert_pos(id, &group, exists);
-		if(!again)
+		int pos=get_item_pos(id);
+		if(pos>=0)
 			{
-			for(unsigned int u=0; u<count; u++)
-				{
-				if(m_children[group+u]->set(id, item, false, exists))
-					return true;
-				}
-			if(shift_children(group, count))
-				{
-				count=get_insert_pos(id, &group, exists);
-				for(unsigned int u=0; u<count; u++)
-					{
-					if(m_children[group+u]->set(id, item, false, exists))
-						return true;
-					}
-				}
+			if(m_children[pos]->set(id, item, again, exists))
+				return true;
 			}
-		if(!split_child(group))
-			return false;
-		get_insert_pos(id, &group, exists);
-		return m_children[group]->set(id, item, true, exists);
+		return add_internal(id, item, again);
 		}
 	bool shift_children(unsigned int group, unsigned int count)
 		{
@@ -1313,11 +1294,10 @@ protected:
 	// Modification
 	bool add_internal(_id_t const& id, _item_t const* item)noexcept
 		{
-		bool exists=false;
-		if(this->m_root->add(id, item, false, &exists))
+		if(this->m_root->add(id, item, false))
 			return true;
 		this->m_root=new _parent_group_t(this->m_root);
-		return this->m_root->add(id, item, true, &exists);
+		return this->m_root->add(id, item, true);
 		}
 	bool set_internal(_id_t const& id, _item_t const* item)noexcept
 		{
@@ -1404,6 +1384,7 @@ public:
 
 	// Modification
 	inline bool add(_id_t const& id)noexcept { return this->add_internal(id, nullptr); }
+	inline bool set(_id_t const& id)noexcept { return this->set_internal(id, nullptr); }
 };
 
 
