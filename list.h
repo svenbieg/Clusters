@@ -60,7 +60,7 @@ public:
 	virtual std::size_t append(_item_t const* append, std::size_t count)noexcept=0;
 	virtual bool insert_at(std::size_t position, _item_t const& item, bool again)noexcept=0;
 	virtual bool remove_at(std::size_t position)noexcept=0;
-	virtual void set_at(std::size_t position, _item_t const& item)noexcept=0;
+	virtual bool set_at(std::size_t position, _item_t const& item)noexcept=0;
 };
 
 
@@ -177,12 +177,13 @@ public:
 			new (&items[u]) _item_t(std::move(items[u+count]));
 		m_item_count-=count;
 		}
-	void set_at(std::size_t position, _item_t const& item)noexcept override
+	bool set_at(std::size_t position, _item_t const& item)noexcept override
 		{
 		if(position>=m_item_count)
-			return;
+			return false;
 		_item_t* items=get_items();
 		items[position]=item;
+		return true;
 		}
 
 private:
@@ -475,12 +476,12 @@ public:
 			m_children[u]=m_children[u+count];
 		m_child_count-=count;
 		}
-	void set_at(std::size_t position, _item_t const& item)noexcept override
+	bool set_at(std::size_t position, _item_t const& item)noexcept override
 		{
 		unsigned int group=get_group(&position);
 		if(group>=_group_size)
-			return;
-		m_children[group]->set_at(position, item);
+			return false;
+		return m_children[group]->set_at(position, item);
 		}
 	inline void set_child_count(unsigned int count)noexcept { m_child_count=count; }
 
@@ -659,19 +660,27 @@ public:
 	friend class _list_iterator_base<_item_t, _group_size, false>;
 
 	// Access
-	inline _item_t operator[](std::size_t position)const noexcept { return get_at(position); }
 	_item_t get_at(std::size_t position)const noexcept
 		{
+		if(!m_root)
+			return _item_t();
 		_item_t const* item=m_root->get_at(position);
 		if(item==nullptr)
 			return _item_t();
 		return *item;
 		}
-	inline std::size_t get_count()const noexcept { return m_root->get_item_count(); }
+	std::size_t get_count()const noexcept
+		{
+		if(!m_root)
+			return 0;
+		return m_root->get_item_count();
+		}
 
 	// Modification
 	void append(_item_t const& item)noexcept
 		{
+		if(!m_root)
+			m_root=new _item_group_t();
 		if(m_root->append(item, false))
 			return;
 		m_root=new _parent_group_t(m_root);
@@ -679,6 +688,8 @@ public:
 		}
 	void append(_item_t const* items, std::size_t count)noexcept
 		{
+		if(!m_root)
+			m_root=new _item_group_t();
 		std::size_t pos=0;
 		while(count>0)
 			{
@@ -693,31 +704,46 @@ public:
 		}
 	void clear()noexcept
 		{
-		delete m_root;
-		m_root=new _item_group_t();
+		if(m_root)
+			{
+			delete m_root;
+			m_root=nullptr;
+			}
 		}
 	void insert_at(std::size_t position, _item_t const& item)noexcept
 		{
+		if(!m_root)
+			m_root=new _item_group_t();
 		if(m_root->insert_at(position, item, false))
 			return;
 		m_root=new _parent_group_t(m_root);
 		m_root->insert_at(position, item, true);
 		}
-	void remove_at(std::size_t position)noexcept
+	bool remove_at(std::size_t position)noexcept
 		{
+		if(!m_root)
+			return false;
 		if(m_root->remove_at(position))
+			{
 			update_root();
+			return true;
+			}
+		return false;
 		}
-	void set_at(std::size_t position, _item_t const& item)noexcept
+	bool set_at(std::size_t position, _item_t const& item)noexcept
 		{
-		m_root->set_at(position, item);
+		if(!m_root)
+			return false;
+		return m_root->set_at(position, item);
 		}
 
 protected:
 	// Con-/Destructors
-	_list_cluster()noexcept: m_root(new _item_group_t()) {}
-	_list_cluster(_list_cluster const& list)noexcept
+	_list_cluster()noexcept: m_root(nullptr) {}
+	_list_cluster(_list_cluster const& list)noexcept: m_root(nullptr)
 		{
+		if(!list.m_root)
+			return;
 		if(list.m_root->get_level()>0)
 			{
 			m_root=new _parent_group_t((_parent_group_t const&)*list.m_root);
@@ -734,7 +760,14 @@ private:
 	void update_root()noexcept
 		{
 		if(m_root->get_level()==0)
+			{
+			if(m_root->get_child_count()==0)
+				{
+				delete m_root;
+				m_root=nullptr;
+				}
 			return;
+			}
 		if(m_root->get_child_count()>1)
 			return;
 		_parent_group_t* root=(_parent_group_t*)m_root;
@@ -874,6 +907,8 @@ public:
 		{
 		m_current=nullptr;
 		_group_t* group=m_list->m_root;
+		if(!group)
+			return false;
 		unsigned int levelcount=group->get_level()+1;
 		if(!set_level_count(levelcount))
 			return false;

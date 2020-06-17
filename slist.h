@@ -801,17 +801,32 @@ public:
 	friend class _slist_iterator_base<_id_t, _item_t, _group_size, false>;
 
 		// Access
-	inline bool contains(_id_t const& id)const noexcept { return m_root->contains(id); }
-	inline std::size_t get_count()const noexcept { return m_root->get_item_count(); }
+	bool contains(_id_t const& id)const noexcept
+		{
+		if(!m_root)
+			return false;
+		return m_root->contains(id);
+		}
+	std::size_t get_count()const noexcept
+		{
+		if(!m_root)
+			return false;
+		return m_root->get_item_count();
+		}
 
 	// Modification
 	void clear()noexcept
 		{
-		delete m_root;
-		m_root=new _item_group_t();
+		if(m_root)
+			{
+			delete m_root;
+			m_root=nullptr;
+			}
 		}
 	bool remove(_id_t const& id)noexcept
 		{
+		if(!m_root)
+			return false;
 		if(m_root->remove(id))
 			{
 			update_root();
@@ -819,17 +834,25 @@ public:
 			}
 		return false;
 		}
-	void remove_at(std::size_t position)noexcept
+	bool remove_at(std::size_t position)noexcept
 		{
+		if(!m_root)
+			return false;
 		if(m_root->remove_at(position))
+			{
 			update_root();
+			return true;
+			}
+		return false;
 		}
 
 protected:
 	// Con-/Destructors
-	_slist_cluster(): m_root(new _item_group_t()) {}
-	_slist_cluster(_slist_cluster const& slist)
+	_slist_cluster(): m_root(nullptr) {}
+	_slist_cluster(_slist_cluster const& slist): m_root(nullptr)
 		{
+		if(!slist.m_root)
+			return;
 		if(slist.m_root->get_level()>0)
 			{
 			m_root=new _parent_group_t((_parent_group_t const&)*slist.m_root);
@@ -845,7 +868,14 @@ protected:
 	void update_root()noexcept
 		{
 		if(m_root->get_level()==0)
+			{
+			if(m_root->get_child_count()==0)
+				{
+				delete m_root;
+				m_root=nullptr;
+				}
 			return;
+			}
 		if(m_root->get_child_count()>1)
 			return;
 		_parent_group_t* root=(_parent_group_t*)m_root;
@@ -909,6 +939,8 @@ public:
 		m_current=nullptr;
 		bool bfound=true;
 		_group_t* group=m_slist->m_root;
+		if(!group)
+			return false;
 		unsigned int levelcount=group->get_level()+1;
 		if(!set_level_count(levelcount))
 			return false;
@@ -1017,6 +1049,8 @@ public:
 		{
 		m_current=nullptr;
 		_group_t* group=m_slist->m_root;
+		if(!group)
+			return false;
 		unsigned int levelcount=group->get_level()+1;
 		if(!set_level_count(levelcount))
 			return false;
@@ -1175,7 +1209,7 @@ public:
 	_slist_iterator(_slist_t* slist, std::size_t, _id_t const& id)noexcept: _base_t(slist) { this->find(id); }
 
 	// Access
-	inline _id_t get_current()const noexcept
+	_id_t get_current()const noexcept
 		{
 		if(this->m_current==nullptr)
 			return _id_t();
@@ -1216,13 +1250,13 @@ public:
 	_slist_const_iterator(_slist_t const* slist, std::size_t, _id_t const& id)noexcept: _base_t(slist) { this->find(id); }
 
 	// Access
-	inline _id_t get_current_id()const noexcept
+	_id_t get_current_id()const noexcept
 		{
 		if(this->m_current==nullptr)
 			return _id_t();
 		return this->m_current->get_id();
 		}
-	inline _item_t get_current_item()const noexcept
+	_item_t get_current_item()const noexcept
 		{
 		if(this->m_current==nullptr)
 			return _item_t();
@@ -1247,7 +1281,7 @@ public:
 	_slist_const_iterator(_slist_t const* slist, std::size_t, _id_t const& id)noexcept: _base_t(slist) { this->find(id); }
 
 	// Access
-	inline _id_t get_current()const noexcept
+	_id_t get_current()const noexcept
 		{
 		if(this->m_current==nullptr)
 			return _id_t();
@@ -1294,6 +1328,8 @@ protected:
 	// Modification
 	bool add_internal(_id_t const& id, _item_t const* item)noexcept
 		{
+		if(!this->m_root)
+			this->m_root=new _item_group_t();
 		if(this->m_root->add(id, item, false))
 			return true;
 		this->m_root=new _parent_group_t(this->m_root);
@@ -1301,6 +1337,8 @@ protected:
 		}
 	bool set_internal(_id_t const& id, _item_t const* item)noexcept
 		{
+		if(!this->m_root)
+			this->m_root=new _item_group_t();
 		bool exists=false;
 		if(this->m_root->set(id, item, false, &exists))
 			return true;
@@ -1320,6 +1358,7 @@ class _slist_typed: public _slist_base<_id_t, _item_t, _group_size>
 private:
 	// Using
 	using _base_t=_slist_base<_id_t, _item_t, _group_size>;
+	using _item_group_t=_slist_item_group<_id_t, _item_t, _group_size>;
 	using _parent_group_t=_slist_parent_group<_id_t, _item_t, _group_size>;
 	using _slist_item_t=_slist_item<_id_t, _item_t>;
 
@@ -1329,9 +1368,10 @@ public:
 	_slist_typed(_base_t const& base)noexcept: _base_t(base) {}
 
 	// Access
-	inline _item_t operator[](_id_t const& id)const { return get(id); }
 	_item_t get(_id_t const& id)const noexcept
 		{
+		if(!this->m_root)
+			return _item_t();
 		_slist_item_t* item=this->m_root->get(id);
 		if(item==nullptr)
 			return _item_t();
@@ -1339,6 +1379,8 @@ public:
 		}
 	bool try_get(_id_t const& id, _item_t* item)const noexcept
 		{
+		if(!this->m_root)
+			return false;
 		_slist_item_t* pitem=this->m_root->get(id);
 		if(pitem==nullptr)
 			return false;
@@ -1357,6 +1399,7 @@ class _slist_typed<_id_t, void, _group_size>: public _slist_base<_id_t, void, _g
 private:
 	// Using
 	using _base_t=_slist_base<_id_t, void, _group_size>;
+	using _item_group_t=_slist_item_group<_id_t, void, _group_size>;
 	using _parent_group_t=_slist_parent_group<_id_t, void, _group_size>;
 	using _slist_item_t=_slist_item<_id_t, void>;
 
@@ -1366,9 +1409,10 @@ public:
 	_slist_typed(_base_t const& base)noexcept: _base_t(base) {}
 
 	// Access
-	inline _id_t const operator[](std::size_t position)const noexcept { return get_at(position); }
 	_id_t get(_id_t const& id)const noexcept
 		{
+		if(!this->m_root)
+			this->m_root=new _item_group_t();
 		_slist_item_t* item=this->m_root->get(id);
 		if(item==nullptr)
 			return _id_t();
@@ -1376,6 +1420,8 @@ public:
 		}
 	_id_t get_at(std::size_t position)const noexcept
 		{
+		if(!this->m_root)
+			this->m_root=new _item_group_t();
 		_slist_item_t* item=this->m_root->get_at(position);
 		if(item==nullptr)
 			return _id_t();
