@@ -1086,7 +1086,7 @@ protected:
 			}
 		}
 	_slist_iterator_base(_slist_ptr_t slist)noexcept:
-		m_slist(slist), m_its(nullptr), m_level_count(0) {}
+		m_current(nullptr), m_slist(slist), m_its(nullptr), m_level_count(0) {}
 	~_slist_iterator_base()noexcept
 		{
 		if(m_its!=nullptr)
