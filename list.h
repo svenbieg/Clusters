@@ -54,6 +54,7 @@ public:
 	virtual unsigned int get_child_count()const noexcept=0;
 	virtual std::size_t get_item_count()const noexcept=0;
 	virtual unsigned int get_level()const noexcept=0;
+	virtual std::size_t get_many(std::size_t position, std::size_t count, _item_t* items)const noexcept=0;
 
 	// Modification
 	virtual bool append(_item_t const& item, bool again)noexcept=0;
@@ -61,6 +62,7 @@ public:
 	virtual bool insert_at(std::size_t position, _item_t const& item, bool again)noexcept=0;
 	virtual bool remove_at(std::size_t position)noexcept=0;
 	virtual bool set_at(std::size_t position, _item_t const& item)noexcept=0;
+	virtual std::size_t set_many(std::size_t position, std::size_t count, _item_t const* items)=0;
 };
 
 
@@ -106,6 +108,18 @@ public:
 	inline _item_t* get_items()noexcept { return (_item_t*)m_items; }
 	inline _item_t const* get_items()const noexcept { return (_item_t const*)m_items; }
 	inline unsigned int get_level()const noexcept override { return 0; }
+	std::size_t get_many(std::size_t position, std::size_t count, _item_t* items)const noexcept override
+		{
+		if(position>=m_item_count)
+			return 0;
+		unsigned int pos=(unsigned int)position;
+		unsigned int max=m_item_count-pos;
+		unsigned int copy=count>max? max: count;
+		_item_t const* src=get_items();
+		for(unsigned int u=0; u<copy; u++)
+			items[u]=src[pos+u];
+		return copy;
+		}
 
 	// Modification
 	bool append(_item_t const& item, bool)noexcept override
@@ -185,6 +199,17 @@ public:
 		items[position]=item;
 		return true;
 		}
+	std::size_t set_many(std::size_t position, std::size_t count, _item_t const* items)override
+		{
+		if(position>=m_item_count)
+			return 0;
+		unsigned int max=m_item_count-(unsigned int)position;
+		unsigned int copy=count>max? max: count;
+		_item_t* dst=get_items();
+		for(unsigned int u=0; u<copy; u++)
+			dst[position+u]=items[u];
+		return copy;
+		}
 
 private:
 	// Uninitialized array of items
@@ -258,6 +283,24 @@ public:
 	inline unsigned int get_child_count()const noexcept override { return m_child_count; }
 	inline std::size_t get_item_count()const noexcept override { return m_item_count; }
 	inline unsigned int get_level()const noexcept override { return m_level; }
+	std::size_t get_many(std::size_t position, std::size_t count, _item_t* items)const noexcept override
+		{
+		unsigned int group=get_group(&position);
+		if(group>=_group_size)
+			return 0;
+		std::size_t pos=0;
+		while(pos<count)
+			{
+			pos+=m_children[group]->get_many(position, count-pos, &items[pos]);
+			if(pos==count)
+				return pos;
+			group++;
+			if(group==m_child_count)
+				return pos;
+			position=0;
+			}
+		return pos;
+		}
 
 	// Modification
 	bool append(_item_t const& item, bool again)noexcept override
@@ -295,30 +338,30 @@ public:
 			if(pos>0)
 				{
 				m_item_count+=pos;
-				count-=pos;
-				if(count==0)
-					return pos;
+				if(pos==count)
+					return count;
 				}
 			}
-		unsigned int last=minimize_internal();
-		for(; last<m_child_count; last++)
+		if(m_child_count>1)
 			{
-			std::size_t written=m_children[last]->append(&append[pos], count);
-			if(written>0)
+			unsigned int last=minimize_internal();
+			for(; last<m_child_count; last++)
 				{
+				auto written=m_children[last]->append(&append[pos], count-pos);
+				if(!written)
+					continue;
 				m_item_count+=written;
 				pos+=written;
-				count-=written;
-				if(count==0)
+				if(pos==count)
 					break;
 				}
+			if(pos==count)
+				{
+				free_children();
+				return count;
+				}
 			}
-		if(count==0)
-			{
-			free_children();
-			return pos;
-			}
-		while(count>0)
+		while(pos<count)
 			{
 			if(m_child_count==_group_size)
 				break;
@@ -331,10 +374,9 @@ public:
 				m_children[m_child_count]=new _parent_group_t(m_level-1);
 				}
 			m_child_count++;
-			std::size_t written=m_children[m_child_count-1]->append(&append[pos], count);
+			std::size_t written=m_children[m_child_count-1]->append(&append[pos], count-pos);
 			m_item_count+=written;
 			pos+=written;
-			count-=written;
 			}
 		return pos;
 		}
@@ -484,6 +526,24 @@ public:
 		return m_children[group]->set_at(position, item);
 		}
 	inline void set_child_count(unsigned int count)noexcept { m_child_count=count; }
+	std::size_t set_many(std::size_t position, std::size_t count, _item_t const* items)override
+		{
+		unsigned int group=get_group(&position);
+		if(group>=_group_size)
+			return 0;
+		std::size_t pos=0;
+		while(pos<count)
+			{
+			pos+=m_children[group]->set_many(position, count-pos, &items[pos]);
+			if(pos==count)
+				return pos;
+			group++;
+			if(group==m_child_count)
+				return pos;
+			position=0;
+			}
+		return pos;
+		}
 
 private:
 	// Access
@@ -675,6 +735,12 @@ public:
 			return 0;
 		return m_root->get_item_count();
 		}
+	std::size_t get_many(std::size_t position, std::size_t count, _item_t* items)const noexcept
+		{
+		if(!m_root)
+			return 0;
+		return m_root->get_many(position, count, items);
+		}
 
 	// Modification
 	void append(_item_t const& item)noexcept
@@ -691,15 +757,12 @@ public:
 		if(!m_root)
 			m_root=new _item_group_t();
 		std::size_t pos=0;
-		while(count>0)
+		while(pos<count)
 			{
-			std::size_t written=m_root->append(&items[pos], count);
-			count-=written;
-			if(count>0)
-				{
-				m_root=new _parent_group_t(m_root);
-				pos+=written;
-				}
+			pos+=m_root->append(&items[pos], count-pos);
+			if(pos==count)
+				break;
+			m_root=new _parent_group_t(m_root);
 			}
 		}
 	void clear()noexcept
@@ -710,14 +773,21 @@ public:
 			m_root=nullptr;
 			}
 		}
-	void insert_at(std::size_t position, _item_t const& item)noexcept
+	bool insert_at(std::size_t position, _item_t const& item)noexcept
 		{
 		if(!m_root)
+			{
+			if(position>0)
+				return false;
 			m_root=new _item_group_t();
+			return m_root->append(item, false);
+			}
+		if(position>m_root->get_item_count())
+			return false;
 		if(m_root->insert_at(position, item, false))
-			return;
+			return true;
 		m_root=new _parent_group_t(m_root);
-		m_root->insert_at(position, item, true);
+		return m_root->insert_at(position, item, true);
 		}
 	bool remove_at(std::size_t position)noexcept
 		{
@@ -735,6 +805,18 @@ public:
 		if(!m_root)
 			return false;
 		return m_root->set_at(position, item);
+		}
+	std::size_t set_many(std::size_t position, std::size_t count, _item_t const* items)
+		{
+		std::size_t pos=0;
+		if(m_root)
+			{
+			pos=m_root->set_many(position, count, items);
+			if(pos==count)
+				return count;
+			}
+		append(&items[pos], count-pos);
+		return count;
 		}
 
 protected:
