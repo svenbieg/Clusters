@@ -307,8 +307,6 @@ private:
 				}
 			return u;
 			}
-		if(u>0&&item->get_id()>id)
-			u--;
 		return -(int)u-1;
 		}
 
@@ -584,8 +582,6 @@ private:
 				}
 			return u;
 			}
-		if(u>0&&first->get_id()>id)
-			u--;
 		return -(int)u-1;
 		}
 	unsigned int get_insert_pos(_id_t const& id, unsigned int* group)const noexcept
