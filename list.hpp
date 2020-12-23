@@ -620,8 +620,8 @@ private:
 			{
 			if(count+m_children[position+1]->get_child_count()<=_group_size)
 				{
-				move_children(position, position+1, count);
-				remove_internal(position);
+				move_children(position+1, position, count);
+				remove_internal(position+1);
 				return true;
 				}
 			}
