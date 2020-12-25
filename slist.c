@@ -21,6 +21,18 @@
 // Group
 //=======
 
+// Con-/Destructors
+void slist_group_destroy(slist_group_t* group)
+{
+if(group->level==0)
+	{
+	free(group);
+	return;
+	}
+return slist_parent_group_destroy((slist_parent_group_t*)group);
+}
+
+
 // Access
 
 slist_item_t* slist_group_get_first_item(slist_group_t* group)
@@ -301,6 +313,14 @@ group->last=slist_group_get_last_item(child);
 group->item_count=slist_group_get_item_count(child);
 group->children[0]=child;
 return group;
+}
+
+void slist_parent_group_destroy(slist_parent_group_t* group)
+{
+uint16_t child_count=group->child_count;
+for(uint16_t u=0; u<child_count; u++)
+	slist_group_destroy(group->children[u]);
+free(group);
 }
 
 
@@ -713,129 +733,124 @@ group->last=slist_group_get_last_item(group->children[child_count-1]);
 }
 
 
-//=======
-// SList
-//=======
+//======
+// List
+//======
 
 // Con-/Destructors
 
-void slist_init(slist_t* slist)
+void slist_destroy(slist_t* list)
 {
-slist->root=NULL;
+slist_group_t* root=list->root;
+if(!root)
+	return;
+list->root=NULL;
+slist_group_destroy(root);
+}
+
+void slist_init(slist_t* list)
+{
+list->root=NULL;
 }
 
 
 // Access
 
-slist_value_t slist_get_item(slist_t* slist, slist_id_t id)
+slist_item_t* slist_get_item(slist_t* list, slist_id_t id)
 {
-if(!slist->root)
-	return 0;
-slist_item_t* item=slist_group_get_item(slist->root, id);
-if(!item)
-	return 0;
-return item->value;
-}
-
-slist_item_t* slist_get_item_at(slist_t* slist, size_t pos)
-{
-if(!slist->root)
+if(!list->root)
 	return NULL;
-return slist_group_get_item_at(slist->root, pos);
+return slist_group_get_item(list->root, id);
 }
 
-size_t slist_get_item_count(slist_t* slist)
+slist_item_t* slist_get_item_at(slist_t* list, size_t pos)
 {
-if(!slist->root)
+if(!list->root)
+	return NULL;
+return slist_group_get_item_at(list->root, pos);
+}
+
+size_t slist_get_item_count(slist_t* list)
+{
+if(!list->root)
 	return 0;
-return slist_group_get_item_count(slist->root);
-}
-
-bool slist_try_get_item(slist_t* slist, slist_id_t id, slist_value_t* value)
-{
-if(!slist->root)
-	return false;
-slist_item_t* item=slist_group_get_item(slist->root, id);
-if(!item)
-	return false;
-*value=item->value;
-return true;
+return slist_group_get_item_count(list->root);
 }
 
 
 // Modification
 
-bool slist_add_item(slist_t* slist, slist_id_t id, slist_value_t value)
+bool slist_add_item(slist_t* list, slist_id_t id, slist_value_t value)
 {
-if(!slist->root)
+if(!list->root)
 	{
-	slist->root=(slist_group_t*)slist_item_group_create();
-	if(!slist->root)
+	list->root=(slist_group_t*)slist_item_group_create();
+	if(!list->root)
 		return false;
 	}
-if(slist_group_add_item(slist->root, id, value, false))
+if(slist_group_add_item(list->root, id, value, false))
 	return true;
-slist_parent_group_t* root=slist_parent_group_create_with_child(slist->root);
+slist_parent_group_t* root=slist_parent_group_create_with_child(list->root);
 if(!root)
 	return false;
-slist->root=(slist_group_t*)root;
+list->root=(slist_group_t*)root;
 if(slist_parent_group_add_item(root, id, value, true))
 	return true;
 return false;
 }
 
-bool slist_remove_item(slist_t* slist, slist_id_t id)
+bool slist_remove_item(slist_t* list, slist_id_t id)
 {
-if(!slist->root)
+if(!list->root)
 	return false;
-if(slist_group_remove_item(slist->root, id))
+if(slist_group_remove_item(list->root, id))
 	{
-	slist_update_root(slist);
+	slist_update_root(list);
 	return true;
 	}
 return false;
 }
 
-bool slist_remove_item_at(slist_t* slist, size_t pos)
+bool slist_remove_item_at(slist_t* list, size_t pos)
 {
-if(!slist->root)
+if(!list->root)
 	return false;
-if(slist_group_remove_item_at(slist->root, pos))
+if(slist_group_remove_item_at(list->root, pos))
 	{
-	slist_update_root(slist);
+	slist_update_root(list);
 	return true;
 	}
 return false;
 }
 
-bool slist_set_item(slist_t* slist, slist_id_t id, slist_value_t value)
+bool slist_set_item(slist_t* list, slist_id_t id, slist_value_t value)
 {
-if(!slist->root)
+if(!list->root)
 	{
-	slist->root=(slist_group_t*)slist_item_group_create();
-	if(!slist->root)
+	list->root=(slist_group_t*)slist_item_group_create();
+	if(!list->root)
 		return false;
 	}
 bool exists=false;
-if(slist_group_set_item(slist->root, id, value, false, &exists))
+if(slist_group_set_item(list->root, id, value, false, &exists))
 	return true;
-slist_parent_group_t* root=slist_parent_group_create_with_child(slist->root);
+slist_parent_group_t* root=slist_parent_group_create_with_child(list->root);
 if(!root)
 	return false;
-slist->root=(slist_group_t*)root;
+list->root=(slist_group_t*)root;
 return slist_parent_group_set_item(root, id, value, true, &exists);
 }
 
-void slist_update_root(slist_t* slist)
+void slist_update_root(slist_t* list)
 {
-slist_group_t* root=slist->root;
+slist_group_t* root=list->root;
 uint16_t level=root->level;
 uint16_t child_count=root->child_count;
 if(level==0)
 	{
 	if(child_count==0)
 		{
-		slist->root=NULL;
+		list->root=NULL;
 		free(root);
 		}
 	return;
@@ -843,7 +858,7 @@ if(level==0)
 if(child_count>1)
 	return;
 slist_parent_group_t* proot=(slist_parent_group_t*)root;
-slist->root=proot->children[0];
+list->root=proot->children[0];
 root->child_count=0;
 free(root);
 }
@@ -855,10 +870,10 @@ free(root);
 
 // Con-/Destructors
 
-void slist_it_init(slist_it_t* it, slist_t* slist)
+void slist_it_init(slist_it_t* it, slist_t* list)
 {
 it->current=NULL;
-it->slist=slist;
+it->list=list;
 it->level_count=0;
 it->pointers=NULL;
 }
@@ -871,7 +886,7 @@ if(it->pointers)
 	it->pointers=NULL;
 	}
 it->current=NULL;
-it->slist=NULL;
+it->list=NULL;
 it->level_count=0;
 }
 
@@ -924,7 +939,7 @@ bool slist_it_find(slist_it_t* it, slist_id_t id)
 {
 it->current=NULL;
 bool found=true;
-slist_group_t* group=it->slist->root;
+slist_group_t* group=it->list->root;
 if(!group)
 	return false;
 uint16_t level_count=group->level+1;
@@ -1043,7 +1058,7 @@ bool slist_it_remove_current(slist_it_t* it)
 if(!it->current)
 	return false;
 size_t pos=slist_it_get_position(it);
-if(!slist_remove_item_at(it->slist, pos))
+if(!slist_remove_item_at(it->list, pos))
 	return false;
 slist_it_set_position(it, pos);
 return true;
@@ -1071,7 +1086,7 @@ return false;
 bool slist_it_set_position(slist_it_t* it, size_t pos)
 {
 it->current=NULL;
-slist_group_t* group=it->slist->root;
+slist_group_t* group=it->list->root;
 if(!group)
 	return false;
 uint16_t level_count=group->level+1;

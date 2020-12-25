@@ -17,6 +17,7 @@
 // Using
 //=======
 
+#include <stdbool.h>
 #include <stdint.h>
 
 
@@ -59,6 +60,9 @@ typedef struct
 int16_t level;
 int16_t child_count;
 }slist_group_t;
+
+// Con-/Destructors
+void slist_group_destroy(slist_group_t* group);
 
 // Access
 slist_item_t* slist_group_get_first_item(slist_group_t* group);
@@ -121,16 +125,16 @@ size_t item_count;
 slist_group_t* children[SLIST_GROUP_SIZE];
 }slist_parent_group_t;
 
-
 // Con-/Destructors
 slist_parent_group_t* slist_parent_group_create(uint16_t level);
 slist_parent_group_t* slist_parent_group_create_with_child(slist_group_t* child);
+void slist_parent_group_destroy(slist_parent_group_t* group);
 
 // Access
 int16_t slist_parent_group_get_group(slist_parent_group_t* group, size_t* pos);
 uint16_t slist_parent_group_get_insert_pos(slist_parent_group_t* group, slist_id_t id, uint16_t* insert_pos);
-slist_item_t* slist_parent_group_get_item_at(slist_parent_group_t* group, size_t pos);
 slist_item_t* slist_parent_group_get_item(slist_parent_group_t* group, slist_id_t id);
+slist_item_t* slist_parent_group_get_item_at(slist_parent_group_t* group, size_t pos);
 int16_t slist_parent_group_get_item_pos(slist_parent_group_t* group, slist_id_t id);
 int16_t slist_parent_group_get_nearest_space(slist_parent_group_t* group, int16_t pos);
 
@@ -153,9 +157,9 @@ bool slist_parent_group_split_child(slist_parent_group_t* group, uint16_t pos);
 void slist_parent_group_update_bounds(slist_parent_group_t* group);
 
 
-//=======
-// SList
-//=======
+//======
+// List
+//======
 
 typedef struct
 {
@@ -163,20 +167,20 @@ slist_group_t* root;
 }slist_t;
 
 // Con-/Destructors
-void slist_init(slist_t* slist);
+void slist_destroy(slist_t* list);
+void slist_init(slist_t* list);
 
 // Access
-slist_value_t slist_get_item(slist_t* slist, slist_id_t id);
-slist_item_t* slist_get_item_at(slist_t* slist, size_t pos);
-size_t slist_get_item_count(slist_t* slist);
-bool slist_try_get_item(slist_t* slist, slist_id_t id, slist_value_t* value);
+slist_item_t* slist_get_item(slist_t* list, slist_id_t id);
+slist_item_t* slist_get_item_at(slist_t* list, size_t pos);
+size_t slist_get_item_count(slist_t* list);
 
 // Modification
-bool slist_add_item(slist_t* slist, slist_id_t id, slist_value_t value);
-bool slist_remove_item(slist_t* slist, slist_id_t id);
-bool slist_remove_item_at(slist_t* slist, size_t pos);
-bool slist_set_item(slist_t* slist, slist_id_t id, slist_value_t value);
-void slist_update_root(slist_t* slist);
+bool slist_add_item(slist_t* list, slist_id_t id, slist_value_t value);
+bool slist_remove_item(slist_t* list, slist_id_t id);
+bool slist_remove_item_at(slist_t* list, size_t pos);
+bool slist_set_item(slist_t* list, slist_id_t id, slist_value_t value);
+void slist_update_root(slist_t* list);
 
 
 //==========
@@ -192,14 +196,14 @@ uint16_t pos;
 typedef struct
 {
 slist_item_t* current;
-slist_t* slist;
+slist_t* list;
 uint16_t level_count;
 slist_it_ptr_t* pointers;
 }slist_it_t;
 
 
 // Con-/Destructors
-void slist_it_init(slist_it_t* it, slist_t* slist);
+void slist_it_init(slist_it_t* it, slist_t* list);
 void slist_it_destroy(slist_it_t* it);
 
 // Access
