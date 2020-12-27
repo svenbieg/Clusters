@@ -29,7 +29,7 @@ if(group->level==0)
 	free(group);
 	return;
 	}
-return slist_parent_group_destroy((slist_parent_group_t*)group);
+slist_parent_group_destroy((slist_parent_group_t*)group);
 }
 
 
@@ -251,12 +251,13 @@ if(pos<0)
 return slist_item_group_remove_item_at(group, pos);
 }
 
-bool slist_item_group_remove_item_at(slist_item_group_t* group, size_t pos)
+bool slist_item_group_remove_item_at(slist_item_group_t* group, size_t at)
 {
+uint16_t pos=(uint16_t)at;
 uint16_t child_count=group->child_count;
 if(pos>=child_count)
 	return false;
-for(size_t u=pos; u+1<child_count; u++)
+for(uint16_t u=pos; u+1<child_count; u++)
 	group->items[u]=group->items[u+1];
 group->child_count--;
 return true;
@@ -537,7 +538,7 @@ if(pos+1<child_count)
 	uint16_t after=group->children[pos+1]->child_count;
 	if(count+after<=SLIST_GROUP_SIZE)
 		{
-		slist_parent_group_move_children(group, pos+1, pos, count);
+		slist_parent_group_move_children(group, pos+1, pos, after);
 		slist_parent_group_remove_group(group, pos+1);
 		return true;
 		}

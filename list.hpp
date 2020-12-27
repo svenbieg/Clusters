@@ -609,7 +609,8 @@ private:
 			}
 		if(position>0)
 			{
-			if(count+m_children[position-1]->get_child_count()<=_group_size)
+			unsigned int before=m_children[position-1]->get_child_count();
+			if(count+before<=_group_size)
 				{
 				move_children(position, position-1, count);
 				remove_internal(position);
@@ -618,9 +619,10 @@ private:
 			}
 		if(position+1<m_child_count)
 			{
-			if(count+m_children[position+1]->get_child_count()<=_group_size)
+			unsigned int after=m_children[position+1]->get_child_count();
+			if(count+after<=_group_size)
 				{
-				move_children(position+1, position, count);
+				move_children(position+1, position, after);
 				remove_internal(position+1);
 				return true;
 				}
