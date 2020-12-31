@@ -72,7 +72,7 @@ size_t slist_group_get_item_count(slist_group_t* group);
 slist_item_t* slist_group_get_last_item(slist_group_t* group);
 
 // Modification
-bool slist_group_add_item(slist_group_t* group, slist_id_t id, slist_value_t value, bool again);
+bool slist_group_add_item(slist_group_t* group, slist_id_t id, slist_value_t value, bool again, bool* exists);
 bool slist_group_remove_item(slist_group_t* group, slist_id_t id);
 bool slist_group_remove_item_at(slist_group_t* group, size_t pos);
 bool slist_group_set_item(slist_group_t* group, slist_id_t id, slist_value_t value, bool again, bool* exists);
@@ -101,7 +101,7 @@ int16_t slist_item_group_get_item_pos(slist_item_group_t* group, slist_id_t id);
 slist_item_t* slist_item_group_get_last_item(slist_item_group_t* group);
 
 // Modification
-bool slist_item_group_add_item(slist_item_group_t* group, slist_id_t id, slist_value_t value);
+bool slist_item_group_add_item(slist_item_group_t* group, slist_id_t id, slist_value_t value, bool* exists);
 bool slist_item_group_add_item_internal(slist_item_group_t* group, slist_id_t id, slist_value_t value, uint16_t pos);
 void slist_item_group_append_items(slist_item_group_t* group, slist_item_t const* items, uint16_t count);
 void slist_item_group_insert_items(slist_item_group_t* group, uint16_t pos, slist_item_t const* items, uint16_t count);
@@ -132,15 +132,15 @@ void slist_parent_group_destroy(slist_parent_group_t* group);
 
 // Access
 int16_t slist_parent_group_get_group(slist_parent_group_t* group, size_t* pos);
-uint16_t slist_parent_group_get_insert_pos(slist_parent_group_t* group, slist_id_t id, uint16_t* insert_pos);
+uint16_t slist_parent_group_get_insert_pos(slist_parent_group_t* group, slist_id_t id, uint16_t* insert_pos, bool* exists);
 slist_item_t* slist_parent_group_get_item(slist_parent_group_t* group, slist_id_t id);
 slist_item_t* slist_parent_group_get_item_at(slist_parent_group_t* group, size_t pos);
 int16_t slist_parent_group_get_item_pos(slist_parent_group_t* group, slist_id_t id);
 int16_t slist_parent_group_get_nearest_space(slist_parent_group_t* group, int16_t pos);
 
 // Modification
-bool slist_parent_group_add_item(slist_parent_group_t* group, slist_id_t id, slist_value_t value, bool again);
-bool slist_parent_group_add_item_internal(slist_parent_group_t* group, slist_id_t id, slist_value_t value, bool again);
+bool slist_parent_group_add_item(slist_parent_group_t* group, slist_id_t id, slist_value_t value, bool again, bool* exists);
+bool slist_parent_group_add_item_internal(slist_parent_group_t* group, slist_id_t id, slist_value_t value, bool again, bool* exists);
 void slist_parent_group_append_groups(slist_parent_group_t* group, slist_group_t* const* groups, uint16_t count);
 bool slist_parent_group_combine_children(slist_parent_group_t* group, uint16_t pos);
 void slist_parent_group_insert_groups(slist_parent_group_t* group, uint16_t pos, slist_group_t* const* groups, uint16_t count);

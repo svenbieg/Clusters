@@ -76,11 +76,11 @@ return pgroup->last;
 
 // Modification
 
-bool slist_group_add_item(slist_group_t* group, slist_id_t id, slist_value_t value, bool again)
+bool slist_group_add_item(slist_group_t* group, slist_id_t id, slist_value_t value, bool again, bool* exists)
 {
 if(group->level==0)
-	return slist_item_group_add_item((slist_item_group_t*)group, id, value);
-return slist_parent_group_add_item((slist_parent_group_t*)group, id, value, again);
+	return slist_item_group_add_item((slist_item_group_t*)group, id, value, exists);
+return slist_parent_group_add_item((slist_parent_group_t*)group, id, value, again, exists);
 }
 
 bool slist_group_remove_item(slist_group_t* group, slist_id_t id)
@@ -133,8 +133,9 @@ return group->items;
 
 uint16_t slist_item_group_get_insert_pos(slist_item_group_t* group, slist_id_t id, bool* exists)
 {
+uint16_t child_count=group->child_count;
 uint16_t start=0;
-uint16_t end=group->child_count;
+uint16_t end=child_count;
 while(start<end)
 	{
 	uint16_t pos=start+(end-start)/2;
@@ -151,7 +152,7 @@ while(start<end)
 	*exists=true;
 	return pos;
 	}
-return end;
+return start;
 }
 
 slist_item_t* slist_item_group_get_item(slist_item_group_t* group, slist_id_t id)
@@ -205,10 +206,11 @@ return &group->items[count-1];
 
 // Modification
 
-bool slist_item_group_add_item(slist_item_group_t* group, slist_id_t id, slist_value_t value)
+bool slist_item_group_add_item(slist_item_group_t* group, slist_id_t id, slist_value_t value, bool* exists)
 {
-bool exists=false;
-uint16_t pos=slist_item_group_get_insert_pos(group, id, &exists);
+uint16_t pos=slist_item_group_get_insert_pos(group, id, exists);
+if(*exists)
+	return false;
 return slist_item_group_add_item_internal(group, id, value, pos);
 }
 
@@ -340,7 +342,7 @@ for(uint16_t u=0; u<child_count; u++)
 return -1;
 }
 
-uint16_t slist_parent_group_get_insert_pos(slist_parent_group_t* group, slist_id_t id, uint16_t* insert_pos)
+uint16_t slist_parent_group_get_insert_pos(slist_parent_group_t* group, slist_id_t id, uint16_t* insert_pos, bool* exists)
 {
 uint16_t child_count=group->child_count;
 if(!child_count)
@@ -354,6 +356,12 @@ while(start<end)
 	uint16_t pos=start+(end-start)/2;
 	first=slist_group_get_first_item(group->children[pos]);
 	last=slist_group_get_last_item(group->children[pos]);
+	if(first->id==id||last->id==id)
+		{
+		*exists=true;
+		*insert_pos=pos;
+		return 1;
+		}
 	if(first->id>id)
 		{
 		end=pos;
@@ -459,9 +467,9 @@ return -1;
 
 // Modification
 
-bool slist_parent_group_add_item(slist_parent_group_t* group, slist_id_t id, slist_value_t value, bool again)
+bool slist_parent_group_add_item(slist_parent_group_t* group, slist_id_t id, slist_value_t value, bool again, bool* exists)
 {
-if(slist_parent_group_add_item_internal(group, id, value, again))
+if(slist_parent_group_add_item_internal(group, id, value, again, exists))
 	{
 	group->item_count++;
 	slist_parent_group_update_bounds(group);
@@ -470,33 +478,37 @@ if(slist_parent_group_add_item_internal(group, id, value, again))
 return false;
 }
 
-bool slist_parent_group_add_item_internal(slist_parent_group_t* group, slist_id_t id, slist_value_t value, bool again)
+bool slist_parent_group_add_item_internal(slist_parent_group_t* group, slist_id_t id, slist_value_t value, bool again, bool* exists)
 {
 uint16_t pos=0;
-uint16_t count=slist_parent_group_get_insert_pos(group, id, &pos);
+uint16_t count=slist_parent_group_get_insert_pos(group, id, &pos, exists);
+if(*exists)
+	return false;
 if(!again)
 	{
 	for(uint16_t u=0; u<count; u++)
 		{
-		if(slist_group_add_item(group->children[pos+u], id, value, false))
+		if(slist_group_add_item(group->children[pos+u], id, value, false, exists))
 			return true;
+		if(*exists)
+			return false;
 		}
 	if(slist_parent_group_shift_children(group, pos, count))
 		{
-		count=slist_parent_group_get_insert_pos(group, id, &pos);
+		count=slist_parent_group_get_insert_pos(group, id, &pos, exists);
 		for(uint16_t u=0; u<count; u++)
 			{
-			if(slist_group_add_item(group->children[pos+u], id, value, false))
+			if(slist_group_add_item(group->children[pos+u], id, value, false, exists))
 				return true;
 			}
 		}
 	}
 if(!slist_parent_group_split_child(group, pos))
 	return false;
-count=slist_parent_group_get_insert_pos(group, id, &pos);
+count=slist_parent_group_get_insert_pos(group, id, &pos, exists);
 for(uint16_t u=0; u<count; u++)
 	{
-	if(slist_group_add_item(group->children[pos+u], id, value, true))
+	if(slist_group_add_item(group->children[pos+u], id, value, true, exists))
 		return true;
 	}
 return false;
@@ -681,7 +693,7 @@ if(pos>=0)
 	if(slist_group_set_item(group->children[pos], id, value, again, exists))
 		return true;
 	}
-return slist_parent_group_add_item_internal(group, id, value, again);
+return slist_parent_group_add_item_internal(group, id, value, again, exists);
 }
 
 bool slist_parent_group_shift_children(slist_parent_group_t* group, uint16_t pos, uint16_t count)
@@ -789,15 +801,16 @@ if(!list->root)
 	if(!list->root)
 		return false;
 	}
-if(slist_group_add_item(list->root, id, value, false))
+bool exists=false;
+if(slist_group_add_item(list->root, id, value, false, &exists))
 	return true;
+if(exists)
+	return false;
 slist_parent_group_t* root=slist_parent_group_create_with_child(list->root);
 if(!root)
 	return false;
 list->root=(slist_group_t*)root;
-if(slist_parent_group_add_item(root, id, value, true))
-	return true;
-return false;
+return slist_parent_group_add_item(root, id, value, true, &exists);
 }
 
 bool slist_remove_item(slist_t* list, slist_id_t id)
