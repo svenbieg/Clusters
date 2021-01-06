@@ -17,8 +17,8 @@
 // Using
 //=======
 
-#include <cstring>
 #include <new>
+#include <stdint.h>
 #include <type_traits>
 #include <utility>
 
@@ -34,7 +34,7 @@ namespace Clusters {
 // Forward-Declarations
 //======================
 
-template <typename _item_t, unsigned int _group_size> class list;
+template <typename _item_t, uint16_t _group_size> class list;
 
 
 //=======
@@ -51,9 +51,9 @@ public:
 	// Access
 	virtual _item_t* get_at(std::size_t position)noexcept=0;
 	virtual _item_t const* get_at(std::size_t position)const noexcept=0;
-	virtual unsigned int get_child_count()const noexcept=0;
+	virtual uint16_t get_child_count()const noexcept=0;
 	virtual std::size_t get_item_count()const noexcept=0;
-	virtual unsigned int get_level()const noexcept=0;
+	virtual uint16_t get_level()const noexcept=0;
 	virtual std::size_t get_many(std::size_t position, std::size_t count, _item_t* items)const noexcept=0;
 
 	// Modification
@@ -70,7 +70,7 @@ public:
 // Item-group
 //============
 
-template <typename _item_t, unsigned int _group_size>
+template <typename _item_t, uint16_t _group_size>
 class _list_item_group: public _list_group<_item_t>
 {
 public:
@@ -80,13 +80,13 @@ public:
 		{
 		_item_t* dst=get_items();
 		_item_t const* src=group.get_items();
-		for(unsigned int u=0; u<m_item_count; u++)
+		for(uint16_t u=0; u<m_item_count; u++)
 			new (&dst[u]) _item_t(src[u]);
 		}
 	~_list_item_group()noexcept override
 		{
 		_item_t* items=get_items();
-		for(unsigned int u=0; u<m_item_count; u++)
+		for(uint16_t u=0; u<m_item_count; u++)
 			items[u].~_item_t();
 		}
 
@@ -103,20 +103,20 @@ public:
 			return nullptr;
 		return &get_items()[position];
 		}
-	inline unsigned int get_child_count()const noexcept override { return m_item_count; }
+	inline uint16_t get_child_count()const noexcept override { return m_item_count; }
 	inline std::size_t get_item_count()const noexcept override { return m_item_count; }
 	inline _item_t* get_items()noexcept { return (_item_t*)m_items; }
 	inline _item_t const* get_items()const noexcept { return (_item_t const*)m_items; }
-	inline unsigned int get_level()const noexcept override { return 0; }
+	inline uint16_t get_level()const noexcept override { return 0; }
 	std::size_t get_many(std::size_t position, std::size_t count, _item_t* items)const noexcept override
 		{
 		if(position>=m_item_count)
 			return 0;
-		unsigned int pos=(unsigned int)position;
-		unsigned int max=m_item_count-pos;
-		unsigned int copy=count>max? max: (unsigned int)count;
+		uint16_t pos=(uint16_t)position;
+		uint16_t max=(uint16_t)(m_item_count-pos);
+		uint16_t copy=count>max? max: (uint16_t)count;
 		_item_t const* src=get_items();
-		for(unsigned int u=0; u<copy; u++)
+		for(uint16_t u=0; u<copy; u++)
 			items[u]=src[pos+u];
 		return copy;
 		}
@@ -133,23 +133,23 @@ public:
 		}
 	std::size_t append(_item_t const* append, std::size_t count)noexcept override
 		{
-		unsigned int copy=_group_size-m_item_count;
+		uint16_t copy=(uint16_t)(_group_size-m_item_count);
 		if(copy==0)
 			return 0;
 		if(count<copy)
-			copy=(unsigned int)count;
+			copy=(uint16_t)count;
 		_item_t* items=get_items();
-		for(unsigned int u=0; u<copy; u++)
+		for(uint16_t u=0; u<copy; u++)
 			new (&items[m_item_count+u]) _item_t(append[u]);
-		m_item_count+=copy;
+		m_item_count=(uint16_t)(m_item_count+copy);
 		return copy;
 		}
-	void append_items(_item_t* append, unsigned int count)noexcept
+	void append_items(_item_t* append, uint16_t count)noexcept
 		{
 		_item_t* items=get_items();
-		for(unsigned int u=0; u<count; u++)
+		for(uint16_t u=0; u<count; u++)
 			new (&items[m_item_count+u]) _item_t(std::move(append[u]));
-		m_item_count+=count;
+		m_item_count=(uint16_t)(m_item_count+count);
 		}
 	bool insert_at(std::size_t position, _item_t const& item, bool)noexcept override
 		{
@@ -158,20 +158,20 @@ public:
 		if(m_item_count==_group_size)
 			return false;
 		_item_t* items=get_items();
-		for(unsigned int u=m_item_count; u>position; u--)
+		for(uint16_t u=m_item_count; u>position; u--)
 			new (&items[u]) _item_t(std::move(items[u-1]));
 		new (&items[position]) _item_t(item);
 		m_item_count++;
 		return true;
 		}
-	void insert_items(unsigned int position, _item_t* insert, unsigned int count)noexcept
+	void insert_items(uint16_t position, _item_t* insert, uint16_t count)noexcept
 		{
 		_item_t* items=get_items();
-		for(unsigned int u=m_item_count+count-1; u>=position+count; u--)
+		for(uint16_t u=(uint16_t)(m_item_count+count-1); u>=position+count; u--)
 			new (&items[u]) _item_t(std::move(items[u-count]));
-		for(unsigned int u=0; u<count; u++)
+		for(uint16_t u=0; u<count; u++)
 			new (&items[position+u]) _item_t(std::move(insert[u]));
-		m_item_count+=count;
+		m_item_count=(uint16_t)(m_item_count+count);
 		}
 	bool remove_at(std::size_t position)noexcept override
 		{
@@ -179,17 +179,17 @@ public:
 			return false;
 		_item_t* items=get_items();
 		items[position].~_item_t();
-		for(unsigned int u=(unsigned int)position; u+1<m_item_count; u++)
+		for(uint16_t u=(uint16_t)position; u+1<m_item_count; u++)
 			new (&items[u]) _item_t(std::move(items[u+1]));
 		m_item_count--;
 		return true;
 		}
-	void remove_items(unsigned int position, unsigned int count)noexcept
+	void remove_items(uint16_t position, uint16_t count)noexcept
 		{
 		_item_t* items=get_items();
-		for(unsigned int u=position; u+count<m_item_count; u++)
+		for(uint16_t u=position; u+count<m_item_count; u++)
 			new (&items[u]) _item_t(std::move(items[u+count]));
-		m_item_count-=count;
+		m_item_count=(uint16_t)(m_item_count-count);
 		}
 	bool set_at(std::size_t position, _item_t const& item)noexcept override
 		{
@@ -203,17 +203,17 @@ public:
 		{
 		if(position>=m_item_count)
 			return 0;
-		unsigned int max=m_item_count-(unsigned int)position;
-		unsigned int copy=count>max? max: (unsigned int)count;
+		uint16_t max=(uint16_t)(m_item_count-(uint16_t)position);
+		uint16_t copy=count>max? max: (uint16_t)count;
 		_item_t* dst=get_items();
-		for(unsigned int u=0; u<copy; u++)
+		for(uint16_t u=0; u<copy; u++)
 			dst[position+u]=items[u];
 		return copy;
 		}
 
 private:
 	// Uninitialized array of items
-	unsigned int m_item_count;
+	uint16_t m_item_count;
 	alignas(alignof(_item_t[_group_size])) unsigned char m_items[sizeof(_item_t[_group_size])];
 };
 
@@ -222,7 +222,7 @@ private:
 // Parent-group
 //==============
 
-template <typename _item_t, unsigned int _group_size>
+template <typename _item_t, uint16_t _group_size>
 class _list_parent_group: public _list_group<_item_t>
 {
 private:
@@ -233,9 +233,9 @@ private:
 
 public:
 	// Con-Destructors
-	_list_parent_group(unsigned int level)noexcept: m_child_count(0), m_item_count(0), m_level(level) {}
+	_list_parent_group(uint16_t level)noexcept: m_child_count(0), m_item_count(0), m_level(level) {}
 	_list_parent_group(_group_t* child)noexcept:
-		m_child_count(1), m_item_count(child->get_item_count()), m_level(child->get_level()+1)
+		m_child_count(1), m_item_count(child->get_item_count()), m_level((uint16_t)(child->get_level()+1))
 		{
 		m_children[0]=child;
 		}
@@ -244,48 +244,48 @@ public:
 		{
 		if(m_level>1)
 			{
-			for(unsigned int u=0; u<m_child_count; u++)
+			for(uint16_t u=0; u<m_child_count; u++)
 				m_children[u]=new _parent_group_t((_parent_group_t const&)*group.m_children[u]);
 			}
 		else
 			{
-			for(unsigned int u=0; u<m_child_count; u++)
+			for(uint16_t u=0; u<m_child_count; u++)
 				m_children[u]=new _item_group_t((_item_group_t const&)*group.m_children[u]);
 			}
 		}
 	~_list_parent_group()noexcept override
 		{
-		for(unsigned int u=0; u<m_child_count; u++)
+		for(uint16_t u=0; u<m_child_count; u++)
 				delete m_children[u];
 		}
 
 	// Access
 	_item_t* get_at(std::size_t position)noexcept override
 		{
-		unsigned int group=get_group(&position);
+		uint16_t group=get_group(&position);
 		if(group>=_group_size)
 			return nullptr;
 		return m_children[group]->get_at(position);
 		}
 	_item_t const* get_at(std::size_t position)const noexcept override
 		{
-		unsigned int group=get_group(&position);
+		uint16_t group=get_group(&position);
 		if(group>=_group_size)
 			return nullptr;
 		return m_children[group]->get_at(position);
 		}
-	_group_t* get_child(unsigned int position)noexcept
+	_group_t* get_child(uint16_t position)noexcept
 		{
 		if(position>=m_child_count)
 			return nullptr;
 		return m_children[position];
 		}
-	inline unsigned int get_child_count()const noexcept override { return m_child_count; }
+	inline uint16_t get_child_count()const noexcept override { return m_child_count; }
 	inline std::size_t get_item_count()const noexcept override { return m_item_count; }
-	inline unsigned int get_level()const noexcept override { return m_level; }
+	inline uint16_t get_level()const noexcept override { return m_level; }
 	std::size_t get_many(std::size_t position, std::size_t count, _item_t* items)const noexcept override
 		{
-		unsigned int group=get_group(&position);
+		uint16_t group=get_group(&position);
 		if(group>=_group_size)
 			return 0;
 		std::size_t pos=0;
@@ -305,7 +305,7 @@ public:
 	// Modification
 	bool append(_item_t const& item, bool again)noexcept override
 		{
-		unsigned int group=m_child_count-1;
+		uint16_t group=(uint16_t)(m_child_count-1);
 		if(!again)
 			{
 			if(m_children[group]->append(item, false))
@@ -313,7 +313,7 @@ public:
 				m_item_count++;
 				return true;
 				}
-			unsigned int empty=get_nearest(group);
+			uint16_t empty=get_nearest_space(group);
 			if(empty<m_child_count)
 				{
 				move_empty_slot(empty, group);
@@ -344,7 +344,7 @@ public:
 			}
 		if(m_child_count>1)
 			{
-			unsigned int last=minimize_internal();
+			uint16_t last=minimize_internal();
 			for(; last<m_child_count; last++)
 				{
 				auto written=m_children[last]->append(&append[pos], count-pos);
@@ -371,7 +371,7 @@ public:
 				}
 			else
 				{
-				m_children[m_child_count]=new _parent_group_t(m_level-1);
+				m_children[m_child_count]=new _parent_group_t((uint16_t)(m_level-1));
 				}
 			m_child_count++;
 			std::size_t written=m_children[m_child_count-1]->append(&append[pos], count-pos);
@@ -380,26 +380,28 @@ public:
 			}
 		return pos;
 		}
-	void append_groups(_group_t* const* groups, unsigned int count)noexcept
+	void append_groups(_group_t* const* groups, uint16_t count)noexcept
 		{
-		memcpy(&m_children[m_child_count], groups, count*sizeof(_group_t*));
-		for(unsigned int u=0; u<count; u++)
+		for(uint16_t u=0; u<count; u++)
+			{
+			m_children[m_child_count+u]=groups[u];
 			m_item_count+=groups[u]->get_item_count();
-		m_child_count+=count;
+			}
+		m_child_count=(uint16_t)(m_child_count+count);
 		}
 	bool insert_at(std::size_t position, _item_t const& item, bool again)noexcept
 		{
 		if(position>m_item_count)
 			return true;
 		std::size_t pos=position;
-		unsigned int group=0;
-		unsigned int inscount=get_insert_pos(&pos, &group);
+		uint16_t group=0;
+		uint16_t inscount=get_insert_pos(&pos, &group);
 		if(!inscount)
 			return false;
 		if(!again)
 			{
 			std::size_t at=pos;
-			for(unsigned int u=0; u<inscount; u++)
+			for(uint16_t u=0; u<inscount; u++)
 				{
 				if(m_children[group+u]->insert_at(at, item, false))
 					{
@@ -408,7 +410,7 @@ public:
 					}
 				at=0;
 				}
-			unsigned int empty=get_nearest(group);
+			uint16_t empty=get_nearest_space(group);
 			if(empty<m_child_count)
 				{
 				if(inscount>1&&empty>group)
@@ -417,7 +419,7 @@ public:
 				pos=position;
 				inscount=get_insert_pos(&pos, &group);
 				std::size_t at=pos;
-				for(unsigned int u=0; u<inscount; u++)
+				for(uint16_t u=0; u<inscount; u++)
 					{
 					if(m_children[group+u]->insert_at(at, item, false))
 						{
@@ -440,16 +442,18 @@ public:
 		m_item_count++;
 		return true;
 		}
-	void insert_groups(unsigned int position, _group_t* const* groups, unsigned int count)noexcept
+	void insert_groups(uint16_t position, _group_t* const* groups, uint16_t count)noexcept
 		{
-		for(unsigned int u=m_child_count+count-1; u>=position+count; u--)
+		for(uint16_t u=(uint16_t)(m_child_count+count-1); u>=position+count; u--)
 			m_children[u]=m_children[u-count];
-		memcpy(&m_children[position], groups, count*sizeof(_group_t*));
-		for(unsigned int u=0; u<count; u++)
+		for(uint16_t u=0; u<count; u++)
+			{
+			m_children[position+u]=groups[u];
 			m_item_count+=groups[u]->get_item_count();
-		m_child_count+=count;
+			}
+		m_child_count=(uint16_t)(m_child_count+count);
 		}
-	void move_children(unsigned int source, unsigned int destination, unsigned int count)noexcept
+	void move_children(uint16_t source, uint16_t destination, uint16_t count)noexcept
 		{
 		if(count==0)
 			return;
@@ -464,9 +468,9 @@ public:
 				}
 			else
 				{
-				unsigned int srccount=src->get_child_count();
+				uint16_t srccount=src->get_child_count();
 				dst->insert_groups(0, &src->m_children[srccount-count], count);
-				src->remove_groups(srccount-count, count);
+				src->remove_groups((uint16_t)(srccount-count), count);
 				}
 			}
 		else
@@ -481,54 +485,54 @@ public:
 			else
 				{
 				_item_t* srcitems=src->get_items();
-				unsigned int srccount=src->get_child_count();
+				uint16_t srccount=src->get_child_count();
 				dst->insert_items(0, &srcitems[srccount-count], count);
-				src->remove_items(srccount-count, count);
+				src->remove_items((uint16_t)(srccount-count), count);
 				}
 			}
 		}
-	void move_empty_slot(unsigned int source, unsigned int destination)noexcept
+	void move_empty_slot(uint16_t source, uint16_t destination)noexcept
 		{
 		if(source<destination)
 			{
-			for(unsigned int u=source; u<destination; u++)
-				move_children(u+1, u, 1);
+			for(uint16_t u=source; u<destination; u++)
+				move_children((uint16_t)(u+1), u, 1);
 			}
 		else
 			{
-			for(unsigned int u=source; u>destination; u--)
-				move_children(u-1, u, 1);
+			for(uint16_t u=source; u>destination; u--)
+				move_children((uint16_t)(u-1), u, 1);
 			}
 		}
 	bool remove_at(std::size_t position)noexcept override
 		{
 		if(position>=m_item_count)
 			return false;
-		unsigned int group=get_group(&position);
+		uint16_t group=get_group(&position);
 		m_children[group]->remove_at(position);
 		m_item_count--;
 		combine_children(group);
 		return true;
 		}
-	void remove_groups(unsigned int position, unsigned int count)noexcept
+	void remove_groups(uint16_t position, uint16_t count)noexcept
 		{
-		for(unsigned int u=0; u<count; u++)
+		for(uint16_t u=0; u<count; u++)
 			m_item_count-=m_children[position+u]->get_item_count();
-		for(unsigned int u=position; u+count<m_child_count; u++)
+		for(uint16_t u=position; u+count<m_child_count; u++)
 			m_children[u]=m_children[u+count];
-		m_child_count-=count;
+		m_child_count=(uint16_t)(m_child_count-count);
 		}
 	bool set_at(std::size_t position, _item_t const& item)noexcept override
 		{
-		unsigned int group=get_group(&position);
+		uint16_t group=get_group(&position);
 		if(group>=_group_size)
 			return false;
 		return m_children[group]->set_at(position, item);
 		}
-	inline void set_child_count(unsigned int count)noexcept { m_child_count=count; }
+	inline void set_child_count(uint16_t count)noexcept { m_child_count=count; }
 	std::size_t set_many(std::size_t position, std::size_t count, _item_t const* items)override
 		{
-		unsigned int group=get_group(&position);
+		uint16_t group=get_group(&position);
 		if(group>=_group_size)
 			return 0;
 		std::size_t pos=0;
@@ -547,9 +551,9 @@ public:
 
 private:
 	// Access
-	unsigned int get_group(std::size_t* position)const noexcept
+	uint16_t get_group(std::size_t* position)const noexcept
 		{
-		for(unsigned int u=0; u<m_child_count; u++)
+		for(uint16_t u=0; u<m_child_count; u++)
 			{
 			std::size_t count=m_children[u]->get_item_count();
 			if(*position<count)
@@ -558,10 +562,10 @@ private:
 			}
 		return _group_size;
 		}
-	unsigned int get_insert_pos(std::size_t* position, unsigned int* group)const noexcept
+	uint16_t get_insert_pos(std::size_t* position, uint16_t* group)const noexcept
 		{
 		std::size_t pos=*position;
-		for(unsigned int u=0; u<m_child_count; u++)
+		for(uint16_t u=0; u<m_child_count; u++)
 			{
 			std::size_t count=m_children[u]->get_item_count();
 			if(pos<=count)
@@ -576,10 +580,10 @@ private:
 			}
 		return 0;
 		}
-	unsigned int get_nearest(unsigned int position)const noexcept
+	uint16_t get_nearest_space(uint16_t position)const noexcept
 		{
-		int before=position-1;
-		unsigned int after=position+1;
+		int16_t before=(int16_t)((int16_t)position-1);
+		uint16_t after=(uint16_t)(position+1);
 		while(before>=0||after<m_child_count)
 			{
 			if(before>=0)
@@ -599,9 +603,9 @@ private:
 		}
 
 	// Modification
-	bool combine_children(unsigned int position)noexcept
+	bool combine_children(uint16_t position)noexcept
 		{
-		unsigned int count=m_children[position]->get_child_count();
+		uint16_t count=m_children[position]->get_child_count();
 		if(count==0)
 			{
 			remove_internal(position);
@@ -609,21 +613,21 @@ private:
 			}
 		if(position>0)
 			{
-			unsigned int before=m_children[position-1]->get_child_count();
+			uint16_t before=m_children[position-1]->get_child_count();
 			if(count+before<=_group_size)
 				{
-				move_children(position, position-1, count);
+				move_children(position, (uint16_t)(position-1), count);
 				remove_internal(position);
 				return true;
 				}
 			}
 		if(position+1<m_child_count)
 			{
-			unsigned int after=m_children[position+1]->get_child_count();
+			uint16_t after=m_children[position+1]->get_child_count();
 			if(count+after<=_group_size)
 				{
-				move_children(position+1, position, after);
-				remove_internal(position+1);
+				move_children((uint16_t)(position+1), position, after);
+				remove_internal((uint16_t)(position+1));
 				return true;
 				}
 			}
@@ -631,7 +635,7 @@ private:
 		}
 	void free_children()noexcept
 		{
-		for(unsigned int u=m_child_count; u>0; u--)
+		for(uint16_t u=m_child_count; u>0; u--)
 			{
 			if(m_children[u-1]->get_child_count()>0)
 				break;
@@ -639,25 +643,25 @@ private:
 			m_child_count--;
 			}
 		}
-	unsigned int minimize_internal()noexcept
+	uint16_t minimize_internal()noexcept
 		{
-		unsigned int dst=0;
-		unsigned int src=1;
+		uint16_t dst=0;
+		uint16_t src=1;
 		for(; dst<m_child_count; dst++)
 			{
-			unsigned int free=_group_size-m_children[dst]->get_child_count();
+			uint16_t free=(uint16_t)(_group_size-m_children[dst]->get_child_count());
 			if(free==0)
 				continue;
 			if(src<=dst)
-				src=dst+1;
+				src=(uint16_t)(dst+1);
 			for(; src<m_child_count; src++)
 				{
-				unsigned int count=m_children[src]->get_child_count();
+				uint16_t count=m_children[src]->get_child_count();
 				if(count==0)
 					continue;
-				unsigned int move=count<free? count: free;
+				uint16_t move=count<free? count: free;
 				move_children(src, dst, move);
-				free-=move;
+				free=(uint16_t)(free-move);
 				if(free==0)
 					break;
 				}
@@ -666,37 +670,37 @@ private:
 			}
 		return dst;
 		}
-	void remove_internal(unsigned int position)noexcept
+	void remove_internal(uint16_t position)noexcept
 		{
 		delete m_children[position];
-		for(unsigned int u=position; u+1<m_child_count; u++)
+		for(uint16_t u=position; u+1<m_child_count; u++)
 			m_children[u]=m_children[u+1];
 		m_child_count--;
 		}
-	bool split_child(unsigned int position)noexcept
+	bool split_child(uint16_t position)noexcept
 		{
 		if(m_child_count==_group_size)
 			return false;
-		for(unsigned int u=m_child_count; u>position+1; u--)
+		for(uint16_t u=m_child_count; u>position+1; u--)
 			m_children[u]=m_children[u-1];
 		if(m_level>1)
 			{
-			m_children[position+1]=new _parent_group_t(m_level-1);
+			m_children[position+1]=new _parent_group_t((uint16_t)(m_level-1));
 			}
 		else
 			{
 			m_children[position+1]=new _item_group_t();
 			}
 		m_child_count++;
-		move_children(position, position+1, 1);
+		move_children(position, (uint16_t)(position+1), 1);
 		return true;
 		}
 
 	// Common
-	unsigned int m_child_count;
+	uint16_t m_child_count;
 	_group_t* m_children[_group_size];
 	std::size_t m_item_count;
-	unsigned int m_level;
+	uint16_t m_level;
 };
 
 
@@ -705,9 +709,9 @@ private:
 //=========
 
 // Forward-Declaration
-template <typename _item_t, unsigned int _group_size, bool _is_const> class _list_iterator_base;
+template <typename _item_t, uint16_t _group_size, bool _is_const> class _list_iterator_base;
 
-template <typename _item_t, unsigned int _group_size>
+template <typename _item_t, uint16_t _group_size>
 class _list_cluster
 {
 private:
@@ -871,7 +875,7 @@ private:
 // Iterator base-class
 //=====================
 
-template <typename _item_t, unsigned int _group_size, bool _is_const>
+template <typename _item_t, uint16_t _group_size, bool _is_const>
 class _list_iterator_base
 {
 protected:
@@ -896,11 +900,11 @@ public:
 		if(m_level_count==0)
 			return 0;
 		std::size_t pos=0;
-		for(unsigned int u=0; u<m_level_count-1; u++)
+		for(uint16_t u=0; u<m_level_count-1; u++)
 			{
 			_parent_group_t* group=(_parent_group_t*)m_its[u].group;
-			unsigned int grouppos=m_its[u].position;
-			for(unsigned int v=0; v<grouppos; v++)
+			uint16_t grouppos=m_its[u].position;
+			for(uint16_t v=0; v<grouppos; v++)
 				pos+=group->get_child(v)->get_item_count();
 			}
 		pos+=m_its[m_level_count-1].position;
@@ -923,14 +927,14 @@ public:
 			return false;
 		_it_struct* it=&m_its[m_level_count-1];
 		_item_group_t* itemgroup=(_item_group_t*)it->group;
-		unsigned int count=itemgroup->get_child_count();
+		uint16_t count=itemgroup->get_child_count();
 		if(it->position+1<count)
 			{
 			it->position++;
 			m_current=itemgroup->get_at(it->position);
 			return true;
 			}
-		for(unsigned int u=m_level_count-1; u>0; u--)
+		for(uint16_t u=(uint16_t)(m_level_count-1); u>0; u--)
 			{
 			it=&m_its[u-1];
 			_parent_group_t* parentgroup=(_parent_group_t*)it->group;
@@ -966,7 +970,7 @@ public:
 			m_current=itemgroup->get_at(it->position);
 			return true;
 			}
-		for(unsigned int u=m_level_count-1; u>0; u--)
+		for(uint16_t u=m_level_count-1; u>0; u--)
 			{
 			it=&m_its[u-1];
 			_parent_group_t* parentgroup=(_parent_group_t*)it->group;
@@ -974,7 +978,7 @@ public:
 				continue;
 			it->position--;
 			_group_t* group=it->group;
-			unsigned int pos=0;
+			uint16_t pos=0;
 			for(; u<m_level_count; u++)
 				{
 				parentgroup=(_parent_group_t*)group;
@@ -997,15 +1001,15 @@ public:
 		_group_t* group=m_list->m_root;
 		if(!group)
 			return false;
-		unsigned int levelcount=group->get_level()+1;
+		uint16_t levelcount=(uint16_t)(group->get_level()+1);
 		if(!set_level_count(levelcount))
 			return false;
-		unsigned int pos=get_position_internal(group, &position);
+		uint16_t pos=get_position_internal(group, &position);
 		if(pos==_group_size)
 			return false;
 		m_its[0].group=group;
 		m_its[0].position=pos;
-		for(unsigned int u=0; u<m_level_count-1; u++)
+		for(uint16_t u=0; u<m_level_count-1; u++)
 			{
 			_parent_group_t* parentgroup=(_parent_group_t*)m_its[u].group;
 			group=parentgroup->get_child(pos);
@@ -1031,7 +1035,8 @@ protected:
 		{
 		if(set_level_count(it.m_level_count))
 			{
-			memcpy(m_its, it.m_its, m_level_count*sizeof(_it_struct));
+			for(uint16_t u=0; u<m_level_count; u++)
+				m_its[u]=it.m_its[u];
 			m_current=it.m_current;
 			}
 		}
@@ -1049,23 +1054,23 @@ protected:
 	typedef struct
 		{
 		_group_t* group;
-		unsigned int position;
+		uint16_t position;
 		}_it_struct;
 
 	// Common
-	unsigned int get_position_internal(_group_t* group, std::size_t* pos)const noexcept
+	uint16_t get_position_internal(_group_t* group, std::size_t* pos)const noexcept
 		{
-		unsigned int count=group->get_child_count();
-		unsigned int level=group->get_level();
+		uint16_t count=group->get_child_count();
+		uint16_t level=group->get_level();
 		if(level==0)
 			{
-			unsigned int u=(unsigned int)*pos;
+			uint16_t u=(uint16_t)*pos;
 			*pos=0;
 			return u;
 			}
 		_parent_group_t* parentgroup=(_parent_group_t*)group;
 		std::size_t itemcount=0;
-		for(unsigned int u=0; u<count; u++)
+		for(uint16_t u=0; u<count; u++)
 			{
 			_group_t* child=parentgroup->get_child(u);
 			itemcount=child->get_item_count();
@@ -1075,7 +1080,7 @@ protected:
 			}
 		return _group_size;
 		}
-	bool set_level_count(unsigned int levelcount)noexcept
+	bool set_level_count(uint16_t levelcount)noexcept
 		{
 		if(m_level_count==levelcount)
 			return true;
@@ -1087,7 +1092,7 @@ protected:
 		}
 	_item_t* m_current;
 	_it_struct* m_its;
-	unsigned int m_level_count;
+	uint16_t m_level_count;
 	_list_ptr_t m_list;
 };
 
@@ -1096,7 +1101,7 @@ protected:
 // Iterator
 //==========
 
-template <typename _item_t, unsigned int _group_size>
+template <typename _item_t, uint16_t _group_size>
 class _list_iterator: public _list_iterator_base<_item_t, _group_size, false>
 {
 private:
@@ -1134,7 +1139,7 @@ public:
 // Const-iterator
 //================
 
-template <typename _item_t, unsigned int _group_size>
+template <typename _item_t, uint16_t _group_size>
 class _list_const_iterator: public _list_iterator_base<_item_t, _group_size, true>
 {
 private:
@@ -1155,7 +1160,7 @@ public:
 // List
 //======
 
-template <typename _item_t, unsigned int _group_size=10>
+template <typename _item_t, uint16_t _group_size=10>
 class list: public _list_cluster<_item_t, _group_size>
 {
 private:
