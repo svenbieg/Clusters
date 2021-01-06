@@ -837,7 +837,11 @@ protected:
 			m_root=new _item_group_t((_item_group_t const&)*list.m_root);
 			}
 		}
-	~_list_cluster()noexcept { delete m_root; }
+	~_list_cluster()noexcept
+		{
+		if(m_root)
+			delete m_root;
+		}
 
 private:
 	// Common

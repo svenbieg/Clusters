@@ -871,7 +871,11 @@ protected:
 			m_root=new _item_group_t((_item_group_t const&)*slist.m_root);
 			}
 		}
-	~_slist_cluster()noexcept { delete m_root; }
+	~_slist_cluster()noexcept
+		{
+		if(m_root)
+			delete m_root;
+		}
 
 	// Common
 	void update_root()noexcept
