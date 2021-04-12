@@ -389,7 +389,7 @@ public:
 			}
 		m_child_count=(uint16_t)(m_child_count+count);
 		}
-	bool insert_at(std::size_t position, _item_t const& item, bool again)noexcept
+	bool insert_at(std::size_t position, _item_t const& item, bool again)noexcept override
 		{
 		if(position>m_item_count)
 			return true;

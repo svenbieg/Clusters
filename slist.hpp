@@ -168,13 +168,13 @@ public:
 		return &get_items()[position];
 		}
 	inline uint16_t get_child_count()const noexcept override { return m_item_count; }
-	_slist_item_t* get_first()noexcept
+	_slist_item_t* get_first()noexcept override
 		{
 		if(m_item_count==0)
 			return nullptr;
 		return get_items();
 		}
-	_slist_item_t const* get_first()const noexcept
+	_slist_item_t const* get_first()const noexcept override
 		{
 		if(m_item_count==0)
 			return nullptr;
@@ -183,13 +183,13 @@ public:
 	inline std::size_t get_item_count()const noexcept override { return m_item_count; }
 	inline _slist_item_t* get_items()noexcept { return (_slist_item_t*)m_items; }
 	inline _slist_item_t const* get_items()const noexcept { return (_slist_item_t const*)m_items; }
-	_slist_item_t* get_last()noexcept
+	_slist_item_t* get_last()noexcept override
 		{
 		if(m_item_count==0)
 			return nullptr;
 		return &get_items()[m_item_count-1];
 		}
-	_slist_item_t const* get_last()const noexcept
+	_slist_item_t const* get_last()const noexcept override
 		{
 		if(m_item_count==0)
 			return nullptr;
