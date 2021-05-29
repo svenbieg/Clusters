@@ -1431,7 +1431,7 @@ public:
 	_id_t get(_id_t const& id)const noexcept
 		{
 		if(!this->m_root)
-			this->m_root=new _item_group_t();
+			return _id_t();
 		_slist_item_t* item=this->m_root->get(id);
 		if(item==nullptr)
 			return _id_t();
@@ -1440,7 +1440,7 @@ public:
 	_id_t get_at(std::size_t position)const noexcept
 		{
 		if(!this->m_root)
-			this->m_root=new _item_group_t();
+			return _id_t();
 		_slist_item_t* item=this->m_root->get_at(position);
 		if(item==nullptr)
 			return _id_t();
