@@ -1,6 +1,6 @@
-//=========
-// slist.h
-//=========
+//===========
+// slist.hpp
+//===========
 
 // Implementation of a sorted list.
 // Items and can be inserted, removed and looked-up in constant low time.

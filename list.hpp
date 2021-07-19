@@ -1,6 +1,6 @@
-//========
-// list.h
-//========
+//==========
+// list.hpp
+//==========
 
 // Implementation of an ordererd list.
 // Items can be inserted and removed in real-time.
