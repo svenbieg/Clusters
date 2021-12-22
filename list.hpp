@@ -34,14 +34,14 @@ namespace Clusters {
 // Forward-Declarations
 //======================
 
-template <typename _item_t, uint16_t _group_size> class list;
+template <typename _item_t, typename _size_t, uint16_t _group_size> class list;
 
 
 //=======
 // Group
 //=======
 
-template <typename _item_t>
+template <typename _item_t, typename _size_t>
 class _list_group
 {
 public:
@@ -49,29 +49,29 @@ public:
 	virtual ~_list_group()noexcept {}
 
 	// Access
-	virtual _item_t* get_at(std::size_t position)noexcept=0;
-	virtual _item_t const* get_at(std::size_t position)const noexcept=0;
+	virtual _item_t* get_at(_size_t position)noexcept=0;
+	virtual _item_t const* get_at(_size_t position)const noexcept=0;
 	virtual uint16_t get_child_count()const noexcept=0;
-	virtual std::size_t get_item_count()const noexcept=0;
+	virtual _size_t get_item_count()const noexcept=0;
 	virtual uint16_t get_level()const noexcept=0;
-	virtual std::size_t get_many(std::size_t position, std::size_t count, _item_t* items)const noexcept=0;
+	virtual _size_t get_many(_size_t position, _size_t count, _item_t* items)const noexcept=0;
 
 	// Modification
 	virtual bool append(_item_t const& item, bool again)noexcept=0;
-	virtual std::size_t append(_item_t const* append, std::size_t count)noexcept=0;
-	virtual bool insert_at(std::size_t position, _item_t const& item, bool again)noexcept=0;
-	virtual bool remove_at(std::size_t position)noexcept=0;
-	virtual bool set_at(std::size_t position, _item_t const& item)noexcept=0;
-	virtual std::size_t set_many(std::size_t position, std::size_t count, _item_t const* items)=0;
+	virtual _size_t append(_item_t const* append, _size_t count)noexcept=0;
+	virtual bool insert_at(_size_t position, _item_t const& item, bool again)noexcept=0;
+	virtual bool remove_at(_size_t position)noexcept=0;
+	virtual bool set_at(_size_t position, _item_t const& item)noexcept=0;
+	virtual _size_t set_many(_size_t position, _size_t count, _item_t const* items)=0;
 };
 
 
 //============
-// Item-group
+// Item-Group
 //============
 
-template <typename _item_t, uint16_t _group_size>
-class _list_item_group: public _list_group<_item_t>
+template <typename _item_t, typename _size_t, uint16_t _group_size>
+class _list_item_group: public _list_group<_item_t, _size_t>
 {
 public:
 	// Con-/Destructors
@@ -91,24 +91,24 @@ public:
 		}
 
 	// Access
-	_item_t* get_at(std::size_t position)noexcept override
+	_item_t* get_at(_size_t position)noexcept override
 		{
 		if(position>=m_item_count)
 			return nullptr;
 		return &get_items()[position];
 		}
-	_item_t const* get_at(std::size_t position)const noexcept override
+	_item_t const* get_at(_size_t position)const noexcept override
 		{
 		if(position>=m_item_count)
 			return nullptr;
 		return &get_items()[position];
 		}
 	inline uint16_t get_child_count()const noexcept override { return m_item_count; }
-	inline std::size_t get_item_count()const noexcept override { return m_item_count; }
+	inline _size_t get_item_count()const noexcept override { return m_item_count; }
 	inline _item_t* get_items()noexcept { return (_item_t*)m_items; }
 	inline _item_t const* get_items()const noexcept { return (_item_t const*)m_items; }
 	inline uint16_t get_level()const noexcept override { return 0; }
-	std::size_t get_many(std::size_t position, std::size_t count, _item_t* items)const noexcept override
+	_size_t get_many(_size_t position, _size_t count, _item_t* items)const noexcept override
 		{
 		if(position>=m_item_count)
 			return 0;
@@ -131,7 +131,7 @@ public:
 		m_item_count++;
 		return true;
 		}
-	std::size_t append(_item_t const* append, std::size_t count)noexcept override
+	_size_t append(_item_t const* append, _size_t count)noexcept override
 		{
 		uint16_t copy=(uint16_t)(_group_size-m_item_count);
 		if(copy==0)
@@ -151,7 +151,7 @@ public:
 			new (&items[m_item_count+u]) _item_t(std::move(append[u]));
 		m_item_count=(uint16_t)(m_item_count+count);
 		}
-	bool insert_at(std::size_t position, _item_t const& item, bool)noexcept override
+	bool insert_at(_size_t position, _item_t const& item, bool)noexcept override
 		{
 		if(position>m_item_count)
 			return true;
@@ -173,7 +173,7 @@ public:
 			new (&items[position+u]) _item_t(std::move(insert[u]));
 		m_item_count=(uint16_t)(m_item_count+count);
 		}
-	bool remove_at(std::size_t position)noexcept override
+	bool remove_at(_size_t position)noexcept override
 		{
 		if(position>=m_item_count)
 			return false;
@@ -191,7 +191,7 @@ public:
 			new (&items[u]) _item_t(std::move(items[u+count]));
 		m_item_count=(uint16_t)(m_item_count-count);
 		}
-	bool set_at(std::size_t position, _item_t const& item)noexcept override
+	bool set_at(_size_t position, _item_t const& item)noexcept override
 		{
 		if(position>=m_item_count)
 			return false;
@@ -199,7 +199,7 @@ public:
 		items[position]=item;
 		return true;
 		}
-	std::size_t set_many(std::size_t position, std::size_t count, _item_t const* items)override
+	_size_t set_many(_size_t position, _size_t count, _item_t const* items)override
 		{
 		if(position>=m_item_count)
 			return 0;
@@ -212,24 +212,24 @@ public:
 		}
 
 private:
-	// Uninitialized array of items
+	// Uninitialized Array of Items
 	uint16_t m_item_count;
 	alignas(alignof(_item_t[_group_size])) unsigned char m_items[sizeof(_item_t[_group_size])];
 };
 
 
 //==============
-// Parent-group
+// Parent-Group
 //==============
 
-template <typename _item_t, uint16_t _group_size>
-class _list_parent_group: public _list_group<_item_t>
+template <typename _item_t, typename _size_t, uint16_t _group_size>
+class _list_parent_group: public _list_group<_item_t, _size_t>
 {
 private:
 	// Using
-	using _group_t=_list_group<_item_t>;
-	using _item_group_t=_list_item_group<_item_t, _group_size>;
-	using _parent_group_t=_list_parent_group<_item_t, _group_size>;
+	using _group_t=_list_group<_item_t, _size_t>;
+	using _item_group_t=_list_item_group<_item_t, _size_t, _group_size>;
+	using _parent_group_t=_list_parent_group<_item_t, _size_t, _group_size>;
 
 public:
 	// Con-Destructors
@@ -260,14 +260,14 @@ public:
 		}
 
 	// Access
-	_item_t* get_at(std::size_t position)noexcept override
+	_item_t* get_at(_size_t position)noexcept override
 		{
 		uint16_t group=get_group(&position);
 		if(group>=_group_size)
 			return nullptr;
 		return m_children[group]->get_at(position);
 		}
-	_item_t const* get_at(std::size_t position)const noexcept override
+	_item_t const* get_at(_size_t position)const noexcept override
 		{
 		uint16_t group=get_group(&position);
 		if(group>=_group_size)
@@ -281,14 +281,14 @@ public:
 		return m_children[position];
 		}
 	inline uint16_t get_child_count()const noexcept override { return m_child_count; }
-	inline std::size_t get_item_count()const noexcept override { return m_item_count; }
+	inline _size_t get_item_count()const noexcept override { return m_item_count; }
 	inline uint16_t get_level()const noexcept override { return m_level; }
-	std::size_t get_many(std::size_t position, std::size_t count, _item_t* items)const noexcept override
+	_size_t get_many(_size_t position, _size_t count, _item_t* items)const noexcept override
 		{
 		uint16_t group=get_group(&position);
 		if(group>=_group_size)
 			return 0;
-		std::size_t pos=0;
+		_size_t pos=0;
 		while(pos<count)
 			{
 			pos+=m_children[group]->get_many(position, count-pos, &items[pos]);
@@ -329,9 +329,9 @@ public:
 		m_item_count++;
 		return true;
 		}
-	std::size_t append(_item_t const* append, std::size_t count)noexcept override
+	_size_t append(_item_t const* append, _size_t count)noexcept override
 		{
-		std::size_t pos=0;
+		_size_t pos=0;
 		if(m_child_count>0)
 			{
 			pos+=m_children[m_child_count-1]->append(append, count);
@@ -374,7 +374,7 @@ public:
 				m_children[m_child_count]=new _parent_group_t((uint16_t)(m_level-1));
 				}
 			m_child_count++;
-			std::size_t written=m_children[m_child_count-1]->append(&append[pos], count-pos);
+			_size_t written=m_children[m_child_count-1]->append(&append[pos], count-pos);
 			m_item_count+=written;
 			pos+=written;
 			}
@@ -389,18 +389,18 @@ public:
 			}
 		m_child_count=(uint16_t)(m_child_count+count);
 		}
-	bool insert_at(std::size_t position, _item_t const& item, bool again)noexcept override
+	bool insert_at(_size_t position, _item_t const& item, bool again)noexcept override
 		{
 		if(position>m_item_count)
 			return true;
-		std::size_t pos=position;
+		_size_t pos=position;
 		uint16_t group=0;
 		uint16_t inscount=get_insert_pos(&pos, &group);
 		if(!inscount)
 			return false;
 		if(!again)
 			{
-			std::size_t at=pos;
+			_size_t at=pos;
 			for(uint16_t u=0; u<inscount; u++)
 				{
 				if(m_children[group+u]->insert_at(at, item, false))
@@ -418,7 +418,7 @@ public:
 				move_empty_slot(empty, group);
 				pos=position;
 				inscount=get_insert_pos(&pos, &group);
-				std::size_t at=pos;
+				_size_t at=pos;
 				for(uint16_t u=0; u<inscount; u++)
 					{
 					if(m_children[group+u]->insert_at(at, item, false))
@@ -432,7 +432,7 @@ public:
 			}
 		if(!split_child(group))
 			return false;
-		std::size_t count=m_children[group]->get_item_count();
+		_size_t count=m_children[group]->get_item_count();
 		if(pos>=count)
 			{
 			group++;
@@ -504,7 +504,7 @@ public:
 				move_children((uint16_t)(u-1), u, 1);
 			}
 		}
-	bool remove_at(std::size_t position)noexcept override
+	bool remove_at(_size_t position)noexcept override
 		{
 		if(position>=m_item_count)
 			return false;
@@ -522,7 +522,7 @@ public:
 			m_children[u]=m_children[u+count];
 		m_child_count=(uint16_t)(m_child_count-count);
 		}
-	bool set_at(std::size_t position, _item_t const& item)noexcept override
+	bool set_at(_size_t position, _item_t const& item)noexcept override
 		{
 		uint16_t group=get_group(&position);
 		if(group>=_group_size)
@@ -530,12 +530,12 @@ public:
 		return m_children[group]->set_at(position, item);
 		}
 	inline void set_child_count(uint16_t count)noexcept { m_child_count=count; }
-	std::size_t set_many(std::size_t position, std::size_t count, _item_t const* items)override
+	_size_t set_many(_size_t position, _size_t count, _item_t const* items)override
 		{
 		uint16_t group=get_group(&position);
 		if(group>=_group_size)
 			return 0;
-		std::size_t pos=0;
+		_size_t pos=0;
 		while(pos<count)
 			{
 			pos+=m_children[group]->set_many(position, count-pos, &items[pos]);
@@ -551,23 +551,23 @@ public:
 
 private:
 	// Access
-	uint16_t get_group(std::size_t* position)const noexcept
+	uint16_t get_group(_size_t* position)const noexcept
 		{
 		for(uint16_t u=0; u<m_child_count; u++)
 			{
-			std::size_t count=m_children[u]->get_item_count();
+			_size_t count=m_children[u]->get_item_count();
 			if(*position<count)
 				return u;
 			*position-=count;
 			}
 		return _group_size;
 		}
-	uint16_t get_insert_pos(std::size_t* position, uint16_t* group)const noexcept
+	uint16_t get_insert_pos(_size_t* position, uint16_t* group)const noexcept
 		{
-		std::size_t pos=*position;
+		_size_t pos=*position;
 		for(uint16_t u=0; u<m_child_count; u++)
 			{
-			std::size_t count=m_children[u]->get_item_count();
+			_size_t count=m_children[u]->get_item_count();
 			if(pos<=count)
 				{
 				*group=u;
@@ -699,7 +699,7 @@ private:
 	// Common
 	uint16_t m_child_count;
 	_group_t* m_children[_group_size];
-	std::size_t m_item_count;
+	_size_t m_item_count;
 	uint16_t m_level;
 };
 
@@ -709,24 +709,24 @@ private:
 //=========
 
 // Forward-Declaration
-template <typename _item_t, uint16_t _group_size, bool _is_const> class _list_iterator_base;
+template <typename _item_t, typename _size_t, uint16_t _group_size, bool _is_const> class _list_iterator_base;
 
-template <typename _item_t, uint16_t _group_size>
+template <typename _item_t, typename _size_t, uint16_t _group_size>
 class _list_cluster
 {
 private:
 	// Using
-	using _group_t=_list_group<_item_t>;
-	using _item_group_t=_list_item_group<_item_t, _group_size>;
-	using _parent_group_t=_list_parent_group<_item_t, _group_size>;
+	using _group_t=_list_group<_item_t, _size_t>;
+	using _item_group_t=_list_item_group<_item_t, _size_t, _group_size>;
+	using _parent_group_t=_list_parent_group<_item_t, _size_t, _group_size>;
 
 public:
 	// Friends
-	friend class _list_iterator_base<_item_t, _group_size, true>;
-	friend class _list_iterator_base<_item_t, _group_size, false>;
+	friend class _list_iterator_base<_item_t, _size_t, _group_size, true>;
+	friend class _list_iterator_base<_item_t, _size_t, _group_size, false>;
 
 	// Access
-	_item_t get_at(std::size_t position)const noexcept
+	_item_t get_at(_size_t position)const noexcept
 		{
 		if(!m_root)
 			return _item_t();
@@ -735,13 +735,13 @@ public:
 			return _item_t();
 		return *item;
 		}
-	std::size_t get_count()const noexcept
+	_size_t get_count()const noexcept
 		{
 		if(!m_root)
 			return 0;
 		return m_root->get_item_count();
 		}
-	std::size_t get_many(std::size_t position, std::size_t count, _item_t* items)const noexcept
+	_size_t get_many(_size_t position, _size_t count, _item_t* items)const noexcept
 		{
 		if(!m_root)
 			return 0;
@@ -758,11 +758,11 @@ public:
 		m_root=new _parent_group_t(m_root);
 		m_root->append(item, true);
 		}
-	void append(_item_t const* items, std::size_t count)noexcept
+	void append(_item_t const* items, _size_t count)noexcept
 		{
 		if(!m_root)
 			m_root=new _item_group_t();
-		std::size_t pos=0;
+		_size_t pos=0;
 		while(pos<count)
 			{
 			pos+=m_root->append(&items[pos], count-pos);
@@ -779,7 +779,7 @@ public:
 			m_root=nullptr;
 			}
 		}
-	bool insert_at(std::size_t position, _item_t const& item)noexcept
+	bool insert_at(_size_t position, _item_t const& item)noexcept
 		{
 		if(!m_root)
 			{
@@ -795,7 +795,7 @@ public:
 		m_root=new _parent_group_t(m_root);
 		return m_root->insert_at(position, item, true);
 		}
-	bool remove_at(std::size_t position)noexcept
+	bool remove_at(_size_t position)noexcept
 		{
 		if(!m_root)
 			return false;
@@ -806,15 +806,15 @@ public:
 			}
 		return false;
 		}
-	bool set_at(std::size_t position, _item_t const& item)noexcept
+	bool set_at(_size_t position, _item_t const& item)noexcept
 		{
 		if(!m_root)
 			return false;
 		return m_root->set_at(position, item);
 		}
-	std::size_t set_many(std::size_t position, std::size_t count, _item_t const* items)
+	_size_t set_many(_size_t position, _size_t count, _item_t const* items)
 		{
-		std::size_t pos=0;
+		_size_t pos=0;
 		if(m_root)
 			{
 			pos=m_root->set_many(position, count, items);
@@ -872,20 +872,20 @@ private:
 
 
 //=====================
-// Iterator base-class
+// Iterator Base-Class
 //=====================
 
-template <typename _item_t, uint16_t _group_size, bool _is_const>
+template <typename _item_t, typename _size_t, uint16_t _group_size, bool _is_const>
 class _list_iterator_base
 {
 protected:
 	// Using
-	using _base_t=_list_iterator_base<_item_t, _group_size, _is_const>;
-	using _group_t=_list_group<_item_t>;
-	using _item_group_t=_list_item_group<_item_t, _group_size>;
-	using _list_t=_list_cluster<_item_t, _group_size>;
+	using _base_t=_list_iterator_base<_item_t, _size_t, _group_size, _is_const>;
+	using _group_t=_list_group<_item_t, _size_t>;
+	using _item_group_t=_list_item_group<_item_t, _size_t, _group_size>;
+	using _list_t=_list_cluster<_item_t, _size_t, _group_size>;
 	using _list_ptr_t=typename std::conditional<_is_const, _list_t const*, _list_t*>::type;
-	using _parent_group_t=_list_parent_group<_item_t, _group_size>;
+	using _parent_group_t=_list_parent_group<_item_t, _size_t, _group_size>;
 
 public:
 	// Access
@@ -895,11 +895,11 @@ public:
 			return _item_t();
 		return *m_current;
 		}
-	std::size_t get_position()const noexcept
+	_size_t get_position()const noexcept
 		{
 		if(m_level_count==0)
 			return 0;
-		std::size_t pos=0;
+		_size_t pos=0;
 		for(uint16_t u=0; u<m_level_count-1; u++)
 			{
 			_parent_group_t* group=(_parent_group_t*)m_its[u].group;
@@ -995,7 +995,7 @@ public:
 		m_current=nullptr;
 		return false;
 		}
-	bool set_position(std::size_t position)noexcept
+	bool set_position(_size_t position)noexcept
 		{
 		m_current=nullptr;
 		_group_t* group=m_list->m_root;
@@ -1042,7 +1042,7 @@ protected:
 		}
 	_list_iterator_base(_list_ptr_t list)noexcept:
 		m_current(nullptr), m_its(nullptr), m_level_count(0), m_list(list) {}
-	_list_iterator_base(_list_ptr_t list, std::size_t position)noexcept:
+	_list_iterator_base(_list_ptr_t list, _size_t position)noexcept:
 		_list_iterator_base(list) { set_position(position); }
 	~_list_iterator_base()noexcept
 		{
@@ -1058,7 +1058,7 @@ protected:
 		}_it_struct;
 
 	// Common
-	uint16_t get_position_internal(_group_t* group, std::size_t* pos)const noexcept
+	uint16_t get_position_internal(_group_t* group, _size_t* pos)const noexcept
 		{
 		uint16_t count=group->get_child_count();
 		uint16_t level=group->get_level();
@@ -1069,7 +1069,7 @@ protected:
 			return u;
 			}
 		_parent_group_t* parentgroup=(_parent_group_t*)group;
-		std::size_t itemcount=0;
+		_size_t itemcount=0;
 		for(uint16_t u=0; u<count; u++)
 			{
 			_group_t* child=parentgroup->get_child(u);
@@ -1101,27 +1101,27 @@ protected:
 // Iterator
 //==========
 
-template <typename _item_t, uint16_t _group_size>
-class _list_iterator: public _list_iterator_base<_item_t, _group_size, false>
+template <typename _item_t, typename _size_t, uint16_t _group_size>
+class _list_iterator: public _list_iterator_base<_item_t, _size_t, _group_size, false>
 {
 private:
 	// Using
-	using _base_t=_list_iterator_base<_item_t, _group_size, false>;
-	using _it_t=_list_iterator<_item_t, _group_size>;
-	using _list_t=_list_cluster<_item_t, _group_size>;
+	using _base_t=_list_iterator_base<_item_t, _size_t, _group_size, false>;
+	using _it_t=_list_iterator<_item_t, _size_t, _group_size>;
+	using _list_t=_list_cluster<_item_t, _size_t, _group_size>;
 
 public:
 	// Con-/Destructors
 	_list_iterator(_it_t const& it)noexcept: _base_t(it) {}
 	_list_iterator(_list_t* list)noexcept: _base_t(list) {}
-	_list_iterator(_list_t* list, std::size_t position)noexcept: _base_t(list, position) {}
+	_list_iterator(_list_t* list, _size_t position)noexcept: _base_t(list, position) {}
 
 	// Modification
 	bool remove_current()noexcept
 		{
 		if(this->m_current==nullptr)
 			return false;
-		std::size_t pos=this->get_position();
+		_size_t pos=this->get_position();
 		this->m_list->remove_at(pos);
 		this->set_position(pos);
 		return true;
@@ -1136,23 +1136,23 @@ public:
 
 
 //================
-// Const-iterator
+// Const-Iterator
 //================
 
-template <typename _item_t, uint16_t _group_size>
-class _list_const_iterator: public _list_iterator_base<_item_t, _group_size, true>
+template <typename _item_t, typename _size_t, uint16_t _group_size>
+class _list_const_iterator: public _list_iterator_base<_item_t, _size_t, _group_size, true>
 {
 private:
 	// Using
-	using _base_t=_list_iterator_base<_item_t, _group_size, true>;
-	using _it_t=_list_const_iterator<_item_t, _group_size>;
-	using _list_t=_list_cluster<_item_t, _group_size>;
+	using _base_t=_list_iterator_base<_item_t, _size_t, _group_size, true>;
+	using _it_t=_list_const_iterator<_item_t, _size_t, _group_size>;
+	using _list_t=_list_cluster<_item_t, _size_t, _group_size>;
 
 public:
 	// Con-/Destructors
 	_list_const_iterator(_it_t const& it)noexcept: _base_t(it) {}
 	_list_const_iterator(_list_t const* list)noexcept: _base_t(list) {}
-	_list_const_iterator(_list_t const* list, std::size_t position)noexcept: _base_t(list, position) {}
+	_list_const_iterator(_list_t const* list, _size_t position)noexcept: _base_t(list, position) {}
 };
 
 
@@ -1160,25 +1160,25 @@ public:
 // List
 //======
 
-template <typename _item_t, uint16_t _group_size=10>
-class list: public _list_cluster<_item_t, _group_size>
+template <typename _item_t, typename _size_t=uint32_t, uint16_t _group_size=10>
+class list: public _list_cluster<_item_t, _size_t, _group_size>
 {
 private:
 	// Using
-	using _base_t=_list_cluster<_item_t, _group_size>;
+	using _base_t=_list_cluster<_item_t, _size_t, _group_size>;
 
 public:
 	// Typedefs
-	typedef _list_const_iterator<_item_t, _group_size> const_iterator;
-	typedef _list_iterator<_item_t, _group_size> iterator;
+	typedef _list_const_iterator<_item_t, _size_t, _group_size> const_iterator;
+	typedef _list_iterator<_item_t, _size_t, _group_size> iterator;
 
 	// Con-/Destructors
 	list()noexcept {}
 	list(list const& list)noexcept: _base_t(list) {}
 
 	// Iteration
-	inline iterator at(std::size_t position)noexcept { return iterator(this, position); }
-	inline const_iterator at(std::size_t position)const noexcept { return const_iterator(this, position); }
+	inline iterator at(_size_t position)noexcept { return iterator(this, position); }
+	inline const_iterator at(_size_t position)const noexcept { return const_iterator(this, position); }
 	inline iterator at(iterator const& it)noexcept { return iterator(it); }
 	inline const_iterator at(const_iterator const& it)const noexcept { return const_iterator(it); }
 	inline iterator first()noexcept { return iterator(this, 0); }

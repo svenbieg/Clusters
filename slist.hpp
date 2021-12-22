@@ -34,7 +34,7 @@ namespace Clusters {
 // Forward-Declarations
 //======================
 
-template <typename _id_t, typename _item_t, uint16_t _group_size> class slist;
+template <typename _id_t, typename _item_t, typename _size_t, uint16_t _group_size> class slist;
 
 
 //======
@@ -76,7 +76,7 @@ private:
 // Group
 //=======
 
-template <typename _id_t, typename _item_t>
+template <typename _id_t, typename _item_t, typename _size_t>
 class _slist_group
 {
 private:
@@ -92,12 +92,12 @@ public:
 	virtual int16_t find(_id_t const& id)const noexcept=0;
 	virtual _slist_item_t* get(_id_t const& id)noexcept=0;
 	virtual _slist_item_t const* get(_id_t const& id)const noexcept=0;
-	virtual _slist_item_t* get_at(std::size_t position)noexcept=0;
-	virtual _slist_item_t const* get_at(std::size_t position)const noexcept=0;
+	virtual _slist_item_t* get_at(_size_t position)noexcept=0;
+	virtual _slist_item_t const* get_at(_size_t position)const noexcept=0;
 	virtual uint16_t get_child_count()const noexcept=0;
 	virtual _slist_item_t* get_first()noexcept=0;
 	virtual _slist_item_t const* get_first()const noexcept=0;
-	virtual std::size_t get_item_count()const noexcept=0;
+	virtual _size_t get_item_count()const noexcept=0;
 	virtual _slist_item_t* get_last()noexcept=0;
 	virtual _slist_item_t const* get_last()const noexcept=0;
 	virtual uint16_t get_level()const noexcept=0;
@@ -105,17 +105,17 @@ public:
 	// Modification
 	virtual bool add(_id_t const& id, _item_t const* item, bool again, bool* exists)noexcept=0;
 	virtual bool remove(_id_t const& id)noexcept=0;
-	virtual bool remove_at(std::size_t position)noexcept=0;
+	virtual bool remove_at(_size_t position)noexcept=0;
 	virtual bool set(_id_t const& id, _item_t const* item, bool again, bool* exists)noexcept=0;
 };
 
 
 //============
-// Item-group
+// Item-Group
 //============
 
-template <typename _id_t, typename _item_t, uint16_t _group_size>
-class _slist_item_group: public _slist_group<_id_t, _item_t>
+template <typename _id_t, typename _item_t, typename _size_t, uint16_t _group_size>
+class _slist_item_group: public _slist_group<_id_t, _item_t, _size_t>
 {
 private:
 	// Using
@@ -155,13 +155,13 @@ public:
 			return nullptr;
 		return &get_items()[pos];
 		}
-	_slist_item_t* get_at(std::size_t position)noexcept override
+	_slist_item_t* get_at(_size_t position)noexcept override
 		{
 		if(position>=m_item_count)
 			return nullptr;
 		return &get_items()[position];
 		}
-	_slist_item_t const* get_at(std::size_t position)const noexcept override
+	_slist_item_t const* get_at(_size_t position)const noexcept override
 		{
 		if(position>=m_item_count)
 			return nullptr;
@@ -180,7 +180,7 @@ public:
 			return nullptr;
 		return get_items();
 		}
-	inline std::size_t get_item_count()const noexcept override { return m_item_count; }
+	inline _size_t get_item_count()const noexcept override { return m_item_count; }
 	inline _slist_item_t* get_items()noexcept { return (_slist_item_t*)m_items; }
 	inline _slist_item_t const* get_items()const noexcept { return (_slist_item_t const*)m_items; }
 	_slist_item_t* get_last()noexcept override
@@ -228,7 +228,7 @@ public:
 			return false;
 		return remove_at(pos);
 		}
-	bool remove_at(std::size_t position)noexcept override
+	bool remove_at(_size_t position)noexcept override
 		{
 		if(position>=m_item_count)
 			return false;
@@ -323,24 +323,24 @@ private:
 		return true;
 		}
 
-	// Uninitialized array of items
+	// Uninitialized Array of Items
 	uint16_t m_item_count;
 	alignas(alignof(_slist_item_t[_group_size])) unsigned char m_items[sizeof(_slist_item_t[_group_size])];
 };
 
 
 //==============
-// Parent-group
+// Parent-Group
 //==============
 
-template <typename _id_t, typename _item_t, uint16_t _group_size>
-class _slist_parent_group: public _slist_group<_id_t, _item_t>
+template <typename _id_t, typename _item_t, typename _size_t, uint16_t _group_size>
+class _slist_parent_group: public _slist_group<_id_t, _item_t, _size_t>
 {
 private:
 	// Using
-	using _group_t=_slist_group<_id_t, _item_t>;
-	using _item_group_t=_slist_item_group<_id_t, _item_t, _group_size>;
-	using _parent_group_t=_slist_parent_group<_id_t, _item_t, _group_size>;
+	using _group_t=_slist_group<_id_t, _item_t, _size_t>;
+	using _item_group_t=_slist_item_group<_id_t, _item_t, _size_t, _group_size>;
+	using _parent_group_t=_slist_parent_group<_id_t, _item_t, _size_t, _group_size>;
 	using _slist_item_t=_slist_item<_id_t, _item_t>;
 
 public:
@@ -392,14 +392,14 @@ public:
 			return nullptr;
 		return m_children[pos]->get(id);
 		}
-	_slist_item_t* get_at(std::size_t position)noexcept override
+	_slist_item_t* get_at(_size_t position)noexcept override
 		{
 		uint16_t group=get_group(&position);
 		if(group>=_group_size)
 			return nullptr;
 		return m_children[group]->get_at(position);
 		}
-	_slist_item_t const* get_at(std::size_t position)const noexcept override
+	_slist_item_t const* get_at(_size_t position)const noexcept override
 		{
 		uint16_t group=get_group(&position);
 		if(group>=_group_size)
@@ -415,7 +415,7 @@ public:
 	inline uint16_t get_child_count()const noexcept override { return m_child_count; }
 	inline _slist_item_t* get_first()noexcept override { return m_first; }
 	inline _slist_item_t const* get_first()const noexcept override { return const_cast<_slist_item_t const*>(m_first); }
-	inline std::size_t get_item_count()const noexcept override { return m_item_count; }
+	inline _size_t get_item_count()const noexcept override { return m_item_count; }
 	inline _slist_item_t* get_last()noexcept override { return m_last; }
 	inline _slist_item_t const* get_last()const noexcept override { return const_cast<_slist_item_t const*>(m_last); }
 	inline uint16_t get_level()const noexcept override { return m_level; }
@@ -514,7 +514,7 @@ public:
 		update_bounds();
 		return true;
 		}
-	bool remove_at(std::size_t position)noexcept override
+	bool remove_at(_size_t position)noexcept override
 		{
 		if(position>=m_item_count)
 			return false;
@@ -551,11 +551,11 @@ public:
 
 private:
 	// Access
-	uint16_t get_group(std::size_t* position)const noexcept
+	uint16_t get_group(_size_t* position)const noexcept
 		{
 		for(uint16_t u=0; u<m_child_count; u++)
 			{
-			std::size_t count=m_children[u]->get_item_count();
+			_size_t count=m_children[u]->get_item_count();
 			if(*position<count)
 				return u;
 			*position-=count;
@@ -781,7 +781,7 @@ private:
 	uint16_t m_child_count;
 	_group_t* m_children[_group_size];
 	_slist_item_t* m_first;
-	std::size_t m_item_count;
+	_size_t m_item_count;
 	_slist_item_t* m_last;
 	uint16_t m_level;
 };
@@ -792,30 +792,30 @@ private:
 //=========
 
 // Forward-Declaration
-template <typename _id_t, typename _item_t, uint16_t _group_size, bool _is_const> class _slist_iterator_base;
+template <typename _id_t, typename _item_t, typename _size_t, uint16_t _group_size, bool _is_const> class _slist_iterator_base;
 
-template <typename _id_t, typename _item_t, uint16_t _group_size>
+template <typename _id_t, typename _item_t, typename _size_t, uint16_t _group_size>
 class _slist_cluster
 {
 private:
 	// Using
-	using _group_t=_slist_group<_id_t, _item_t>;
-	using _item_group_t=_slist_item_group<_id_t, _item_t, _group_size>;
-	using _parent_group_t=_slist_parent_group<_id_t, _item_t, _group_size>;
+	using _group_t=_slist_group<_id_t, _item_t, _size_t>;
+	using _item_group_t=_slist_item_group<_id_t, _item_t, _size_t, _group_size>;
+	using _parent_group_t=_slist_parent_group<_id_t, _item_t, _size_t, _group_size>;
 
 public:
 	// Friends
-	friend class _slist_iterator_base<_id_t, _item_t, _group_size, true>;
-	friend class _slist_iterator_base<_id_t, _item_t, _group_size, false>;
+	friend class _slist_iterator_base<_id_t, _item_t, _size_t, _group_size, true>;
+	friend class _slist_iterator_base<_id_t, _item_t, _size_t, _group_size, false>;
 
-		// Access
+	// Access
 	bool contains(_id_t const& id)const noexcept
 		{
 		if(!m_root)
 			return false;
 		return m_root->contains(id);
 		}
-	std::size_t get_count()const noexcept
+	_size_t get_count()const noexcept
 		{
 		if(!m_root)
 			return false;
@@ -842,7 +842,7 @@ public:
 			}
 		return false;
 		}
-	bool remove_at(std::size_t position)noexcept
+	bool remove_at(_size_t position)noexcept
 		{
 		if(!m_root)
 			return false;
@@ -903,26 +903,26 @@ protected:
 // Iterator base-class
 //=====================
 
-template <typename _id_t, typename _item_t, uint16_t _group_size, bool _is_const>
+template <typename _id_t, typename _item_t, typename _size_t, uint16_t _group_size, bool _is_const>
 class _slist_iterator_base
 {
 protected:
 	// Using
-	using _base_t=_slist_iterator_base<_id_t, _item_t, _group_size, _is_const>;
-	using _group_t=_slist_group<_id_t, _item_t>;
-	using _item_group_t=_slist_item_group<_id_t, _item_t, _group_size>;
-	using _parent_group_t=_slist_parent_group<_id_t, _item_t, _group_size>;
+	using _base_t=_slist_iterator_base<_id_t, _item_t, _size_t, _group_size, _is_const>;
+	using _group_t=_slist_group<_id_t, _item_t, _size_t>;
+	using _item_group_t=_slist_item_group<_id_t, _item_t, _size_t, _group_size>;
+	using _parent_group_t=_slist_parent_group<_id_t, _item_t, _size_t, _group_size>;
 	using _slist_item_t=_slist_item<_id_t, _item_t>;
-	using _slist_t=_slist_cluster<_id_t, _item_t, _group_size>;
+	using _slist_t=_slist_cluster<_id_t, _item_t, _size_t, _group_size>;
 	using _slist_ptr_t=typename std::conditional<_is_const, _slist_t const*, _slist_t*>::type;
 
 public:
 	// Access
-	std::size_t get_position()const noexcept
+	_size_t get_position()const noexcept
 		{
 		if(m_its==nullptr)
 			return 0;
-		std::size_t pos=0;
+		_size_t pos=0;
 		for(uint16_t u=0; u<m_level_count-1; u++)
 			{
 			_parent_group_t* group=(_parent_group_t*)m_its[u].group;
@@ -1060,7 +1060,7 @@ public:
 		m_current=nullptr;
 		return false;
 		}
-	bool set_position(std::size_t position)noexcept
+	bool set_position(_size_t position)noexcept
 		{
 		m_current=nullptr;
 		_group_t* group=m_slist->m_root;
@@ -1117,7 +1117,7 @@ protected:
 		}_it_struct;
 
 	// Common
-	uint16_t get_position_internal(_group_t* group, std::size_t* pos)const noexcept
+	uint16_t get_position_internal(_group_t* group, _size_t* pos)const noexcept
 		{
 		uint16_t count=group->get_child_count();
 		uint16_t level=group->get_level();
@@ -1128,7 +1128,7 @@ protected:
 			return u;
 			}
 		_parent_group_t* parentgroup=(_parent_group_t*)group;
-		std::size_t itemcount=0;
+		_size_t itemcount=0;
 		for(uint16_t u=0; u<count; u++)
 			{
 			_group_t* child=parentgroup->get_child(u);
@@ -1160,21 +1160,21 @@ protected:
 // Iterator
 //==========
 
-template <typename _id_t, typename _item_t, uint16_t _group_size>
-class _slist_iterator: public _slist_iterator_base<_id_t, _item_t, _group_size, false>
+template <typename _id_t, typename _item_t, typename _size_t, uint16_t _group_size>
+class _slist_iterator: public _slist_iterator_base<_id_t, _item_t, _size_t, _group_size, false>
 {
 private:
 	// Using
-	using _base_t=_slist_iterator_base<_id_t, _item_t, _group_size, false>;
-	using _it_t=_slist_iterator<_id_t, _item_t, _group_size>;
-	using _slist_t=_slist_cluster<_id_t, _item_t, _group_size>;
+	using _base_t=_slist_iterator_base<_id_t, _item_t, _size_t, _group_size, false>;
+	using _it_t=_slist_iterator<_id_t, _item_t, _size_t, _group_size>;
+	using _slist_t=_slist_cluster<_id_t, _item_t, _size_t, _group_size>;
 
 public:
 	// Con-/Destructors
 	_slist_iterator(_it_t const& it)noexcept: _base_t(it) {}
 	_slist_iterator(_slist_t* slist)noexcept: _base_t(slist) {}
-	_slist_iterator(_slist_t* slist, std::size_t position)noexcept: _base_t(slist) { this->set_position(position); }
-	_slist_iterator(_slist_t* slist, std::size_t, _id_t const& id)noexcept: _base_t(slist) { this->find(id); }
+	_slist_iterator(_slist_t* slist, _size_t position)noexcept: _base_t(slist) { this->set_position(position); }
+	_slist_iterator(_slist_t* slist, _size_t, _id_t const& id)noexcept: _base_t(slist) { this->find(id); }
 
 	// Access
 	_id_t get_current_id()const noexcept
@@ -1195,7 +1195,7 @@ public:
 		{
 		if(this->m_current==nullptr)
 			return false;
-		std::size_t pos=this->get_position();
+		_size_t pos=this->get_position();
 		this->m_slist->remove_at(pos);
 		this->set_position(pos);
 		return true;
@@ -1208,21 +1208,21 @@ public:
 		}
 };
 
-template <typename _id_t, uint16_t _group_size>
-class _slist_iterator<_id_t, void, _group_size>: public _slist_iterator_base<_id_t, void, _group_size, false>
+template <typename _id_t, typename _size_t, uint16_t _group_size>
+class _slist_iterator<_id_t, void, _size_t, _group_size>: public _slist_iterator_base<_id_t, void, _size_t, _group_size, false>
 {
 private:
 	// Using
-	using _base_t=_slist_iterator_base<_id_t, void, _group_size, false>;
-	using _slist_t=_slist_cluster<_id_t, void, _group_size>;
-	using _it_t=_slist_iterator<_id_t, void, _group_size>;
+	using _base_t=_slist_iterator_base<_id_t, void, _size_t, _group_size, false>;
+	using _slist_t=_slist_cluster<_id_t, void, _size_t, _group_size>;
+	using _it_t=_slist_iterator<_id_t, void, _size_t, _group_size>;
 
 public:
 	// Con-/Destructors
 	_slist_iterator(_it_t const& it)noexcept: _base_t(it) {}
 	_slist_iterator(_slist_t* slist)noexcept: _base_t(slist) {}
-	_slist_iterator(_slist_t* slist, std::size_t position)noexcept: _base_t(slist) { this->set_position(position); }
-	_slist_iterator(_slist_t* slist, std::size_t, _id_t const& id)noexcept: _base_t(slist) { this->find(id); }
+	_slist_iterator(_slist_t* slist, _size_t position)noexcept: _base_t(slist) { this->set_position(position); }
+	_slist_iterator(_slist_t* slist, _size_t, _id_t const& id)noexcept: _base_t(slist) { this->find(id); }
 
 	// Access
 	_id_t get_current()const noexcept
@@ -1237,7 +1237,7 @@ public:
 		{
 		if(this->m_current==nullptr)
 			return false;
-		std::size_t pos=this->get_position();
+		_size_t pos=this->get_position();
 		this->m_slist->remove_at(pos);
 		this->set_position(pos);
 		return true;
@@ -1246,24 +1246,24 @@ public:
 
 
 //================
-// Const-iterator
+// Const-Iterator
 //================
 
-template <typename _id_t, typename _item_t, uint16_t _group_size>
-class _slist_const_iterator: public _slist_iterator_base<_id_t, _item_t, _group_size, true>
+template <typename _id_t, typename _item_t, typename _size_t, uint16_t _group_size>
+class _slist_const_iterator: public _slist_iterator_base<_id_t, _item_t, _size_t, _group_size, true>
 {
 private:
 	// Using
-	using _base_t=_slist_iterator_base<_id_t, _item_t, _group_size, true>;
-	using _it_t=_slist_const_iterator<_id_t, _item_t, _group_size>;
-	using _slist_t=_slist_cluster<_id_t, _item_t, _group_size>;
+	using _base_t=_slist_iterator_base<_id_t, _item_t, _size_t, _group_size, true>;
+	using _it_t=_slist_const_iterator<_id_t, _item_t, _size_t, _group_size>;
+	using _slist_t=_slist_cluster<_id_t, _item_t, _size_t, _group_size>;
 
 public:
 	// Con-/Destructors
 	_slist_const_iterator(_it_t const& it)noexcept: _base_t(it) {}
 	_slist_const_iterator(_slist_t const* slist)noexcept: _base_t(slist) {}
-	_slist_const_iterator(_slist_t const* slist, std::size_t position)noexcept: _base_t(slist) { this->set_position(position); }
-	_slist_const_iterator(_slist_t const* slist, std::size_t, _id_t const& id)noexcept: _base_t(slist) { this->find(id); }
+	_slist_const_iterator(_slist_t const* slist, _size_t position)noexcept: _base_t(slist) { this->set_position(position); }
+	_slist_const_iterator(_slist_t const* slist, _size_t, _id_t const& id)noexcept: _base_t(slist) { this->find(id); }
 
 	// Access
 	_id_t get_current_id()const noexcept
@@ -1280,21 +1280,21 @@ public:
 		}
 };
 
-template <typename _id_t, uint16_t _group_size>
-class _slist_const_iterator<_id_t, void, _group_size>: public _slist_iterator_base<_id_t, void, _group_size, true>
+template <typename _id_t, typename _size_t, uint16_t _group_size>
+class _slist_const_iterator<_id_t, void, _size_t, _group_size>: public _slist_iterator_base<_id_t, void, _size_t, _group_size, true>
 {
 private:
 	// Using
-	using _base_t=_slist_iterator_base<_id_t, void, _group_size, true>;
-	using _it_t=_slist_const_iterator<_id_t, void, _group_size>;
-	using _slist_t=_slist_cluster<_id_t, void, _group_size>;
+	using _base_t=_slist_iterator_base<_id_t, void, _size_t, _group_size, true>;
+	using _it_t=_slist_const_iterator<_id_t, void, _size_t, _group_size>;
+	using _slist_t=_slist_cluster<_id_t, void, _size_t, _group_size>;
 
 public:
 	// Con-/Destructors
 	_slist_const_iterator(_it_t const& it)noexcept: _base_t(it) {}
 	_slist_const_iterator(_slist_t const* slist)noexcept: _base_t(slist) {}
-	_slist_const_iterator(_slist_t const* slist, std::size_t position)noexcept: _base_t(slist) { this->set_position(position); }
-	_slist_const_iterator(_slist_t const* slist, std::size_t, _id_t const& id)noexcept: _base_t(slist) { this->find(id); }
+	_slist_const_iterator(_slist_t const* slist, _size_t position)noexcept: _base_t(slist) { this->set_position(position); }
+	_slist_const_iterator(_slist_t const* slist, _size_t, _id_t const& id)noexcept: _base_t(slist) { this->find(id); }
 
 	// Access
 	_id_t get_current()const noexcept
@@ -1307,26 +1307,26 @@ public:
 
 
 //==================
-// SList base-class
+// SList Base-Class
 //==================
 
-template <typename _id_t, typename _item_t, uint16_t _group_size>
-class _slist_base: public _slist_cluster<_id_t, _item_t, _group_size>
+template <typename _id_t, typename _item_t, typename _size_t, uint16_t _group_size>
+class _slist_base: public _slist_cluster<_id_t, _item_t, _size_t, _group_size>
 {
 private:
 	// Using
-	using _base_t=_slist_cluster<_id_t, _item_t, _group_size>;
-	using _const_it_t=_slist_const_iterator<_id_t, _item_t, _group_size>;
-	using _group_t=_slist_group<_id_t, _item_t>;
-	using _it_t=_slist_iterator<_id_t, _item_t, _group_size>;
-	using _item_group_t=_slist_item_group<_id_t, _item_t, _group_size>;
-	using _parent_group_t=_slist_parent_group<_id_t, _item_t, _group_size>;
+	using _base_t=_slist_cluster<_id_t, _item_t, _size_t, _group_size>;
+	using _const_it_t=_slist_const_iterator<_id_t, _item_t, _size_t, _group_size>;
+	using _group_t=_slist_group<_id_t, _item_t, _size_t>;
+	using _it_t=_slist_iterator<_id_t, _item_t, _size_t, _group_size>;
+	using _item_group_t=_slist_item_group<_id_t, _item_t, _size_t, _group_size>;
+	using _parent_group_t=_slist_parent_group<_id_t, _item_t, _size_t, _group_size>;
 	using _slist_item_t=_slist_item<_id_t, _item_t>;
 
 public:
 	// Iteration
-	inline _it_t at(std::size_t position)noexcept { return _it_t(this, position); }
-	inline _const_it_t at(std::size_t position)const noexcept { return _const_it_t(this, position); }
+	inline _it_t at(_size_t position)noexcept { return _it_t(this, position); }
+	inline _const_it_t at(_size_t position)const noexcept { return _const_it_t(this, position); }
 	inline _it_t at(_it_t const& it)noexcept { return _it_t(it); }
 	inline _const_it_t at(_const_it_t const& it)const noexcept { return _const_it_t(it); }
 	inline _it_t find(_id_t const& id)noexcept { return _it_t(this, 0, id); }
@@ -1368,17 +1368,17 @@ protected:
 
 
 //=============
-// SList typed
+// SList Typed
 //=============
 
-template <typename _id_t, typename _item_t, uint16_t _group_size>
-class _slist_typed: public _slist_base<_id_t, _item_t, _group_size>
+template <typename _id_t, typename _item_t, typename _size_t, uint16_t _group_size>
+class _slist_typed: public _slist_base<_id_t, _item_t, _size_t, _group_size>
 {
 private:
 	// Using
-	using _base_t=_slist_base<_id_t, _item_t, _group_size>;
-	using _item_group_t=_slist_item_group<_id_t, _item_t, _group_size>;
-	using _parent_group_t=_slist_parent_group<_id_t, _item_t, _group_size>;
+	using _base_t=_slist_base<_id_t, _item_t, _size_t, _group_size>;
+	using _item_group_t=_slist_item_group<_id_t, _item_t, _size_t, _group_size>;
+	using _parent_group_t=_slist_parent_group<_id_t, _item_t, _size_t, _group_size>;
 	using _slist_item_t=_slist_item<_id_t, _item_t>;
 
 public:
@@ -1412,14 +1412,14 @@ public:
 	inline bool set(_id_t const& id, _item_t const& item)noexcept { return this->set_internal(id, &item); }
 };
 
-template <typename _id_t, uint16_t _group_size>
-class _slist_typed<_id_t, void, _group_size>: public _slist_base<_id_t, void, _group_size>
+template <typename _id_t, typename _size_t, uint16_t _group_size>
+class _slist_typed<_id_t, void, _size_t, _group_size>: public _slist_base<_id_t, void, _size_t, _group_size>
 {
 private:
 	// Using
-	using _base_t=_slist_base<_id_t, void, _group_size>;
-	using _item_group_t=_slist_item_group<_id_t, void, _group_size>;
-	using _parent_group_t=_slist_parent_group<_id_t, void, _group_size>;
+	using _base_t=_slist_base<_id_t, void, _size_t, _group_size>;
+	using _item_group_t=_slist_item_group<_id_t, void, _size_t, _group_size>;
+	using _parent_group_t=_slist_parent_group<_id_t, void, _size_t, _group_size>;
 	using _slist_item_t=_slist_item<_id_t, void>;
 
 public:
@@ -1437,7 +1437,7 @@ public:
 			return _id_t();
 		return item->get_id();
 		}
-	_id_t get_at(std::size_t position)const noexcept
+	_id_t get_at(_size_t position)const noexcept
 		{
 		if(!this->m_root)
 			return _id_t();
@@ -1457,18 +1457,18 @@ public:
 // SList
 //=======
 
-template <typename _id_t, typename _item_t=void, uint16_t _group_size=10>
-class slist: public _slist_typed<_id_t, _item_t, _group_size>
+template <typename _id_t, typename _item_t=void, typename _size_t=uint32_t, uint16_t _group_size=10>
+class slist: public _slist_typed<_id_t, _item_t, _size_t, _group_size>
 {
 private:
 	// Using
-	using _base_t=_slist_typed<_id_t, _item_t, _group_size>;
+	using _base_t=_slist_typed<_id_t, _item_t, _size_t, _group_size>;
 
 public:
 	// Typedefs
-	typedef _slist_const_iterator<_id_t, _item_t, _group_size> const_iterator;
+	typedef _slist_const_iterator<_id_t, _item_t, _size_t, _group_size> const_iterator;
 	typedef _slist_item<_id_t, _item_t> item;
-	typedef _slist_iterator<_id_t, _item_t, _group_size> iterator;
+	typedef _slist_iterator<_id_t, _item_t, _size_t, _group_size> iterator;
 
 	// Con-/Destructors
 	slist()noexcept {}
