@@ -726,15 +726,9 @@ public:
 	friend class _list_iterator_base<_item_t, _size_t, _group_size, false>;
 
 	// Access
-	_item_t get_at(_size_t position)const noexcept
-		{
-		if(!m_root)
-			return _item_t();
-		_item_t const* item=m_root->get_at(position);
-		if(item==nullptr)
-			return _item_t();
-		return *item;
-		}
+	_item_t& operator[](_size_t position) { return *m_root->get_at(position); }
+	_item_t const& operator[](_size_t position)const { return *m_root->get_at(position); }
+	_item_t& get_at(_size_t position) { return *m_root->get_at(position); }
 	_size_t get_count()const noexcept
 		{
 		if(!m_root)
@@ -889,12 +883,6 @@ protected:
 
 public:
 	// Access
-	_item_t get_current()const noexcept
-		{
-		if(m_current==nullptr)
-			return _item_t();
-		return *m_current;
-		}
 	_size_t get_position()const noexcept
 		{
 		if(m_level_count==0)
@@ -1116,6 +1104,9 @@ public:
 	_list_iterator(_list_t* list)noexcept: _base_t(list) {}
 	_list_iterator(_list_t* list, _size_t position)noexcept: _base_t(list, position) {}
 
+	// Access
+	_item_t& get_current()const { return *m_current; }
+
 	// Modification
 	bool remove_current()noexcept
 		{
@@ -1153,6 +1144,9 @@ public:
 	_list_const_iterator(_it_t const& it)noexcept: _base_t(it) {}
 	_list_const_iterator(_list_t const* list)noexcept: _base_t(list) {}
 	_list_const_iterator(_list_t const* list, _size_t position)noexcept: _base_t(list, position) {}
+
+	// Access
+	_item_t const& get_current()const { return *m_current; }
 };
 
 
