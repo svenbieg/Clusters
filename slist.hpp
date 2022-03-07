@@ -956,10 +956,10 @@ public:
 		_group_t* group=m_slist->m_root;
 		if(!group)
 			return false;
-		uint16_t levelcount=group->get_level()+1;
-		if(!set_level_count(levelcount))
+		uint16_t level_count=group->get_level()+1;
+		if(!set_level_count(level_count))
 			return false;
-		for(uint16_t u=0; u<levelcount-1; u++)
+		for(uint16_t u=0; u<level_count-1; u++)
 			{
 			_parent_group_t* parentgroup=(_parent_group_t*)group;
 			int16_t pos=parentgroup->find(id);
@@ -981,8 +981,8 @@ public:
 			pos++;
 			pos*=-1;
 			}
-		m_its[levelcount-1].group=group;
-		m_its[levelcount-1].position=pos;
+		m_its[level_count-1].group=group;
+		m_its[level_count-1].position=pos;
 		m_current=itemgroup->get_at(pos);
 		return bfound;
 		}
@@ -1066,8 +1066,8 @@ public:
 		_group_t* group=m_slist->m_root;
 		if(!group)
 			return false;
-		uint16_t levelcount=(uint16_t)(group->get_level()+1);
-		if(!set_level_count(levelcount))
+		uint16_t level_count=(uint16_t)(group->get_level()+1);
+		if(!set_level_count(level_count))
 			return false;
 		uint16_t pos=get_position_internal(group, &position);
 		m_its[0].group=group;
@@ -1139,15 +1139,15 @@ protected:
 			}
 		return _group_size;
 		}
-	bool set_level_count(uint16_t levelcount)noexcept
+	bool set_level_count(uint16_t level_count)noexcept
 		{
-		if(m_level_count==levelcount)
+		if(m_level_count==level_count)
 			return true;
 		if(m_its!=nullptr)
 			operator delete(m_its);
-		m_its=(_it_struct*)operator new(levelcount*sizeof(_it_struct));
-		m_level_count=m_its? levelcount: 0;
-		return m_level_count==levelcount;
+		m_its=(_it_struct*)operator new(level_count*sizeof(_it_struct));
+		m_level_count=m_its? level_count: 0;
+		return m_level_count==level_count;
 		}
 	_slist_item_t* m_current;
 	_slist_ptr_t m_slist;

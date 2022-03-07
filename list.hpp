@@ -989,8 +989,8 @@ public:
 		_group_t* group=m_list->m_root;
 		if(!group)
 			return false;
-		uint16_t levelcount=(uint16_t)(group->get_level()+1);
-		if(!set_level_count(levelcount))
+		uint16_t level_count=(uint16_t)(group->get_level()+1);
+		if(!set_level_count(level_count))
 			return false;
 		uint16_t pos=get_position_internal(group, &position);
 		if(pos==_group_size)
@@ -1068,15 +1068,15 @@ protected:
 			}
 		return _group_size;
 		}
-	bool set_level_count(uint16_t levelcount)noexcept
+	bool set_level_count(uint16_t level_count)noexcept
 		{
-		if(m_level_count==levelcount)
+		if(m_level_count==level_count)
 			return true;
 		if(m_its!=nullptr)
 			operator delete(m_its);
-		m_its=(_it_struct*)operator new(levelcount*sizeof(_it_struct));
-		m_level_count=m_its? levelcount: 0;
-		return m_level_count==levelcount;
+		m_its=(_it_struct*)operator new(level_count*sizeof(_it_struct));
+		m_level_count=m_its? level_count: 0;
+		return m_level_count==level_count;
 		}
 	_item_t* m_current;
 	_it_struct* m_its;
