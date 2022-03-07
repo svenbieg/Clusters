@@ -1105,7 +1105,7 @@ public:
 	_list_iterator(_list_t* list, _size_t position)noexcept: _base_t(list, position) {}
 
 	// Access
-	_item_t& get_current()const { return *m_current; }
+	_item_t& get_current()const { return *(this->m_current); }
 
 	// Modification
 	bool remove_current()noexcept
@@ -1146,7 +1146,7 @@ public:
 	_list_const_iterator(_list_t const* list, _size_t position)noexcept: _base_t(list, position) {}
 
 	// Access
-	_item_t const& get_current()const { return *m_current; }
+	_item_t const& get_current()const { return *(this->m_current); }
 };
 
 
