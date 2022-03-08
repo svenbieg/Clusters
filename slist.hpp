@@ -956,25 +956,25 @@ public:
 		_group_t* group=m_slist->m_root;
 		if(!group)
 			return false;
-		uint16_t level_count=group->get_level()+1;
-		if(!set_level_count(level_count))
+		int32_t level_count=group->get_level()+1;
+		if(!set_level_count((uint16_t)level_count))
 			return false;
-		for(uint16_t u=0; u<level_count-1; u++)
+		for(int32_t i=0; i<level_count-1; i++)
 			{
 			_parent_group_t* parentgroup=(_parent_group_t*)group;
-			int16_t pos=parentgroup->find(id);
+			int32_t pos=parentgroup->find(id);
 			if(pos<0)
 				{
 				bfound=false;
 				pos++;
 				pos*=-1;
 				}
-			m_its[u].group=group;
-			m_its[u].position=pos;
-			group=parentgroup->get_child(pos);
+			m_its[i].group=group;
+			m_its[i].position=(uint16_t)pos;
+			group=parentgroup->get_child((uint16_t)pos);
 			}
 		_item_group_t* itemgroup=(_item_group_t*)group;
-		int16_t pos=itemgroup->find(id);
+		int32_t pos=itemgroup->find(id);
 		if(pos<0)
 			{
 			bfound=false;
@@ -982,7 +982,7 @@ public:
 			pos*=-1;
 			}
 		m_its[level_count-1].group=group;
-		m_its[level_count-1].position=pos;
+		m_its[level_count-1].position=(uint16_t)pos;
 		m_current=itemgroup->get_at(pos);
 		return bfound;
 		}
@@ -1035,23 +1035,23 @@ public:
 			m_current=itemgroup->get_at(it->position);
 			return true;
 			}
-		for(uint16_t u=m_level_count-1; u>0; u--)
+		for(int32_t i=m_level_count-1; i>0; i--)
 			{
-			it=&m_its[u-1];
+			it=&m_its[i-1];
 			_parent_group_t* parentgroup=(_parent_group_t*)it->group;
 			if(it->position==0)
 				continue;
 			it->position--;
 			_group_t* group=it->group;
-			uint16_t pos=0;
-			for(; u<m_level_count; u++)
+			int32_t pos=0;
+			for(; i<m_level_count; i++)
 				{
 				parentgroup=(_parent_group_t*)group;
 				group=parentgroup->get_child(it->position);
 				pos=group->get_child_count()-1;
-				it=&m_its[u];
+				it=&m_its[i];
 				it->group=group;
-				it->position=pos;
+				it->position=(uint16_t)pos;
 				}
 			itemgroup=(_item_group_t*)group;
 			m_current=itemgroup->get_at(pos);

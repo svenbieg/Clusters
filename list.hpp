@@ -958,23 +958,23 @@ public:
 			m_current=itemgroup->get_at(it->position);
 			return true;
 			}
-		for(uint16_t u=m_level_count-1; u>0; u--)
+		for(int32_t i=m_level_count-1; i>0; i--)
 			{
-			it=&m_its[u-1];
+			it=&m_its[i-1];
 			_parent_group_t* parentgroup=(_parent_group_t*)it->group;
 			if(it->position==0)
 				continue;
 			it->position--;
 			_group_t* group=it->group;
-			uint16_t pos=0;
-			for(; u<m_level_count; u++)
+			int32_t pos=0;
+			for(; i<m_level_count; i++)
 				{
 				parentgroup=(_parent_group_t*)group;
 				group=parentgroup->get_child(it->position);
 				pos=group->get_child_count()-1;
-				it=&m_its[u];
+				it=&m_its[i];
 				it->group=group;
-				it->position=pos;
+				it->position=(uint16_t)pos;
 				}
 			itemgroup=(_item_group_t*)group;
 			m_current=itemgroup->get_at(pos);
