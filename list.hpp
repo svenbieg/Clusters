@@ -582,7 +582,7 @@ private:
 		}
 	uint16_t get_nearest_space(uint16_t position)const noexcept
 		{
-		int16_t before=((int16_t)position)-1;
+		int16_t before=(int16_t)(position-1);
 		uint16_t after=(uint16_t)(position+1);
 		while(before>=0||after<m_child_count)
 			{
