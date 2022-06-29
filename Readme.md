@@ -10,8 +10,8 @@ Items can be added, removed and even kept sorted in real-time.
 <br />
 
 <p>
-This is the standard-implentation. Do also have a look at<br />
-<a href="http://github.com/svenbieg/Clusters.NET">Clusters.NET</a>,
+This is the standard-implentation. Do also have a look at
+<a href="http://github.com/svenbieg/Clusters.NET">Clusters.NET</a>,<br />
 the Windows.NET-component of Clusters!
 </p>
 <br />
