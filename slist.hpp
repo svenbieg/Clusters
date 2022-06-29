@@ -818,7 +818,7 @@ public:
 	_size_t get_count()const noexcept
 		{
 		if(!m_root)
-			return false;
+			return 0;
 		return m_root->get_item_count();
 		}
 

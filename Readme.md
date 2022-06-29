@@ -11,8 +11,8 @@ Items can be added, removed and even kept sorted in real-time.
 
 <p>
 This is the standard-implentation. Do also have a look at<br />
-<a href="http://github.com/svenbieg/clusters-runtime">Clusters-Runtime</a>,
-the Windows-Runtime-Component of Clusters!
+<a href="http://github.com/svenbieg/Clusters.NET">Clusters.NET</a>,
+the Windows.NET-component of Clusters!
 </p>
 <br />
 
