@@ -3,7 +3,7 @@
 //==========
 
 // Implementation of an ordererd list.
-// Items can be inserted and removed in real-time.
+// Items can be inserted and removed in constant low time.
 
 // Copyright 2019, Sven Bieg (svenbieg@web.de)
 // http://github.com/svenbieg/clusters
