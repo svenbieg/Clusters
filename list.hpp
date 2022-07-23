@@ -729,6 +729,7 @@ public:
 	_item_t& operator[](_size_t position) { return *m_root->get_at(position); }
 	_item_t const& operator[](_size_t position)const { return *m_root->get_at(position); }
 	_item_t& get_at(_size_t position) { return *m_root->get_at(position); }
+	_item_t const& get_at(_size_t position)const { return *m_root->get_at(position); }
 	_size_t get_count()const noexcept
 		{
 		if(!m_root)
