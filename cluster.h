@@ -687,7 +687,7 @@ public:
 			m_position=position;
 			return false;
 			}
-		m_position=-3;
+		m_position=-2;
 		_group_t* group=m_cluster->get_root();
 		if(!group)
 			return false;
