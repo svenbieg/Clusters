@@ -44,6 +44,12 @@ public:
 	map_item(_key_t&& key, _value_t&& value)noexcept: m_key(std::move(key)), m_value(std::move(value)) {}
 
 	// Assignment
+	inline map_item& operator=(map_item const& item)noexcept
+		{
+		m_key=item.m_key;
+		m_value=item.m_value;
+		return *this;
+		}
 	inline map_item& operator=(map_item&& item)noexcept
 		{
 		m_key=std::move(item.m_key);
