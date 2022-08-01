@@ -1,7 +1,7 @@
 <h1>Clusters</h1>
 
 <p>
-I have written an algorithm, wich can order and sort large numbers of items.<br />
+I have written an algorithm, which can order and sort large numbers of items.<br />
 It creates a pyramidal directory, moving entries and groups accordingly.<br />
 Items can be added, removed and even kept sorted in real-time.
 </p><br />
