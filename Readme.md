@@ -3,7 +3,7 @@
 <p>
 I have written an algorithm, which can order and sort large numbers of items.<br />
 It creates a pyramidal directory, moving entries and groups accordingly.<br />
-Items can be added and removed in constant low time.
+Items can be added, removed and looked-up in constant low time.
 </p><br />
 
 <a href="http://svenbieg.azurewebsites.net/Clusters"><img src="https://user-images.githubusercontent.com/12587394/47256750-2e75a180-d485-11e8-8fe4-ad181f695690.jpg" style="" /></a><br />
