@@ -365,7 +365,9 @@ public:
 		{
 		_item_t create(std::forward<_item_param_t>(item));
 		bool created=false;
-		get_internal(&create, &created);
+		auto item=get_internal(&create, &created);
+		if(!created)
+			*item=std::move(create);
 		}
 
 private:

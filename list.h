@@ -233,17 +233,8 @@ public:
 			_group_t* group=nullptr;
 			if(level==1)
 				{
-				_item_group_t* item_group=new _item_group_t();
-				_item_group_t* previous=nullptr;
-				if(child_count>0)
-					previous=(_item_group_t*)this->m_children[child_count-1];
-				if(previous)
-					{
-					item_group->set_previous(previous);
-					previous->set_next(item_group);
-					}
-				this->m_children[child_count]=item_group;
-				group=item_group;
+				group=new _item_group_t();
+				this->m_children[child_count]=group;
 				}
 			else
 				{

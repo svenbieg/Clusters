@@ -158,7 +158,9 @@ public:
 		{
 		_item_t create(std::forward<_key_param_t>(key), std::forward<_value_param_t>(value));
 		bool created=false;
-		get_internal(&create, &created);
+		auto item=get_internal(&create, &created);
+		if(!created)
+			*item=std::move(create);
 		}
 
 private:
