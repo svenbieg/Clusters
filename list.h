@@ -127,8 +127,8 @@ public:
 //===================
 
 template <typename _item_t, typename _size_t, uint16_t _group_size>
-class list_parent_group:
-	public cluster_parent_group<_item_t, list_group<_item_t, _size_t>, list_item_group<_item_t, _size_t, _group_size>, list_parent_group<_item_t, _size_t, _group_size>, _size_t, _group_size>
+class list_parent_group: public cluster_parent_group<_item_t, list_group<_item_t, _size_t>, list_item_group<_item_t, _size_t, _group_size>,
+	list_parent_group<_item_t, _size_t, _group_size>, _size_t, _group_size>
 {
 private:
 	// Using
@@ -390,7 +390,8 @@ private:
 //======
 
 template <typename _item_t, typename _size_t=uint32_t, uint16_t _group_size=10>
-class list: public iterable_cluster<_item_t, list_group<_item_t, _size_t>, list_item_group<_item_t, _size_t, _group_size>, list_parent_group<_item_t, _size_t, _group_size>, _size_t, _group_size>
+class list: public iterable_cluster<_item_t, list_group<_item_t, _size_t>, list_item_group<_item_t, _size_t, _group_size>,
+	list_parent_group<_item_t, _size_t, _group_size>, _size_t, _group_size>
 {
 public:
 	// Using
@@ -466,15 +467,15 @@ public:
 		}
 	void set_many(_size_t position, _item_t const* items, _size_t count)noexcept
 		{
-		auto root=this->create_root();
 		_size_t pos=0;
-		while(1)
+		auto root=this->get_root();
+		if(root)
 			{
-			pos+=root->set_many(position+pos, &items[pos], count-pos);
+			pos+=root->set_many(position, items, count);
 			if(pos==count)
-				break;
-			root=this->lift_root();
+				return;
 			}
+		append(&items[pos], count-pos);
 		}
 };
 
