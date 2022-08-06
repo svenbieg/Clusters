@@ -158,12 +158,15 @@ public:
 	// Access
 	_item_t* get(_key_t const& key, _item_t* create, bool* created, bool again)noexcept override
 		{
-		_item_t* item=get_internal(key, create, created, again);
-		if(*created)
+		bool created_internal=false;
+		_item_t* item=get_internal(key, create, &created_internal, again);
+		if(created_internal)
 			{
 			this->m_item_count++;
 			update_bounds();
 			}
+		if(created)
+			*created=created_internal;
 		return item;
 		}
 	inline _item_t* get_first()noexcept override { return m_first; }
