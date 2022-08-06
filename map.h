@@ -27,6 +27,25 @@
 namespace Clusters {
 
 
+//======================
+// Forward-Declarations
+//======================
+
+template <class _key_t, typename _value_t> class map_item;
+template <class _key_t, typename _value_t, typename _size_t, uint16_t _group_size> class map;
+
+template <class _key_t, typename _value_t, typename _size_t, uint16_t _group_size>
+struct map_traits
+{
+using item_t=map_item<_key_t, _value_t>;
+using group_t=index_group<_key_t, item_t, _size_t, _group_size>;
+using item_group_t=index_item_group<_key_t, item_t, _size_t, _group_size>;
+using parent_group_t=index_parent_group<_key_t, item_t, _size_t, _group_size>;
+using size_t=_size_t;
+static constexpr uint16_t group_size=_group_size;
+};
+
+
 //==========
 // Map-Item
 //==========
@@ -91,15 +110,16 @@ private:
 //=====
 
 template <typename _key_t, typename _value_t, typename _size_t=uint32_t, uint16_t _group_size=10>
-class map: public iterable_cluster<map_item<_key_t, _value_t>, index_group<_key_t, map_item<_key_t, _value_t>, _size_t>, index_item_group<_key_t, map_item<_key_t, _value_t>, _size_t, _group_size>, index_parent_group<_key_t, map_item<_key_t, _value_t>, _size_t, _group_size>, _size_t, _group_size>
+class map: public iterable_cluster<map_traits<_key_t, _value_t, _size_t, _group_size>>
 {
 public:
 	// Using
-	using _item_t=map_item<_key_t, _value_t>;
-	using _group_t=index_group<_key_t, _item_t, _size_t>;
-	using _item_group_t=index_item_group<_key_t, _item_t, _size_t, _group_size>;
-	using _parent_group_t=index_parent_group<_key_t, _item_t, _size_t, _group_size>;
-	using _base_t=iterable_cluster<_item_t, _group_t, _item_group_t, _parent_group_t, _size_t, _group_size>;
+	using _traits_t=map_traits<_key_t, _value_t, _size_t, _group_size>;
+	using _base_t=iterable_cluster<_traits_t>;
+	using _item_t=typename _traits_t::item_t;
+	using _group_t=typename _traits_t::group_t;
+	using _item_group_t=typename _traits_t::item_group_t;
+	using _parent_group_t=typename _traits_t::parent_group_t;
 	using _cluster_pos_t=cluster_position<_group_t>;
 	using iterator=typename _base_t::iterator;
 	using const_iterator=typename _base_t::const_iterator;

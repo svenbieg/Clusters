@@ -34,10 +34,14 @@ namespace Clusters {
 // Cluster-Group
 //===============
 
-template <typename _item_t, typename _size_t>
+template <typename _traits_t>
 class cluster_group
 {
 public:
+	// Using
+	using _item_t=typename _traits_t::item_t;
+	using _size_t=typename _traits_t::size_t;
+
 	// Con-Destructors
 	virtual ~cluster_group()noexcept {}
 
@@ -57,10 +61,17 @@ public:
 // Cluster-Item-Group
 //====================
 
-template <typename _item_t, typename _group_t, typename _item_group_t, typename _size_t, uint16_t _group_size>
-class cluster_item_group: public _group_t
+template <typename _traits_t>
+class cluster_item_group: public _traits_t::group_t
 {
 public:
+	// Using
+	using _item_t=typename _traits_t::item_t;
+	using _group_t=typename _traits_t::group_t;
+	using _item_group_t=typename _traits_t::item_group_t;
+	using _size_t=typename _traits_t::size_t;
+	static constexpr uint16_t _group_size=_traits_t::group_size;
+
 	// Con-/Destructors
 	cluster_item_group()noexcept: m_item_count(0), m_items() {}
 	cluster_item_group(cluster_item_group const& group)noexcept: m_item_count(group.m_item_count), m_items()
@@ -184,10 +195,18 @@ private:
 // Cluster-Parent-Group
 //======================
 
-template <typename _item_t, typename _group_t, typename _item_group_t, typename _parent_group_t, typename _size_t, uint16_t _group_size>
-class cluster_parent_group: public _group_t
+template <typename _traits_t>
+class cluster_parent_group: public _traits_t::group_t
 {
 public:
+	// Using
+	using _item_t=typename _traits_t::item_t;
+	using _group_t=typename _traits_t::group_t;
+	using _item_group_t=typename _traits_t::item_group_t;
+	using _parent_group_t=typename _traits_t::parent_group_t;
+	using _size_t=typename _traits_t::size_t;
+	static constexpr uint16_t _group_size=_traits_t::group_size;
+
 	// Con-/Destructors
 	cluster_parent_group(uint16_t level=0)noexcept:
 		m_child_count(0), m_children(), m_item_count(0), m_level(level)
@@ -441,10 +460,17 @@ protected:
 // Cluster
 //=========
 
-template <typename _item_t, typename _group_t, typename _item_group_t, typename _parent_group_t, typename _size_t, uint16_t _group_size>
+template <typename _traits_t>
 class cluster
 {
 public:
+	// Using
+	using _item_t=typename _traits_t::item_t;
+	using _group_t=typename _traits_t::group_t;
+	using _item_group_t=typename _traits_t::item_group_t;
+	using _parent_group_t=typename _traits_t::parent_group_t;
+	using _size_t=typename _traits_t::size_t;
+
 	// Access
 	_item_t& get_at(_size_t position)
 		{
@@ -545,15 +571,21 @@ public:
 	uint16_t position;
 };
 
-template <typename _item_t, typename _group_t, typename _item_group_t, typename _parent_group_t, typename _size_t, uint16_t _group_size, bool is_const>
+template <typename _traits_t, bool is_const>
 class cluster_iterator_base
 {
 public:
 	// Using
-	using _cluster_t=cluster<_item_t, _group_t, _item_group_t, _parent_group_t, _size_t, _group_size>;
-	using _cluster_ptr=typename std::conditional<is_const, _cluster_t const*, _cluster_t*>::type;
+	using _item_t=typename _traits_t::item_t;
 	using _item_ptr=typename std::conditional<is_const, _item_t const*, _item_t*>::type;
 	using _item_ref=typename std::conditional<is_const, _item_t const&, _item_t&>::type;
+	using _group_t=typename _traits_t::group_t;
+	using _item_group_t=typename _traits_t::item_group_t;
+	using _parent_group_t=typename _traits_t::parent_group_t;
+	using _size_t=typename _traits_t::size_t;
+	static constexpr uint16_t _group_size=_traits_t::group_size;
+	using _cluster_t=cluster<_traits_t>;
+	using _cluster_ptr=typename std::conditional<is_const, _cluster_t const*, _cluster_t*>::type;
 	using _cluster_pos_t=cluster_position<_group_t>;
 
 	// Con-/Destructors
@@ -776,12 +808,13 @@ protected:
 	_cluster_pos_t* m_positions;
 };
 
-template <typename _item_t, typename _group_t, typename _item_group_t, typename _parent_group_t, typename _size_t, uint16_t _group_size>
-class cluster_iterator: public cluster_iterator_base<_item_t, _group_t, _item_group_t, _parent_group_t, _size_t, _group_size, false>
+template <typename _traits_t>
+class cluster_iterator: public cluster_iterator_base<_traits_t, false>
 {
 public:
 	// Using
-	using _base_t=cluster_iterator_base<_item_t, _group_t, _item_group_t, _parent_group_t, _size_t, _group_size, false>;
+	using _base_t=cluster_iterator_base<_traits_t, false>;
+	using _size_t=typename _traits_t::size_t;
 
 	// Con-/Destructors
 	using _base_t::_base_t;
@@ -797,12 +830,12 @@ public:
 		}
 };
 
-template <typename _item_t, typename _group_t, typename _item_group_t, typename _parent_group_t, typename _size_t, uint16_t _group_size>
-class cluster_const_iterator: public cluster_iterator_base<_item_t, _group_t, _item_group_t, _parent_group_t, _size_t, _group_size, true>
+template <typename _traits_t>
+class cluster_const_iterator: public cluster_iterator_base<_traits_t, true>
 {
 public:
 	// Using
-	using _base_t=cluster_iterator_base<_item_t, _group_t, _item_group_t, _parent_group_t, _size_t, _group_size, true>;
+	using _base_t=cluster_iterator_base<_traits_t, true>;
 
 	// Con-/Destructors
 	using _base_t::_base_t;
@@ -813,13 +846,14 @@ public:
 // Iterable Cluster
 //==================
 
-template <typename _item_t, typename _group_t, typename _item_group_t, typename _parent_group_t, typename _size_t, uint16_t _group_size>
-class iterable_cluster: public cluster<_item_t, _group_t, _item_group_t, _parent_group_t, _size_t, _group_size>
+template <typename _traits_t>
+class iterable_cluster: public cluster<_traits_t>
 {
 public:
 	// Using
-	using iterator=cluster_iterator<_item_t, _group_t, _item_group_t, _parent_group_t, _size_t, _group_size>;
-	using const_iterator=cluster_const_iterator<_item_t, _group_t, _item_group_t, _parent_group_t, _size_t, _group_size>;
+	using _size_t=typename _traits_t::size_t;
+	using iterator=cluster_iterator<_traits_t>;
+	using const_iterator=cluster_const_iterator<_traits_t>;
 
 	// Access
 	inline iterator begin() { return iterator(this, 0); }

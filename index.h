@@ -27,12 +27,32 @@
 namespace Clusters {
 
 
+//======================
+// Forward-Declarations
+//======================
+
+template <typename _key_t, typename _item_t, typename _size_t, uint16_t _group_size> class index_group;
+template <typename _key_t, typename _item_t, typename _size_t, uint16_t _group_size> class index_item_group;
+template <typename _key_t, typename _item_t, typename _size_t, uint16_t _group_size> class index_parent_group;
+
+template <typename _key_t, typename _item_t, typename _size_t, uint16_t _group_size>
+struct index_traits
+{
+using item_t=_item_t;
+using group_t=index_group<_key_t, _item_t, _size_t, _group_size>;
+using item_group_t=index_item_group<_key_t, _item_t, _size_t, _group_size>;
+using parent_group_t=index_parent_group<_key_t, _item_t, _size_t, _group_size>;
+using size_t=_size_t;
+static constexpr uint16_t group_size=_group_size;
+};
+
+
 //=============
 // Index-Group
 //=============
 
-template <typename _key_t, typename _item_t, typename _size_t>
-class index_group: public cluster_group<_item_t, _size_t>
+template <typename _key_t, typename _item_t, typename _size_t, uint16_t _group_size>
+class index_group: public cluster_group<index_traits<_key_t, _item_t, _size_t, _group_size>>
 {
 public:
 	// Access
@@ -51,13 +71,14 @@ public:
 //==================
 
 template <typename _key_t, typename _item_t, typename _size_t, uint16_t _group_size>
-class index_item_group: public cluster_item_group<_item_t, index_group<_key_t, _item_t, _size_t>, index_item_group<_key_t, _item_t, _size_t, _group_size>, _size_t, _group_size>
+class index_item_group: public cluster_item_group<index_traits<_key_t, _item_t, _size_t, _group_size>>
 {
 public:
 	// Using
-	using _group_t=index_group<_key_t, _item_t, _size_t>;
-	using _item_group_t=index_item_group<_key_t, _item_t, _size_t, _group_size>;
-	using _base_t=cluster_item_group<_item_t, _group_t, _item_group_t, _size_t, _group_size>;
+	using _traits_t=index_traits<_key_t, _item_t, _size_t, _group_size>;
+	using _base_t=cluster_item_group<_traits_t>;
+	using _group_t=typename _traits_t::group_t;
+	using _item_group_t=typename _traits_t::item_group_t;
 
 	// Con-/Destructors
 	using _base_t::_base_t;
@@ -131,15 +152,15 @@ private:
 //====================
 
 template <typename _key_t, typename _item_t, typename _size_t, uint16_t _group_size>
-class index_parent_group:
-	public cluster_parent_group<_item_t, index_group<_key_t, _item_t, _size_t>, index_item_group<_key_t, _item_t, _size_t, _group_size>, index_parent_group<_key_t, _item_t, _size_t, _group_size>, _size_t, _group_size>
+class index_parent_group: public cluster_parent_group<index_traits<_key_t, _item_t, _size_t, _group_size>>
 {
 public:
 	// Using
-	using _group_t=index_group<_key_t, _item_t, _size_t>;
-	using _item_group_t=index_item_group<_key_t, _item_t, _size_t, _group_size>;
-	using _parent_group_t=index_parent_group<_key_t, _item_t, _size_t, _group_size>;
-	using _base_t=cluster_parent_group<_item_t, _group_t, _item_group_t, _parent_group_t, _size_t, _group_size>;
+	using _traits_t=index_traits<_key_t, _item_t, _size_t, _group_size>;
+	using _base_t=cluster_parent_group<_traits_t>;
+	using _group_t=typename _traits_t::group_t;
+	using _item_group_t=typename _traits_t::item_group_t;
+	using _parent_group_t=typename _traits_t::parent_group_t;
 
 	// Con-Destructors
 	index_parent_group(uint16_t level=0)noexcept: _base_t(level), m_first(nullptr), m_last(nullptr) {}
@@ -326,14 +347,15 @@ private:
 //=======
 
 template <typename _item_t, typename _size_t=uint32_t, uint16_t _group_size=10>
-class index: public iterable_cluster<_item_t, index_group<_item_t, _item_t, _size_t>, index_item_group<_item_t, _item_t, _size_t, _group_size>, index_parent_group<_item_t, _item_t, _size_t, _group_size>, _size_t, _group_size>
+class index: public iterable_cluster<index_traits<_item_t, _item_t, _size_t, _group_size>>
 {
 public:
 	// Using
-	using _group_t=index_group<_item_t, _item_t, _size_t>;
-	using _item_group_t=index_item_group<_item_t, _item_t, _size_t, _group_size>;
-	using _parent_group_t=index_parent_group<_item_t, _item_t, _size_t, _group_size>;
-	using _base_t=iterable_cluster<_item_t, _group_t, _item_group_t, _parent_group_t, _size_t, _group_size>;
+	using _traits_t=index_traits<_item_t, _item_t, _size_t, _group_size>;
+	using _group_t=typename _traits_t::group_t;
+	using _item_group_t=typename _traits_t::item_group_t;
+	using _parent_group_t=typename _traits_t::parent_group_t;
+	using _base_t=iterable_cluster<_traits_t>;
 	using iterator=typename _base_t::iterator;
 
 	// Con-/Destructors
