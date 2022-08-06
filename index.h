@@ -142,12 +142,7 @@ public:
 	using _base_t=cluster_parent_group<_item_t, _group_t, _item_group_t, _parent_group_t, _size_t, _group_size>;
 
 	// Con-Destructors
-	index_parent_group(uint16_t level)noexcept: _base_t(level), m_first(nullptr), m_last(nullptr) {}
-	index_parent_group(_group_t* child)noexcept: _base_t(child)
-		{
-		m_first=this->m_children[0]->get_first();
-		m_last=this->m_children[0]->get_last();
-		}
+	index_parent_group(uint16_t level=0)noexcept: _base_t(level), m_first(nullptr), m_last(nullptr) {}
 	index_parent_group(_parent_group_t const& group)noexcept: _base_t(group)
 		{
 		uint16_t last=(uint16_t)(this->m_child_count-1);
@@ -211,6 +206,12 @@ public:
 		{
 		_base_t::remove_groups(position, count, item_count);
 		update_bounds();
+		}
+	void set_child(_group_t* child)override
+		{
+		_base_t::set_child(child);
+		m_first=this->m_children[0]->get_first();
+		m_last=this->m_children[0]->get_last();
 		}
 
 private:
