@@ -2,8 +2,8 @@
 // cluster.h
 //===========
 
+// Implementation of a pyramidal directory
 // Shared classes for list and index
-// Items are stored in a pyramidal directory
 
 // Copyright 2022, Sven Bieg (svenbieg@web.de)
 // http://github.com/svenbieg/clusters
@@ -62,8 +62,8 @@ class cluster_item_group: public _group_t
 {
 public:
 	// Con-/Destructors
-	cluster_item_group()noexcept: m_item_count(0) {}
-	cluster_item_group(cluster_item_group const& group)noexcept: m_item_count(group.m_item_count)
+	cluster_item_group()noexcept: m_item_count(0), m_items() {}
+	cluster_item_group(cluster_item_group const& group)noexcept: m_item_count(group.m_item_count), m_items()
 		{
 		_item_t* items=get_items();
 		_item_t const* copy=group.get_items();
@@ -78,8 +78,18 @@ public:
 		}
 
 	// Access
-	inline _item_t* get_at(_size_t position)noexcept override { return &get_items()[position]; }
-	inline _item_t const* get_at(_size_t position)const noexcept override { return &get_items()[position]; }
+	inline _item_t* get_at(_size_t position)noexcept override
+		{
+		if(position>=m_item_count)
+			return nullptr;
+		return &get_items()[position];
+		}
+	inline _item_t const* get_at(_size_t position)const noexcept override
+		{
+		if(position>=m_item_count)
+			return nullptr;
+		return &get_items()[position];
+		}
 	inline uint16_t get_child_count()const noexcept override { return m_item_count; }
 	inline _item_t* get_first_item()noexcept { return &get_items()[0]; }
 	inline _size_t get_item_count()const noexcept override { return m_item_count; }
@@ -179,14 +189,9 @@ class cluster_parent_group: public _group_t
 {
 public:
 	// Con-/Destructors
-	cluster_parent_group(uint16_t level)noexcept:
+	cluster_parent_group(uint16_t level=0)noexcept:
 		m_child_count(0), m_children(), m_item_count(0), m_level(level)
 		{}
-	cluster_parent_group(_group_t* child)noexcept:
-		m_child_count(1), m_children(), m_item_count(child->get_item_count()), m_level((uint16_t)(child->get_level()+1))
-		{
-		m_children[0]=child;
-		}
 	cluster_parent_group(_parent_group_t const& group)noexcept:
 		m_child_count(group.m_child_count), m_children(), m_item_count(group.m_item_count), m_level(group.m_level)
 		{
@@ -323,6 +328,13 @@ public:
 			m_children[u]=m_children[u+count];
 		m_child_count=(uint16_t)(m_child_count-count);
 		m_item_count-=item_count;
+		}
+	virtual void set_child(_group_t* child)
+		{
+		m_children[0]=child;
+		m_child_count=1;
+		m_item_count=child->get_item_count();
+		m_level=child->get_level()+1;
 		}
 	inline void set_child_count(uint16_t count) { m_child_count=count; }
 
@@ -513,7 +525,9 @@ protected:
 		}
 	_group_t* lift_root()noexcept
 		{
-		m_root=new _parent_group_t(m_root);
+		auto root=new _parent_group_t();
+		root->set_child(m_root);
+		m_root=root;
 		return m_root;
 		}
 	_group_t* m_root;
@@ -524,6 +538,13 @@ protected:
 // Cluster-Iterator
 //==================
 
+template <typename _group_t> class cluster_position
+{
+public:
+	_group_t* group;
+	uint16_t position;
+};
+
 template <typename _item_t, typename _group_t, typename _item_group_t, typename _parent_group_t, typename _size_t, uint16_t _group_size, bool is_const>
 class cluster_iterator_base
 {
@@ -533,39 +554,33 @@ public:
 	using _cluster_ptr=typename std::conditional<is_const, _cluster_t const*, _cluster_t*>::type;
 	using _item_ptr=typename std::conditional<is_const, _item_t const*, _item_t*>::type;
 	using _item_ref=typename std::conditional<is_const, _item_t const&, _item_t&>::type;
-
-	// Pointer
-	typedef struct
-		{
-		_group_t* group;
-		uint16_t position;
-		}it_ptr;
+	using _cluster_pos_t=cluster_position<_group_t>;
 
 	// Con-/Destructors
 	cluster_iterator_base()noexcept:
-		m_cluster(nullptr), m_current(nullptr), m_level_count(0), m_position(-3), m_pointers(nullptr)
+		m_cluster(nullptr), m_current(nullptr), m_level_count(0), m_position(-3), m_positions(nullptr)
 		{}
 	cluster_iterator_base(cluster_iterator_base const& it)noexcept:
-		m_cluster(it.m_cluster), m_current(nullptr), m_level_count(0), m_position(-3), m_pointers(nullptr)
+		m_cluster(it.m_cluster), m_current(nullptr), m_level_count(0), m_position(-3), m_positions(nullptr)
 		{
 		set_position(it.m_position);
 		}
 	cluster_iterator_base(_cluster_ptr cluster, _size_t position)noexcept:
-		m_cluster(cluster), m_current(nullptr), m_level_count(0), m_position(-3), m_pointers(nullptr)
+		m_cluster(cluster), m_current(nullptr), m_level_count(0), m_position(-3), m_positions(nullptr)
 		{
 		set_position(position);
 		}
-	cluster_iterator_base(_cluster_ptr cluster, _size_t position, it_ptr* pointers, uint16_t level_count)noexcept:
-		m_cluster(cluster), m_level_count(level_count), m_position(position), m_pointers(pointers)
+	cluster_iterator_base(_cluster_ptr cluster, _size_t position, _cluster_pos_t* positions, uint16_t level_count)noexcept:
+		m_cluster(cluster), m_level_count(level_count), m_position(position), m_positions(positions)
 		{
-		auto ptr=&m_pointers[level_count-1];
-		auto item_group=(_item_group_t*)ptr->group;
-		m_current=item_group->get_at(ptr->position);
+		auto pos_ptr=&m_positions[level_count-1];
+		auto item_group=(_item_group_t*)pos_ptr->group;
+		m_current=item_group->get_at(pos_ptr->position);
 		}
 	~cluster_iterator_base()
 		{
-		if(m_pointers)
-			operator delete(m_pointers);
+		if(m_positions)
+			operator delete(m_positions);
 		}
 
 	// Access
@@ -605,134 +620,114 @@ public:
 	inline _size_t get_position()const noexcept { return m_position; }
 	bool move_next()noexcept
 		{
-		if(m_position==-3)
+		if(m_position==-1||m_position==-2||m_position==-3)
 			return false;
-		auto ptr=&m_pointers[m_level_count-1];
-		_item_group_t* item_group=(_item_group_t*)ptr->group;
+		auto pos_ptr=&m_positions[m_level_count-1];
+		_item_group_t* item_group=(_item_group_t*)pos_ptr->group;
 		uint16_t count=item_group->get_child_count();
-		if(ptr->position+1<count)
+		if(pos_ptr->position+1<count)
 			{
-			ptr->position++;
-			m_current=item_group->get_at(ptr->position);
+			pos_ptr->position++;
+			m_current=item_group->get_at(pos_ptr->position);
 			m_position++;
 			return true;
 			}
-		_size_t item_count=m_cluster->get_count();
-		if(m_position+1>=item_count)
-			{
-			m_current=nullptr;
-			m_position=item_count;
-			return false;
-			}
 		for(uint16_t u=(uint16_t)(m_level_count-1); u>0; u--)
 			{
-			ptr--;
-			_parent_group_t* parent_group=(_parent_group_t*)ptr->group;
+			pos_ptr--;
+			_parent_group_t* parent_group=(_parent_group_t*)pos_ptr->group;
 			count=parent_group->get_child_count();
-			if(ptr->position+1>=count)
+			if(pos_ptr->position+1>=count)
 				continue;
-			ptr->position++;
-			_group_t* group=ptr->group;
+			pos_ptr->position++;
+			_group_t* group=pos_ptr->group;
 			for(; u<m_level_count; u++)
 				{
 				parent_group=(_parent_group_t*)group;
-				group=parent_group->get_child(ptr->position);
-				ptr++;
-				ptr->group=group;
-				ptr->position=0;
+				group=parent_group->get_child(pos_ptr->position);
+				pos_ptr++;
+				pos_ptr->group=group;
+				pos_ptr->position=0;
 				}
 			item_group=(_item_group_t*)group;
 			m_current=item_group->get_at(0);
-			break;
+			m_position++;
+			return true;
 			}
-		m_position++;
-		return true;
+		m_current=nullptr;
+		m_position=-2;
+		return false;
 		}
 	bool move_previous()noexcept
 		{
-		if(m_position==-3)
+		if(m_position==-1||m_position==-2||m_position==-3)
 			return false;
-		it_ptr* ptr=&m_pointers[m_level_count-1];
-		_item_group_t* item_group=(_item_group_t*)ptr->group;
-		if(ptr->position>0)
+		auto pos_ptr=&m_positions[m_level_count-1];
+		_item_group_t* item_group=(_item_group_t*)pos_ptr->group;
+		if(pos_ptr->position>0)
 			{
-			ptr->position--;
-			m_current=item_group->get_at(ptr->position);
+			pos_ptr->position--;
+			m_current=item_group->get_at(pos_ptr->position);
 			m_position--;
 			return true;
 			}
-		if(m_position==0||m_position==-1)
-			{
-			m_current=nullptr;
-			m_position=-1;
-			return false;
-			}
 		for(uint16_t u=(uint16_t)(m_level_count-1); u>0; u--)
 			{
-			ptr--;
-			_parent_group_t* parent_group=(_parent_group_t*)ptr->group;
-			if(ptr->position==0)
+			pos_ptr--;
+			_parent_group_t* parent_group=(_parent_group_t*)pos_ptr->group;
+			if(pos_ptr->position==0)
 				continue;
-			ptr->position--;
-			_group_t* group=ptr->group;
+			pos_ptr->position--;
+			_group_t* group=pos_ptr->group;
 			for(; u<m_level_count; u++)
 				{
 				parent_group=(_parent_group_t*)group;
-				group=parent_group->get_child(ptr->position);
-				ptr++;
-				ptr->group=group;
-				ptr->position=(uint16_t)(group->get_child_count()-1);
+				group=parent_group->get_child(pos_ptr->position);
+				pos_ptr++;
+				pos_ptr->group=group;
+				pos_ptr->position=(uint16_t)(group->get_child_count()-1);
 				}
 			item_group=(_item_group_t*)group;
-			m_current=item_group->get_at(ptr->position);
-			break;
+			m_current=item_group->get_at(pos_ptr->position);
+			m_position--;
+			return true;
 			}
-		m_position--;
-		return true;
+		m_current=nullptr;
+		m_position=-1;
+		return false;
 		}
 	bool set_position(_size_t position)
 		{
 		m_current=nullptr;
+		if(position==-1||position==-2)
+			{
+			m_position=position;
+			return false;
+			}
 		m_position=-3;
 		_group_t* group=m_cluster->get_root();
 		if(!group)
 			return false;
 		size_t item_count=group->get_item_count();
 		_size_t offset=position;
-		if(offset==-2)
-			offset=item_count-1;
-		if(offset==-1)
-			offset=0;
 		uint16_t group_pos=get_position_internal(group, &offset);
 		if(group_pos==_group_size)
 			return false;
 		uint16_t level_count=(uint16_t)(group->get_level()+1);
 		set_level_count(level_count);
-		auto ptr=&m_pointers[0];
-		ptr->group=group;
-		ptr->position=group_pos;
+		auto pos_ptr=&m_positions[0];
+		pos_ptr->group=group;
+		pos_ptr->position=group_pos;
 		for(uint16_t u=0; u<m_level_count-1; u++)
 			{
-			_parent_group_t* parent_group=(_parent_group_t*)ptr->group;
+			_parent_group_t* parent_group=(_parent_group_t*)pos_ptr->group;
 			group=parent_group->get_child(group_pos);
 			group_pos=get_position_internal(group, &offset);
 			if(group_pos==_group_size)
 				return false;
-			ptr++;
-			ptr->group=group;
-			ptr->position=group_pos;
-			}
-		if(position==-2)
-			{
-			ptr->position++;
-			m_position=-2;
-			return false;
-			}
-		if(position==-1)
-			{
-			ptr->position--;
-			m_position=-1;
-			return false;
+			pos_ptr++;
+			pos_ptr->group=group;
+			pos_ptr->position=group_pos;
 			}
 		_item_group_t* item_group=(_item_group_t*)group;
 		m_current=item_group->get_at(group_pos);
@@ -742,14 +737,14 @@ public:
 
 protected:
 	// Common
-	uint16_t get_position_internal(_group_t* group, _size_t* pos)const noexcept
+	uint16_t get_position_internal(_group_t* group, _size_t* position)const noexcept
 		{
 		uint16_t child_count=group->get_child_count();
 		uint16_t level=group->get_level();
 		if(level==0)
 			{
-			uint16_t group_pos=(uint16_t)*pos;
-			*pos=0;
+			uint16_t group_pos=(uint16_t)*position;
+			*position=0;
 			if(group_pos>=child_count)
 				return _group_size;
 			return group_pos;
@@ -759,9 +754,9 @@ protected:
 			{
 			_group_t* child=parent_group->get_child(u);
 			_size_t item_count=child->get_item_count();
-			if(*pos<item_count)
+			if(*position<item_count)
 				return u;
-			*pos-=item_count;
+			*position-=item_count;
 			}
 		return _group_size;
 		}
@@ -769,17 +764,16 @@ protected:
 		{
 		if(m_level_count==level_count)
 			return;
-		if(m_pointers)
-			operator delete(m_pointers);
-		m_pointers=(it_ptr*)operator new(level_count*sizeof(it_ptr));
+		if(m_positions)
+			operator delete(m_positions);
+		m_positions=(_cluster_pos_t*)operator new(level_count*sizeof(_cluster_pos_t));
 		m_level_count=level_count;
 		}
-
 	_cluster_ptr m_cluster;
 	_item_ptr m_current;
 	uint16_t m_level_count;
 	_size_t m_position;
-	it_ptr* m_pointers;
+	_cluster_pos_t* m_positions;
 };
 
 template <typename _item_t, typename _group_t, typename _item_group_t, typename _parent_group_t, typename _size_t, uint16_t _group_size>
