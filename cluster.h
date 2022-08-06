@@ -542,6 +542,9 @@ public:
 		}it_ptr;
 
 	// Con-/Destructors
+	cluster_iterator_base()noexcept:
+		m_cluster(nullptr), m_current(nullptr), m_level_count(0), m_position(-3), m_pointers(nullptr)
+		{}
 	cluster_iterator_base(cluster_iterator_base const& it)noexcept:
 		m_cluster(it.m_cluster), m_current(nullptr), m_level_count(0), m_position(-3), m_pointers(nullptr)
 		{
@@ -551,6 +554,13 @@ public:
 		m_cluster(cluster), m_current(nullptr), m_level_count(0), m_position(-3), m_pointers(nullptr)
 		{
 		set_position(position);
+		}
+	cluster_iterator_base(_cluster_ptr cluster, _size_t position, it_ptr* pointers, uint16_t level_count)noexcept:
+		m_cluster(cluster), m_level_count(level_count), m_position(position), m_pointers(pointers)
+		{
+		auto ptr=&m_pointers[level_count-1];
+		auto item_group=(_item_group_t*)ptr->group;
+		m_current=item_group->get_at(ptr->position);
 		}
 	~cluster_iterator_base()
 		{
@@ -730,7 +740,7 @@ public:
 		return true;
 		}
 
-private:
+protected:
 	// Common
 	uint16_t get_position_internal(_group_t* group, _size_t* pos)const noexcept
 		{

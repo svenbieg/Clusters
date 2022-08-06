@@ -109,7 +109,10 @@ public:
 	// Access
 	template <class _key_param_t> inline _value_t& operator[](_key_param_t&& key)noexcept
 		{
-		return get(std::forward<_key_param_t>(key));
+		_item_t create(std::forward<_key_param_t>(key), _value_t());
+		bool created=false;
+		_item_t* got=get_internal(&create, &created);
+		return got->get_value();
 		}
 	inline _value_t operator[](_key_t const& key)const noexcept { return get(key); }
 	bool contains(_key_t const& key)const noexcept
@@ -119,15 +122,9 @@ public:
 			return false;
 		return root->get(key)!=nullptr;
 		}
-	inline iterator find(_key_t const& key)noexcept { return search_internal(key, true); }
-	template <class _key_param_t> _value_t& get(_key_param_t&& key)noexcept
-		{
-		_item_t create(std::forward<_key_param_t>(key), _value_t());
-		bool created=false;
-		_item_t* got=get_internal(&create, &created);
-		return got->get_value();
-		}
-	_value_t get(_key_t const& key, bool read_only=true)const noexcept
+	inline iterator find(_key_t const& key)noexcept { return search_internal<iterator>(key, true); }
+	inline const_iterator find(_key_t const& key)const noexcept { return search_internal<const_iterator>(key, true); }
+	_value_t get(_key_t const& key)const noexcept
 		{
 		auto root=this->m_root;
 		if(!root)
@@ -137,7 +134,8 @@ public:
 			return _value_t();
 		return item->get_value();
 		}
-	inline iterator search(_key_t const& key)noexcept { return search_internal(key, false); }
+	inline iterator search(_key_t const& key)noexcept { return search_internal<iterator>(key, false); }
+	inline const_iterator search(_key_t const& key)const noexcept { return search_internal<const_iterator>(key, false); }
 
 	// Modification
 	template <typename _key_param_t, typename _value_param_t> bool add(_key_param_t&& key, _value_param_t&& value)noexcept
@@ -174,14 +172,22 @@ private:
 		root=this->lift_root();
 		return root->get(item->get_key(), item, created, true);
 		}
-	iterator search_internal(_key_t const& key, bool find)noexcept
+	template <class _it_t> _it_t search_internal(_key_t const& key, bool find)const noexcept
 		{
+		auto group=this->m_root;
+		if(!group)
+			return _it_t();
+		uint16_t level_count=group->get_level()+1;
+		auto pointers=(_it_t::it_ptr*)operator new(level_count*sizeof(_it_t::it_ptr));
+		auto ptr=&pointers[0];
 		_size_t position=0;
 		bool exists=false;
-		auto group=this->m_root;
 		while(group)
 			{
 			uint16_t group_pos=group->search(key, &position, &exists);
+			ptr->group=group;
+			ptr->position=group_pos;
+			ptr++;
 			if(group->get_level()>0)
 				{
 				auto parent_group=(_parent_group_t*)group;
@@ -190,9 +196,10 @@ private:
 				}
 			if(find&&!exists)
 				break;
-			return iterator(this, position, (_item_group_t*)group, group_pos);
+			return _it_t((_base_t*)this, position, pointers, level_count);
 			}
-		return this->end();
+		operator delete(pointers);
+		return _it_t();
 		}
 };
 
