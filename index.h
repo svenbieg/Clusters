@@ -47,9 +47,9 @@ static constexpr uint16_t group_size=_group_size;
 };
 
 
-//=============
-// Index-Group
-//=============
+//=======
+// Group
+//=======
 
 template <typename _key_t, typename _item_t, typename _size_t, uint16_t _group_size>
 class index_group: public cluster_group<index_traits<_key_t, _item_t, _size_t, _group_size>>
@@ -66,9 +66,9 @@ public:
 };
 
 
-//==================
-// Index-Item-Group
-//==================
+//============
+// Item-Group
+//============
 
 template <typename _key_t, typename _item_t, typename _size_t, uint16_t _group_size>
 class index_item_group: public cluster_item_group<index_traits<_key_t, _item_t, _size_t, _group_size>>
@@ -147,9 +147,9 @@ private:
 };
 
 
-//====================
-// Index-Parent-Group
-//====================
+//==============
+// Parent-Group
+//==============
 
 template <typename _key_t, typename _item_t, typename _size_t, uint16_t _group_size>
 class index_parent_group: public cluster_parent_group<index_traits<_key_t, _item_t, _size_t, _group_size>>

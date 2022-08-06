@@ -30,9 +30,9 @@
 namespace Clusters {
 
 
-//===============
-// Cluster-Group
-//===============
+//=======
+// Group
+//=======
 
 template <typename _traits_t>
 class cluster_group
@@ -57,9 +57,9 @@ public:
 };
 
 
-//====================
-// Cluster-Item-Group
-//====================
+//============
+// Item-Group
+//============
 
 template <typename _traits_t>
 class cluster_item_group: public _traits_t::group_t
@@ -191,9 +191,9 @@ private:
 };
 
 
-//======================
-// Cluster-Parent-Group
-//======================
+//==============
+// Parent-Group
+//==============
 
 template <typename _traits_t>
 class cluster_parent_group: public _traits_t::group_t
@@ -560,9 +560,9 @@ protected:
 };
 
 
-//==================
-// Cluster-Iterator
-//==================
+//==========
+// Iterator
+//==========
 
 template <typename _group_t> class cluster_position
 {
