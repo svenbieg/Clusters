@@ -100,6 +100,7 @@ public:
 	using _item_group_t=index_item_group<_key_t, _item_t, _size_t, _group_size>;
 	using _parent_group_t=index_parent_group<_key_t, _item_t, _size_t, _group_size>;
 	using _base_t=iterable_cluster<_item_t, _group_t, _item_group_t, _parent_group_t, _size_t, _group_size>;
+	using _cluster_pos_t=cluster_position<_group_t>;
 	using iterator=typename _base_t::iterator;
 	using const_iterator=typename _base_t::const_iterator;
 
@@ -178,16 +179,16 @@ private:
 		if(!group)
 			return _it_t();
 		uint16_t level_count=group->get_level()+1;
-		auto pointers=(_it_t::it_ptr*)operator new(level_count*sizeof(_it_t::it_ptr));
-		auto ptr=&pointers[0];
+		auto pointers=(_cluster_pos_t*)operator new(level_count*sizeof(_cluster_pos_t));
+		auto pos_ptr=&pointers[0];
 		_size_t position=0;
 		bool exists=false;
 		while(group)
 			{
 			uint16_t group_pos=group->search(key, &position, &exists);
-			ptr->group=group;
-			ptr->position=group_pos;
-			ptr++;
+			pos_ptr->group=group;
+			pos_ptr->position=group_pos;
+			pos_ptr++;
 			if(group->get_level()>0)
 				{
 				auto parent_group=(_parent_group_t*)group;
