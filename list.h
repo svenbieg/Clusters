@@ -141,7 +141,7 @@ public:
 template <typename _traits_t>
 class list_parent_group_base: public cluster_parent_group<_traits_t>
 {
-private:
+public:
 	// Using
 	using _base_t=cluster_parent_group<_traits_t>;
 	using _item_t=typename _traits_t::item_t;
@@ -151,7 +151,6 @@ private:
 	using _size_t=typename _traits_t::size_t;
 	static constexpr uint16_t _group_size=_traits_t::group_size;
 
-public:
 	// Con-Destructors
 	using _base_t::_base_t;
 
