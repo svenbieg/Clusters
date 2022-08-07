@@ -120,10 +120,9 @@ public:
 		set_position(position);
 		}
 	shared_cluster_iterator(_cluster_t* cluster, _iterator_t&& it):
-		m_cluster(cluster)
+		m_cluster(cluster), m_iterator(std::forward<_iterator_t>(it))
 		{
 		m_cluster->m_mutex.lock_shared();
-		m_iterator=_iterator_t(std::forward<_iterator_t>(it));
 		}
 	~shared_cluster_iterator()
 		{

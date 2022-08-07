@@ -600,13 +600,19 @@ public:
 	using _cluster_pos_t=cluster_position<_group_t>;
 
 	// Con-/Destructors
-	cluster_iterator_base():
-		m_cluster(nullptr), m_current(nullptr), m_level_count(0), m_position(-3), m_positions(nullptr)
-		{}
 	cluster_iterator_base(cluster_iterator_base const& it):
 		m_cluster(it.m_cluster), m_current(nullptr), m_level_count(0), m_position(-3), m_positions(nullptr)
 		{
 		set_position(it.m_position);
+		}
+	cluster_iterator_base(cluster_iterator_base&& it):
+		m_cluster(it.m_cluster), m_current(it.m_current), m_level_count(it.m_level_count), m_position(it.m_position), m_positions(it.m_positions)
+		{
+		it.m_cluster=nullptr;
+		it.m_current=nullptr;
+		it.m_level_count=0;
+		it.m_position=-3;
+		it.m_positions=nullptr;
 		}
 	cluster_iterator_base(_cluster_ptr cluster, _size_t position=-3)noexcept:
 		m_cluster(cluster), m_current(nullptr), m_level_count(0), m_position(-3), m_positions(nullptr)
@@ -625,23 +631,6 @@ public:
 		if(m_positions)
 			operator delete(m_positions);
 		}
-	
-	// Assignment
-	cluster_iterator_base& operator=(cluster_iterator_base&& it)
-		{
-		m_cluster=it.m_cluster;
-		m_current=it.m_current;
-		m_level_count=it.m_level_count;
-		m_position=it.m_position;
-		m_positions=it.m_positions;
-		it.m_cluster=nullptr;
-		it.m_current=nullptr;
-		it.m_level_count=0;
-		it.m_position=-3;
-		it.m_positions=nullptr;
-		return *this;
-		}
-
 
 	// Access
 	inline _item_ref operator*()const { return get_current(); }
