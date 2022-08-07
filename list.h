@@ -439,19 +439,19 @@ public:
 			root=this->lift_root();
 			}
 		}
-	template <typename _item_param_t> void insert_at(_size_t position, _item_param_t&& item)noexcept
+	template <typename _item_param_t> void insert_at(_size_t position, _item_param_t&& item)
 		{
 		_item_t fwd(std::forward<_item_param_t>(item));
 		auto root=this->m_root;
 		if(!root)
 			{
 			if(position>0)
-				return;
+				throw std::out_of_range(nullptr);
 			root=this->create_root();
 			}
 		auto count=root->get_item_count();
 		if(position>count)
-			return;
+			throw std::out_of_range(nullptr);
 		if(root->insert_at(position, &fwd, false))
 			return;
 		root=this->lift_root();
