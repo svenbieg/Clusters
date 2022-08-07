@@ -47,8 +47,8 @@ public:
 		}
 	void unlock_shared()
 		{
-		m_mutex.unlock_shared();
 		m_access_count--;
+		m_mutex.unlock_shared();
 		m_signal.notify_one();
 		}
 
