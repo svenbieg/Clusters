@@ -138,18 +138,16 @@ public:
 // Parent-Group
 //==============
 
-template <typename _traits_t>
-class list_parent_group_base: public cluster_parent_group<_traits_t>
+template <typename _item_t, typename _size_t, uint16_t _group_size>
+class list_parent_group: public cluster_parent_group<list_traits<_item_t, _size_t, _group_size>>
 {
 public:
 	// Using
+	using _traits_t=list_traits<_item_t, _size_t, _group_size>;
 	using _base_t=cluster_parent_group<_traits_t>;
-	using _item_t=typename _traits_t::item_t;
 	using _group_t=typename _traits_t::group_t;
 	using _item_group_t=typename _traits_t::item_group_t;
 	using _parent_group_t=typename _traits_t::parent_group_t;
-	using _size_t=typename _traits_t::size_t;
-	static constexpr uint16_t _group_size=_traits_t::group_size;
 
 	// Con-Destructors
 	using _base_t::_base_t;
@@ -390,18 +388,6 @@ private:
 			}
 		return dst;
 		}
-};
-
-template <typename _item_t, typename _size_t, uint16_t _group_size>
-class list_parent_group: public list_parent_group_base<list_traits<_item_t, _size_t, _group_size>>
-{
-public:
-	// Using
-	using _traits_t=list_traits<_item_t, _size_t, _group_size>;
-	using _base_t=list_parent_group_base<_traits_t>;
-
-	// Con-/Destructors
-	using _base_t::_base_t;
 };
 
 
