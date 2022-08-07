@@ -492,13 +492,13 @@ public:
 			throw std::out_of_range(nullptr);
 		return *item;
 		}
-	_item_t get_at(_size_t position)const noexcept
+	_item_t const& get_at(_size_t position)const
 		{
 		if(!m_root)
-			return _item_t();
+			throw std::out_of_range(nullptr);
 		_item_t const* item=m_root->get_at(position);
 		if(!item)
-			return _item_t();
+			throw std::out_of_range(nullptr);
 		return *item;
 		}
 	_size_t get_count()const noexcept
@@ -600,14 +600,9 @@ public:
 	using _cluster_pos_t=cluster_position<_group_t>;
 
 	// Con-/Destructors
-	cluster_iterator_base()noexcept:
-		m_cluster(nullptr), m_current(nullptr), m_level_count(0), m_position(-3), m_positions(nullptr)
+	cluster_iterator_base(_cluster_ptr cluster)noexcept:
+		m_cluster(cluster), m_current(nullptr), m_level_count(0), m_position(-3), m_positions(nullptr)
 		{}
-	cluster_iterator_base(cluster_iterator_base const& it)noexcept:
-		m_cluster(it.m_cluster), m_current(nullptr), m_level_count(0), m_position(-3), m_positions(nullptr)
-		{
-		set_position(it.m_position);
-		}
 	cluster_iterator_base(_cluster_ptr cluster, _size_t position)noexcept:
 		m_cluster(cluster), m_current(nullptr), m_level_count(0), m_position(-3), m_positions(nullptr)
 		{
@@ -833,9 +828,10 @@ public:
 	// Modification
 	bool remove_current()
 		{
-		_size_t position=this->m_position;
-		if(!this->m_cluster->remove_at(position))
+		if(!this->has_current())
 			return false;
+		_size_t position=this->m_position;
+		m_cluster->remove_at(position);
 		this->set_position(position);
 		return true;
 		}
