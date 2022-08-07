@@ -59,11 +59,11 @@ public:
 		m_mutex.lock_shared();
 		m_access_mutex.unlock();
 		}
-	void lock_exclusive()
+	inline void lock_exclusive()
 		{
 		m_mutex.lock();
 		}
-	void unlock_exclusive()
+	inline void unlock_exclusive()
 		{
 		m_mutex.unlock();
 		}
