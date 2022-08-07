@@ -42,8 +42,8 @@ public:
 	void lock_shared()
 		{
 		std::unique_lock<std::mutex> lock(m_access_mutex);
-		m_mutex.lock_shared();
 		m_access_count++;
+		m_mutex.lock_shared();
 		}
 	void unlock_shared()
 		{
