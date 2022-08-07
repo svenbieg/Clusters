@@ -28,7 +28,7 @@ the Windows.NET-component of Clusters!
 		<td>The size of the groups is limited and 10 by default.</td>
 	</tr><tr><td></td></tr><tr>
 		<td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="http://svenbieg.azurewebsites.net/Clusters"><img src="https://user-images.githubusercontent.com/12587394/47256737-f4a49b00-d484-11e8-9171-a40ef63c3ff1.png" /></a></td>
-		<td>If the group is full a parentgroup is created.</td>
+		<td>If the group is full a parent-group is created.</td>
 	</tr><tr><td></td></tr><tr>
 		<td>&nbsp;&nbsp;&nbsp;&nbsp;<a href="http://svenbieg.azurewebsites.net/Clusters"><img src="https://user-images.githubusercontent.com/12587394/47256739-ff5f3000-d484-11e8-9445-4443f52e228a.png" /></a></td>
 		<td>The first and the last entry can be moved to the neighbour-group.</td>
@@ -37,10 +37,10 @@ the Windows.NET-component of Clusters!
 		<td>The entries are moved between the groups, so all groups get as full as possible.</td>
 	</tr><tr><td></td></tr><tr>
 		<td><a href="http://svenbieg.azurewebsites.net/Clusters"><img src="https://user-images.githubusercontent.com/12587394/47256745-1736b400-d485-11e8-9785-e0479250b51d.png" /></a></td>
-		<td>The number of groups is limited too, another parentgroup is created.</td>
+		<td>The number of groups is limited too, another parent-group is created.</td>
 	</tr><tr><td></td></tr><tr>
 		<td><a href="http://svenbieg.azurewebsites.net/Clusters"><img src="https://user-images.githubusercontent.com/12587394/47256748-21f14900-d485-11e8-9506-db75fa50c9bd.png" /></a></td>
-		<td>If an entry needs to be inserted in a full group, a whole subtree can be moved.</td>
+		<td>If an entry needs to be inserted in a full group, a whole sub-tree can be moved.</td>
 	</tr>
 </table><br />
 
