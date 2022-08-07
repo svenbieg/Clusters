@@ -18,6 +18,7 @@
 
 #include <condition_variable>
 #include <shared_mutex>
+#include <stdint.h>
 
 
 //===========
