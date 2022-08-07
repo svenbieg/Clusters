@@ -30,6 +30,13 @@
 namespace Clusters {
 
 
+//======================
+// Forward-Declarations
+//======================
+
+template <typename _traits_t, bool is_const> class cluster_iterator_base;
+
+
 //=======
 // Group
 //=======
@@ -464,6 +471,10 @@ template <typename _traits_t>
 class cluster
 {
 public:
+	// Friends
+	friend class cluster_iterator_base<_traits_t, false>;
+	friend class cluster_iterator_base<_traits_t, true>;
+
 	// Using
 	using _item_t=typename _traits_t::item_t;
 	using _group_t=typename _traits_t::group_t;
@@ -496,7 +507,6 @@ public:
 			return 0;
 		return m_root->get_item_count();
 		}
-	inline _group_t* get_root()const noexcept { return m_root; }
 
 	// Modification
 	void clear()noexcept
@@ -549,6 +559,7 @@ protected:
 		root->set_child_count(0);
 		delete root;
 		}
+	inline _group_t* get_root()const noexcept { return m_root; }
 	_group_t* lift_root()noexcept
 		{
 		auto root=new _parent_group_t();
