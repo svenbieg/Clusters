@@ -144,6 +144,8 @@ private:
 			*exists=true;
 			return pos;
 			}
+		if(start==item_count)
+			start--;
 		return start;
 		}
 };
@@ -180,7 +182,7 @@ public:
 		get_item_pos(key, &pos, false);
 		for(uint16_t u=0; u<pos; u++)
 			*position+=this->m_children[u]->get_item_count();
-		return this->m_children[pos]->find(key, position, exists);
+		return pos;
 		}
 	_item_t* get(_key_t const& key, _item_t* create, bool* created, bool again)noexcept override
 		{

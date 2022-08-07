@@ -195,7 +195,7 @@ private:
 		bool exists=false;
 		while(group)
 			{
-			uint16_t group_pos=group->search(key, &position, &exists);
+			uint16_t group_pos=group->find(key, &position, &exists);
 			pos_ptr->group=group;
 			pos_ptr->position=group_pos;
 			pos_ptr++;
