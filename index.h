@@ -31,6 +31,7 @@ namespace Clusters {
 // Forward-Declarations
 //======================
 
+template <typename _item_t, typename _size_t, uint16_t _group_size> class index;
 template <typename _key_t, typename _item_t, typename _size_t, uint16_t _group_size> class index_group;
 template <typename _key_t, typename _item_t, typename _size_t, uint16_t _group_size> class index_item_group;
 template <typename _key_t, typename _item_t, typename _size_t, uint16_t _group_size> class index_parent_group;
@@ -42,6 +43,7 @@ using item_t=_item_t;
 using group_t=index_group<_key_t, _item_t, _size_t, _group_size>;
 using item_group_t=index_item_group<_key_t, _item_t, _size_t, _group_size>;
 using parent_group_t=index_parent_group<_key_t, _item_t, _size_t, _group_size>;
+using cluster_t=index<_item_t, _size_t, _group_size>;
 using size_t=_size_t;
 static constexpr uint16_t group_size=_group_size;
 };
@@ -56,10 +58,10 @@ class index_group: public cluster_group<index_traits<_key_t, _item_t, _size_t, _
 {
 public:
 	// Access
+	virtual uint16_t find(_key_t const& key, _size_t* position, bool* exists)const noexcept=0;
 	virtual _item_t* get(_key_t const& key, _item_t* create=nullptr, bool* created=nullptr, bool again=false)noexcept=0;
 	virtual _item_t* get_first()noexcept=0;
 	virtual _item_t* get_last()noexcept=0;
-	virtual uint16_t search(_key_t const& key, _size_t* position, bool* exists)const noexcept=0;
 
 	// Modification
 	virtual bool remove(_key_t const& key)noexcept=0;
@@ -84,6 +86,12 @@ public:
 	using _base_t::_base_t;
 
 	// Access
+	inline uint16_t find(_key_t const& key, _size_t* position, bool* exists)const noexcept override
+		{
+		uint16_t pos=get_item_pos(key, exists);
+		*position+=pos;
+		return pos;
+		}
 	_item_t* get(_key_t const& key, _item_t* create, bool* created, bool again)noexcept override
 		{
 		bool exists=false;
@@ -99,12 +107,6 @@ public:
 		}
 	inline _item_t* get_first()noexcept override { return this->get_first_item(); }
 	inline _item_t* get_last()noexcept override { return this->get_last_item(); }
-	inline uint16_t search(_key_t const& key, _size_t* position, bool* exists)const noexcept override
-		{
-		uint16_t pos=get_item_pos(key, exists);
-		*position+=pos;
-		return pos;
-		}
 
 	// Modification
 	bool remove(_key_t const& key)noexcept override
@@ -172,6 +174,14 @@ public:
 		}
 
 	// Access
+	inline uint16_t find(_key_t const& key, _size_t* position, bool* exists)const noexcept override
+		{
+		uint16_t pos=0;
+		get_item_pos(key, &pos, false);
+		for(uint16_t u=0; u<pos; u++)
+			*position+=this->m_children[u]->get_item_count();
+		return this->m_children[pos]->find(key, position, exists);
+		}
 	_item_t* get(_key_t const& key, _item_t* create, bool* created, bool again)noexcept override
 		{
 		bool created_internal=false;
@@ -187,14 +197,6 @@ public:
 		}
 	inline _item_t* get_first()noexcept override { return m_first; }
 	inline _item_t* get_last()noexcept override { return m_last; }
-	inline uint16_t search(_key_t const& key, _size_t* position, bool* exists)const noexcept override
-		{
-		uint16_t pos=0;
-		get_item_pos(key, &pos, false);
-		for(uint16_t u=0; u<pos; u++)
-			*position+=this->m_children[u]->get_item_count();
-		return this->m_children[pos]->search(key, position, exists);
-		}
 
 	// Modification
 	_size_t insert_groups(uint16_t position, _group_t* const* groups, uint16_t count)noexcept override
@@ -369,8 +371,24 @@ public:
 			return false;
 		return root->get(item)!=nullptr;
 		}
-	inline iterator find(_item_t const& item)noexcept { return search_internal(item, true); }
-	inline iterator search(_item_t const& item)noexcept { return search_internal(item, false); }
+	iterator find(_item_t const& item)noexcept
+		{
+		_size_t position=0;
+		bool exists=false;
+		auto group=this->m_root;
+		while(group)
+			{
+			uint16_t group_pos=group->find(item, &position, &exists);
+			if(group->get_level()>0)
+				{
+				auto parent_group=(_parent_group_t*)group;
+				group=parent_group->get_child(group_pos);
+				continue;
+				}
+			return iterator(this, position, (_item_group_t*)group, group_pos);
+			}
+		return this->end();
+		}
 
 	// Modification
 	template <typename _item_param_t> bool add(_item_param_t&& item)noexcept
@@ -406,26 +424,6 @@ private:
 			return got;
 		root=this->lift_root();
 		return root->get(*create, create, created, true);
-		}
-	iterator search_internal(_item_t const& item, bool find)
-		{
-		_size_t position=0;
-		bool exists=false;
-		auto group=this->m_root;
-		while(group)
-			{
-			uint16_t group_pos=group->search(item, &position, &exists);
-			if(group->get_level()>0)
-				{
-				auto parent_group=(_parent_group_t*)group;
-				group=parent_group->get_child(group_pos);
-				continue;
-				}
-			if(find&&!exists)
-				break;
-			return iterator(this, position, (_item_group_t*)group, group_pos);
-			}
-		return this->end();
 		}
 };
 

@@ -27,6 +27,26 @@
 namespace Clusters {
 
 
+//======================
+// Forward-Declarations
+//======================
+
+template <typename _key_t, typename _value_t, typename _size_t, uint16_t _group_size> class map;
+template <typename _key_t, typename _value_t> class map_item;
+
+template <typename _key_t, typename _value_t, typename _size_t, uint16_t _group_size>
+struct map_traits
+{
+using item_t=map_item<_key_t, _value_t>;
+using group_t=index_group<_key_t, item_t, _size_t, _group_size>;
+using item_group_t=index_item_group<_key_t, item_t, _size_t, _group_size>;
+using parent_group_t=index_parent_group<_key_t, item_t, _size_t, _group_size>;
+using cluster_t=map<_key_t, _value_t, _size_t, _group_size>;
+using size_t=_size_t;
+static constexpr uint16_t group_size=_group_size;
+};
+
+
 //======
 // Item
 //======
@@ -91,11 +111,11 @@ private:
 //=====
 
 template <typename _key_t, typename _value_t, typename _size_t=uint32_t, uint16_t _group_size=10>
-class map: public iterable_cluster<index_traits<_key_t, map_item<_key_t, _value_t>, _size_t, _group_size>>
+class map: public iterable_cluster<map_traits<_key_t, _value_t, _size_t, _group_size>>
 {
 public:
 	// Using
-	using _traits_t=index_traits<_key_t, map_item<_key_t, _value_t>, _size_t, _group_size>;
+	using _traits_t=map_traits<_key_t, _value_t, _size_t, _group_size>;
 	using _base_t=iterable_cluster<_traits_t>;
 	using _item_t=typename _traits_t::item_t;
 	using _group_t=typename _traits_t::group_t;
@@ -124,8 +144,8 @@ public:
 			return false;
 		return root->get(key)!=nullptr;
 		}
-	inline iterator find(_key_t const& key)noexcept { return search_internal<iterator>(key, true); }
-	inline const_iterator find(_key_t const& key)const noexcept { return search_internal<const_iterator>(key, true); }
+	inline iterator find(_key_t const& key)noexcept { return find_internal<iterator>(key); }
+	inline const_iterator find(_key_t const& key)const noexcept { return find_internal<const_iterator>(key); }
 	_value_t get(_key_t const& key)const noexcept
 		{
 		auto root=this->m_root;
@@ -136,8 +156,6 @@ public:
 			return _value_t();
 		return item->get_value();
 		}
-	inline iterator search(_key_t const& key)noexcept { return search_internal<iterator>(key, false); }
-	inline const_iterator search(_key_t const& key)const noexcept { return search_internal<const_iterator>(key, false); }
 
 	// Modification
 	template <typename _key_param_t, typename _value_param_t> bool add(_key_param_t&& key, _value_param_t&& value)noexcept
@@ -165,20 +183,11 @@ public:
 
 private:
 	// Common
-	_item_t* get_internal(_item_t* item, bool* created)noexcept
-		{
-		auto root=this->create_root();
-		_item_t* got=root->get(item->get_key(), item, created, false);
-		if(got!=item)
-			return got;
-		root=this->lift_root();
-		return root->get(item->get_key(), item, created, true);
-		}
-	template <class _it_t> _it_t search_internal(_key_t const& key, bool find)const noexcept
+	template <class _it_t> _it_t find_internal(_key_t const& key)const noexcept
 		{
 		auto group=this->m_root;
 		if(!group)
-			return _it_t();
+			return _it_t((_base_t*)this, -2);
 		uint16_t level_count=group->get_level()+1;
 		auto pointers=(_cluster_pos_t*)operator new(level_count*sizeof(_cluster_pos_t));
 		auto pos_ptr=&pointers[0];
@@ -196,12 +205,19 @@ private:
 				group=parent_group->get_child(group_pos);
 				continue;
 				}
-			if(find&&!exists)
-				break;
 			return _it_t((_base_t*)this, position, pointers, level_count);
 			}
 		operator delete(pointers);
-		return _it_t();
+		return _it_t((_base_t*)this, -2);
+		}
+	_item_t* get_internal(_item_t* item, bool* created)noexcept
+		{
+		auto root=this->create_root();
+		_item_t* got=root->get(item->get_key(), item, created, false);
+		if(got!=item)
+			return got;
+		root=this->lift_root();
+		return root->get(item->get_key(), item, created, true);
 		}
 };
 

@@ -31,6 +31,7 @@ namespace Clusters {
 // Forward-Declarations
 //======================
 
+template <typename _item_t, typename _size_t, uint16_t _group_size> class list;
 template <typename _item_t, typename _size_t, uint16_t _group_size> class list_group;
 template <typename _item_t, typename _size_t, uint16_t _group_size> class list_item_group;
 template <typename _item_t, typename _size_t, uint16_t _group_size> class list_parent_group;
@@ -42,6 +43,7 @@ using item_t=_item_t;
 using group_t=list_group<_item_t, _size_t, _group_size>;
 using item_group_t=list_item_group<_item_t, _size_t, _group_size>;
 using parent_group_t=list_parent_group<_item_t, _size_t, _group_size>;
+using cluster_t=list<_item_t, _size_t, _group_size>;
 using size_t=_size_t;
 static constexpr uint16_t group_size=_group_size;
 };
@@ -124,9 +126,10 @@ public:
 		uint16_t item_count=this->get_child_count();
 		if(position>=item_count)
 			return 0;
+		uint16_t copy=(uint16_t)(item_count-(uint16_t)position);
+		if(copy>count)
+			copy=(uint16_t)count;
 		_item_t* items=this->get_items();
-		uint16_t max=(uint16_t)(item_count-(uint16_t)position);
-		uint16_t copy=count>max? max: (uint16_t)count;
 		for(uint16_t u=0; u<copy; u++)
 			items[position+u]=many[u];
 		return copy;
@@ -309,7 +312,7 @@ public:
 	_size_t set_many(_size_t position, _item_t const* many, _size_t count)override
 		{
 		uint16_t group=this->get_group(&position);
-		if(group>=_group_size)
+		if(group==_group_size)
 			return 0;
 		_size_t pos=0;
 		while(pos<count)
@@ -464,9 +467,14 @@ public:
 		}
 	void set_many(_size_t position, _item_t const* items, _size_t count)noexcept
 		{
-		_size_t pos=0;
+		_size_t item_count=0;
 		auto root=this->get_root();
 		if(root)
+			item_count=root->get_count();
+		if(position>item_count)
+			throw std::out_of_range(nullptr);
+		_size_t pos=0;
+		if(root&&position<item_count)
 			{
 			pos+=root->set_many(position, items, count);
 			if(pos==count)
