@@ -63,13 +63,6 @@ public:
 		m_mutex.unlock_shared();
 		return item;
 		}
-	_size_t get_count()
-		{
-		m_mutex.lock_shared();
-		_size_t count=_cluster_t::get_count();
-		m_mutex.unlock_shared();
-		return count;
-		}
 
 	// Modification
 	void clear()
