@@ -89,6 +89,9 @@ public:
 	inline uint16_t find(_key_t const& key, _size_t* position, bool* exists)const noexcept override
 		{
 		uint16_t pos=get_item_pos(key, exists);
+		uitn16_t item_count=this->m_item_count;
+		if(pos==item_count)
+			pos--;
 		*position+=pos;
 		return pos;
 		}
@@ -144,8 +147,6 @@ private:
 			*exists=true;
 			return pos;
 			}
-		if(start==item_count)
-			start--;
 		return start;
 		}
 };
