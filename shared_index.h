@@ -65,23 +65,23 @@ public:
 	// Modification
 	template <typename _item_param_t> bool add(_item_param_t&& item)noexcept
 		{
-		this->m_mutex.lock_exclusive();
+		this->m_mutex.lock();
 		bool added=_cluster_t::add(std::forward<_item_param_t>(item));
-		this->m_mutex.unlock_exclusive();
+		this->m_mutex.unlock();
 		return added;
 		}
 	bool remove(_item_t const& item)
 		{
-		this->m_mutex.lock_exclusive();
+		this->m_mutex.lock();
 		bool removed=_cluster_t::remove(item);
-		this->m_mutex.unlock_exclusive();
+		this->m_mutex.unlock();
 		return removed;
 		}
 	template <typename _item_param_t> void set(_item_param_t&& item)noexcept
 		{
-		this->m_mutex.lock_exclusive();
+		this->m_mutex.lock();
 		_cluster_t::set(std::forward<_item_param_t>(item));
-		this->m_mutex.unlock_exclusive();
+		this->m_mutex.unlock();
 		}
 };
 

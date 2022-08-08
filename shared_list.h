@@ -46,33 +46,33 @@ public:
 	// Modification
 	template <typename _item_param_t> void append(_item_param_t&& item)
 		{
-		this->m_mutex.lock_exclusive();
+		this->m_mutex.lock();
 		_cluster_t::append(std::forward<_item_param_t>(item));
-		this->m_mutex.unlock_exclusive();
+		this->m_mutex.unlock();
 		}
 	void append(_item_t const* items, _size_t count)
 		{
-		this->m_mutex.lock_exclusive();
+		this->m_mutex.lock();
 		_cluster_t::append(items, count);
-		this->m_mutex.unlock_exclusive();
+		this->m_mutex.unlock();
 		}
 	template <typename _item_param_t> void insert_at(_size_t position, _item_param_t&& item)
 		{
-		this->m_mutex.lock_exclusive();
+		this->m_mutex.lock();
 		try
 			{
 			_cluster_t::insert_at(position, std::forward<_item_param_t>(item));
 			}
 		catch(std::exception& e)
 			{
-			this->m_mutex.unlock_exclusive();
+			this->m_mutex.unlock();
 			throw e;
 			}
-		this->m_mutex.unlock_exclusive();
+		this->m_mutex.unlock();
 		}
 	template <typename _item_param_t> void set_at(_size_t position, _item_param_t&& item)
 		{
-		this->m_mutex.lock_exclusive();
+		this->m_mutex.lock();
 		try
 			{
 			_item_t& item=_cluster_t::get_at(position);
@@ -80,24 +80,24 @@ public:
 			}
 		catch(std::exception& e)
 			{
-			this->m_mutex.unlock_exclusive();
+			this->m_mutex.unlock();
 			throw e;
 			}
-		this->m_mutex.unlock_exclusive();
+		this->m_mutex.unlock();
 		}
 	void set_many(_size_t position, _item_t const* items, _size_t count)noexcept
 		{
-		this->m_mutex.lock_exclusive();
+		this->m_mutex.lock();
 		try
 			{
 			_cluster_t::set_many(position, items, count);
 			}
 		catch(std::exception& e)
 			{
-			this->m_mutex.unlock_exclusive();
+			this->m_mutex.unlock();
 			throw e;
 			}
-		this->m_mutex.unlock_exclusive();
+		this->m_mutex.unlock();
 		}
 };
 

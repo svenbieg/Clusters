@@ -17,8 +17,8 @@
 // Using
 //=======
 
+#include <shared_mutex>
 #include "cluster.h"
-#include "mutex.h"
 
 
 //===========
@@ -67,15 +67,15 @@ public:
 	// Modification
 	void clear()
 		{
-		m_mutex.lock_exclusive();
+		m_mutex.lock();
 		_cluster_t::clear();
-		m_mutex.unlock_exclusive();
+		m_mutex.unlock();
 		}
 	bool remove_at(_size_t position)
 		{
-		m_mutex.lock_exclusive();
+		m_mutex.lock();
 		bool removed=_cluster_t::remove_at(position);
-		m_mutex.unlock_exclusive();
+		m_mutex.unlock();
 		return removed;
 		}
 
@@ -87,7 +87,7 @@ protected:
 		}
 
 	// Common
-	mutex m_mutex;
+	std::shared_mutex m_mutex;
 };
 
 
@@ -139,15 +139,6 @@ public:
 	inline bool move_next() { return m_iterator.move_next(); }
 	inline bool move_previous() { return m_iterator.move_previous(); }
 	inline bool set_position(_size_t position) { return m_iterator.set_position(position); }
-
-	// Modification
-	bool remove_current()
-		{
-		m_cluster->m_mutex.upgrade_lock();
-		bool removed=m_iterator.remove_current();
-		m_cluster->m_mutex.downgrade_lock();
-		return removed;
-		}
 
 private:
 	// Common

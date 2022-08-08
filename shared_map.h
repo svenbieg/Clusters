@@ -74,23 +74,23 @@ public:
 	// Modification
 	template <typename _key_param_t, typename _value_param_t> bool add(_key_param_t&& key, _value_param_t&& value)
 		{
-		this->m_mutex.lock_exclusive();
+		this->m_mutex.lock();
 		bool added=_cluster_t::add(std::forward<_key_param_t>(key), std::forward<_value_param_t>(value));
-		this->m_mutex.unlock_exclusive();
+		this->m_mutex.unlock();
 		return added;
 		}
 	bool remove(_key_t const& key)
 		{
-		this->m_mutex.lock_exclusive();
+		this->m_mutex.lock();
 		bool removed=_cluster_t::remove(key);
-		this->m_mutex.unlock_exclusive();
+		this->m_mutex.unlock();
 		return removed;
 		}
 	template <typename _key_param_t, typename _value_param_t> void set(_key_param_t&& key, _value_param_t&& value)
 		{
-		this->m_mutex.lock_exclusive();
+		this->m_mutex.lock();
 		_cluster_t::set(std::forward<_key_param_t>(key), std::forward<_value_param_t>(value));
-		this->m_mutex.unlock_exclusive();
+		this->m_mutex.unlock();
 		}
 };
 
