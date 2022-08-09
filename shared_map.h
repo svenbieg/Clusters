@@ -40,8 +40,8 @@ public:
 	using _traits_t=map_traits<_key_t, _value_t, _size_t, _group_size>;
 	using _item_t=typename _traits_t::item_t;
 	using _cluster_t=typename _traits_t::cluster_t;
-	using _iterator_t=cluster_iterator<_traits_t>;
-	using iterator=shared_cluster_iterator<_traits_t>;
+	using _iterator_t=cluster_iterator_typed<_traits_t, false>;
+	using iterator=shared_cluster_iterator_typed<_traits_t, false>;
 
 	// Con-/Destructors
 	shared_map() {}

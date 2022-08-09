@@ -39,8 +39,8 @@ public:
 	// Using
 	using _traits_t=index_traits<_item_t, _item_t, _size_t, _group_size>;
 	using _cluster_t=typename _traits_t::cluster_t;
-	using _iterator_t=cluster_iterator<_traits_t>;
-	using iterator=shared_cluster_iterator<_traits_t>;
+	using _iterator_t=cluster_iterator_typed<_traits_t, false>;
+	using iterator=shared_cluster_iterator_typed<_traits_t, false>;
 
 	// Con-/Destructors
 	shared_index() {}

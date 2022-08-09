@@ -582,26 +582,28 @@ public:
 	uint16_t position;
 };
 
-template <typename _traits_t, bool is_const>
+template <typename _traits_t, bool _is_const>
 class cluster_iterator_base
 {
 public:
 	// Using
 	using _item_t=typename _traits_t::item_t;
-	using _item_ptr=typename std::conditional<is_const, _item_t const*, _item_t*>::type;
-	using _item_ref=typename std::conditional<is_const, _item_t const&, _item_t&>::type;
+	using _item_ptr=typename std::conditional<_is_const, _item_t const*, _item_t*>::type;
+	using _item_ref=typename std::conditional<_is_const, _item_t const&, _item_t&>::type;
 	using _group_t=typename _traits_t::group_t;
 	using _item_group_t=typename _traits_t::item_group_t;
 	using _parent_group_t=typename _traits_t::parent_group_t;
 	using _size_t=typename _traits_t::size_t;
 	static constexpr uint16_t _group_size=_traits_t::group_size;
 	using _cluster_t=cluster<_traits_t>;
-	using _cluster_ptr=typename std::conditional<is_const, _cluster_t const*, _cluster_t*>::type;
+	using _cluster_ptr=typename std::conditional<_is_const, _cluster_t const*, _cluster_t*>::type;
 	using _cluster_pos_t=cluster_position<_group_t>;
+	static constexpr _size_t end_pos=-2;
+	static constexpr _size_t rend_pos=-1;
 
 	// Con-/Destructors
 	cluster_iterator_base(cluster_iterator_base const& it):
-		m_cluster(it.m_cluster), m_current(nullptr), m_level_count(0), m_position(-3), m_positions(nullptr)
+		m_cluster(it.m_cluster), m_current(nullptr), m_level_count(0), m_position(end_pos), m_positions(nullptr)
 		{
 		set_position(it.m_position);
 		}
@@ -611,11 +613,14 @@ public:
 		it.m_cluster=nullptr;
 		it.m_current=nullptr;
 		it.m_level_count=0;
-		it.m_position=-3;
+		it.m_position=end_pos;
 		it.m_positions=nullptr;
 		}
-	cluster_iterator_base(_cluster_ptr cluster, _size_t position=-3)noexcept:
-		m_cluster(cluster), m_current(nullptr), m_level_count(0), m_position(-3), m_positions(nullptr)
+	cluster_iterator_base(_cluster_ptr cluster)noexcept:
+		m_cluster(cluster), m_current(nullptr), m_level_count(0), m_position(end_pos), m_positions(nullptr)
+		{}
+	cluster_iterator_base(_cluster_ptr cluster, _size_t position)noexcept:
+		m_cluster(cluster), m_current(nullptr), m_level_count(0), m_position(end_pos), m_positions(nullptr)
 		{
 		set_position(position);
 		}
@@ -669,8 +674,10 @@ public:
 	inline _size_t get_position()const noexcept { return m_position; }
 	bool move_next()noexcept
 		{
-		if(m_position==-1||m_position==-2||m_position==-3)
+		if(m_position==end_pos)
 			return false;
+		if(m_position==rend_pos)
+			return set_position(0);
 		auto pos_ptr=&m_positions[m_level_count-1];
 		_item_group_t* item_group=(_item_group_t*)pos_ptr->group;
 		uint16_t count=item_group->get_child_count();
@@ -703,14 +710,20 @@ public:
 			m_position++;
 			return true;
 			}
-		m_current=nullptr;
-		m_position=-2;
+		reset(end_pos);
 		return false;
 		}
 	bool move_previous()noexcept
 		{
-		if(m_position==-1||m_position==-2||m_position==-3)
+		if(m_position==rend_pos)
 			return false;
+		if(m_position==end_pos)
+			{
+			_size_t item_count=m_cluster->get_count();
+			if(item_count==0)
+				return false;
+			return set_position(item_count-1);
+			}
 		auto pos_ptr=&m_positions[m_level_count-1];
 		_item_group_t* item_group=(_item_group_t*)pos_ptr->group;
 		if(pos_ptr->position>0)
@@ -741,27 +754,29 @@ public:
 			m_position--;
 			return true;
 			}
-		m_current=nullptr;
-		m_position=-1;
+		reset(rend_pos);
 		return false;
 		}
 	bool set_position(_size_t position)
 		{
-		m_current=nullptr;
-		if(position==-1||position==-2||position==-3)
+		if(is_outside(position))
 			{
-			m_position=position;
+			reset(position);
 			return false;
 			}
-		m_position=-3;
 		_group_t* group=m_cluster->get_root();
 		if(!group)
+			{
+			reset(end_pos);
 			return false;
-		size_t item_count=group->get_item_count();
+			}
 		_size_t offset=position;
 		uint16_t group_pos=get_position_internal(group, &offset);
 		if(group_pos==_group_size)
+			{
+			reset(end_pos);
 			return false;
+			}
 		uint16_t level_count=(uint16_t)(group->get_level()+1);
 		set_level_count(level_count);
 		auto pos_ptr=&m_positions[0];
@@ -773,7 +788,10 @@ public:
 			group=parent_group->get_child(group_pos);
 			group_pos=get_position_internal(group, &offset);
 			if(group_pos==_group_size)
+				{
+				reset(end_pos);
 				return false;
+				}
 			pos_ptr++;
 			pos_ptr->group=group;
 			pos_ptr->position=group_pos;
@@ -809,13 +827,28 @@ protected:
 			}
 		return _group_size;
 		}
+	inline bool is_outside()const { return is_outside(m_position); }
+	inline bool is_outside(_size_t position)const
+		{
+		return (position==end_pos||position==rend_pos);
+		}
+	inline void reset(_size_t position)
+		{
+		set_level_count(0);
+		m_current=nullptr;
+		m_position=position;
+		}
 	void set_level_count(uint16_t level_count)noexcept
 		{
 		if(m_level_count==level_count)
 			return;
 		if(m_positions)
+			{
 			operator delete(m_positions);
-		m_positions=(_cluster_pos_t*)operator new(level_count*sizeof(_cluster_pos_t));
+			m_positions=nullptr;
+			}
+		if(level_count>0)
+			m_positions=(_cluster_pos_t*)operator new(level_count*sizeof(_cluster_pos_t));
 		m_level_count=level_count;
 		}
 	_cluster_ptr m_cluster;
@@ -825,8 +858,8 @@ protected:
 	_cluster_pos_t* m_positions;
 };
 
-template <typename _traits_t>
-class cluster_iterator: public cluster_iterator_base<_traits_t, false>
+template <typename _traits_t, bool is_const>
+class cluster_iterator_typed: public cluster_iterator_base<_traits_t, false>
 {
 public:
 	// Using
@@ -849,7 +882,7 @@ public:
 };
 
 template <typename _traits_t>
-class cluster_const_iterator: public cluster_iterator_base<_traits_t, true>
+class cluster_iterator_typed<_traits_t, true>: public cluster_iterator_base<_traits_t, true>
 {
 public:
 	// Using
@@ -870,8 +903,8 @@ class iterable_cluster: public cluster<_traits_t>
 public:
 	// Using
 	using _size_t=typename _traits_t::size_t;
-	using iterator=cluster_iterator<_traits_t>;
-	using const_iterator=cluster_const_iterator<_traits_t>;
+	using iterator=cluster_iterator_typed<_traits_t, false>;
+	using const_iterator=cluster_iterator_typed<_traits_t, true>;
 
 	// Access
 	inline iterator begin() { return iterator(this, 0); }
