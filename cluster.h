@@ -859,7 +859,7 @@ protected:
 };
 
 template <typename _traits_t, bool is_const>
-class cluster_iterator_typed: public cluster_iterator_base<_traits_t, false>
+class cluster_iterator: public cluster_iterator_base<_traits_t, false>
 {
 public:
 	// Using
@@ -882,7 +882,7 @@ public:
 };
 
 template <typename _traits_t>
-class cluster_iterator_typed<_traits_t, true>: public cluster_iterator_base<_traits_t, true>
+class cluster_iterator<_traits_t, true>: public cluster_iterator_base<_traits_t, true>
 {
 public:
 	// Using
@@ -903,8 +903,8 @@ class iterable_cluster: public cluster<_traits_t>
 public:
 	// Using
 	using _size_t=typename _traits_t::size_t;
-	using iterator=cluster_iterator_typed<_traits_t, false>;
-	using const_iterator=cluster_iterator_typed<_traits_t, true>;
+	using iterator=cluster_iterator<_traits_t, false>;
+	using const_iterator=cluster_iterator<_traits_t, true>;
 
 	// Access
 	inline iterator begin() { return iterator(this, 0); }

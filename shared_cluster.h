@@ -97,11 +97,11 @@ protected:
 //==========
 
 template <typename _traits_t, bool _is_const>
-class shared_cluster_iterator_base: protected cluster_iterator_typed<_traits_t, _is_const>
+class shared_cluster_iterator_base: protected cluster_iterator<_traits_t, _is_const>
 {
 public:
 	// Using
-	using _base_t=cluster_iterator_typed<_traits_t, _is_const>;
+	using _base_t=cluster_iterator<_traits_t, _is_const>;
 	using _cluster_t=cluster<_traits_t>;
 	using _cluster_ptr=typename std::conditional<_is_const, _cluster_t const*, _cluster_t*>::type;
 	using _shared_cluster_t=shared_cluster<_traits_t>;
@@ -202,12 +202,12 @@ protected:
 };
 
 template <class _traits_t, bool _is_const>
-class shared_cluster_iterator_typed: public shared_cluster_iterator_base<_traits_t, false>
+class shared_cluster_iterator: public shared_cluster_iterator_base<_traits_t, false>
 {
 public:
 	// Using
 	using _base_t=shared_cluster_iterator_base<_traits_t, false>;
-	using iterator_base_t=cluster_iterator_typed<_traits_t, false>;
+	using iterator_base_t=cluster_iterator<_traits_t, false>;
 
 	// Con-/Destructors
 	using _base_t::_base_t;
@@ -217,7 +217,7 @@ public:
 };
 
 template <class _traits_t>
-class shared_cluster_iterator_typed<_traits_t, true>: public shared_cluster_iterator_base<_traits_t, true>
+class shared_cluster_iterator<_traits_t, true>: public shared_cluster_iterator_base<_traits_t, true>
 {
 public:
 	// Using
@@ -238,8 +238,8 @@ class iterable_shared_cluster: public shared_cluster<_traits_t>
 public:
 	// Using
 	using _size_t=typename _traits_t::size_t;
-	using iterator=shared_cluster_iterator_typed<_traits_t, false>;
-	using const_iterator=shared_cluster_iterator_typed<_traits_t, true>;
+	using iterator=shared_cluster_iterator<_traits_t, false>;
+	using const_iterator=shared_cluster_iterator<_traits_t, true>;
 
 	// Access
 	inline iterator begin() { return iterator(this, 0); }
