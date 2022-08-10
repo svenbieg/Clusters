@@ -166,7 +166,7 @@ public:
 		this->unlock();
 		return false;
 		}
-	inline bool set_position(_size_t position)
+	bool set_position(_size_t position)
 		{
 		if(this->is_outside())
 			{
@@ -213,14 +213,7 @@ public:
 	using _base_t::_base_t;
 
 	// Modification
-	bool remove_current()
-		{
-		if(!iterator_base_t::remove_current())
-			return false;
-		if(this->is_outside())
-			this->unlock();
-		return true;
-		}
+	inline bool remove_current() { return iterator_base_t::remove_current(); }
 };
 
 template <class _traits_t>

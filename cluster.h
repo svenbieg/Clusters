@@ -757,7 +757,7 @@ public:
 		reset(rend_pos);
 		return false;
 		}
-	bool set_position(_size_t position)
+	bool set_position(_size_t position)noexcept
 		{
 		if(is_outside(position))
 			{
@@ -870,7 +870,7 @@ public:
 	using _base_t::_base_t;
 
 	// Modification
-	bool remove_current()
+	bool remove_current()noexcept
 		{
 		if(!this->has_current())
 			return false;
