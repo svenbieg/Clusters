@@ -144,8 +144,8 @@ public:
 			return false;
 		return root->get(key)!=nullptr;
 		}
-	inline iterator find(_key_t const& key)noexcept { return find_internal<iterator>(key); }
-	inline const_iterator find(_key_t const& key)const noexcept { return find_internal<const_iterator>(key); }
+	inline iterator find(_key_t const& key, index_find_method method=index_find_method::above_or_equal)noexcept { return find_internal<iterator>(key, method); }
+	inline const_iterator find(_key_t const& key, index_find_method method=index_find_method::above_or_equal)const noexcept { return find_internal<const_iterator>(key, method); }
 	_value_t get(_key_t const& key)const noexcept
 		{
 		auto root=this->m_root;
@@ -183,7 +183,7 @@ public:
 
 private:
 	// Common
-	template <class _it_t> _it_t find_internal(_key_t const& key)const noexcept
+	template <class _it_t> _it_t find_internal(_key_t const& key, index_find_method method)const noexcept
 		{
 		auto group=this->m_root;
 		if(!group)
@@ -195,7 +195,9 @@ private:
 		bool exists=false;
 		while(group)
 			{
-			uint16_t group_pos=group->find(key, &position, &exists);
+			uint16_t group_pos=group->find(key, &position, &exists, method);
+			if(group_pos==_group_size)
+				break;
 			pos_ptr->group=group;
 			pos_ptr->position=group_pos;
 			pos_ptr++;
@@ -210,14 +212,14 @@ private:
 		operator delete(pointers);
 		return _it_t((_base_t*)this, -2);
 		}
-	_item_t* get_internal(_item_t* item, bool* created)noexcept
+	_item_t* get_internal(_item_t* create, bool* created)noexcept
 		{
 		auto root=this->create_root();
-		_item_t* got=root->get(item->get_key(), item, created, false);
-		if(got!=item)
+		_item_t* got=root->get(create->get_key(), create, created, false);
+		if(got!=create)
 			return got;
 		root=this->lift_root();
-		return root->get(item->get_key(), item, created, true);
+		return root->get(create->get_key(), create, created, true);
 		}
 };
 

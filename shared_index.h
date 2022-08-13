@@ -53,11 +53,11 @@ public:
 		this->m_mutex.unlock_shared();
 		return contains;
 		}
-	iterator find(_item_t const& item)
+	iterator find(_item_t const& item, index_find_method method=index_find_method::above_or_equal)
 		{
 		this->m_mutex.lock_shared();
-		_iterator_t found=_cluster_t::find(item);
-		iterator it(this, std::forward<_iterator_t>(found));
+		_iterator_t found=_cluster_t::find(item, method);
+		iterator it(std::forward<_iterator_t>(found));
 		this->m_mutex.unlock_shared();
 		return it;
 		}
