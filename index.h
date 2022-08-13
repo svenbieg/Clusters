@@ -402,6 +402,8 @@ public:
 	using _base_t::_base_t;
 
 	// Access
+	inline _item_t& operator[](_size_t position) { return this->get_at(position); }
+	inline _item_t const& operator[](_size_t position)const { return this->get_at(position); }
 	bool contains(_item_t const& item)const noexcept
 		{
 		auto root=this->m_root;
