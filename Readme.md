@@ -45,8 +45,8 @@ the Windows.NET-component of Clusters!
 </table><br />
 
 <p>
-You can find detailed information on my
-<a href="http://svenbieg.azurewebsites.net/clusters">Homepage</a>.
+You can find detailed information in the
+<a href="https://github.com/svenbieg/Clusters/wiki/Home">Wiki</a>.
 </p>
 
 <br /><br /><br /><br /><br />
