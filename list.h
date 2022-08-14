@@ -470,7 +470,7 @@ public:
 		_size_t item_count=0;
 		auto root=this->get_root();
 		if(root)
-			item_count=root->get_count();
+			item_count=root->get_item_count();
 		if(position>item_count)
 			throw std::out_of_range(nullptr);
 		_size_t pos=0;
