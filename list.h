@@ -44,6 +44,8 @@ using group_t=list_group<_item_t, _size_t, _group_size>;
 using item_group_t=list_item_group<_item_t, _size_t, _group_size>;
 using parent_group_t=list_parent_group<_item_t, _size_t, _group_size>;
 using cluster_t=list<_item_t, _size_t, _group_size>;
+using iterator_t=cluster_iterator<list_traits, false>;
+using const_iterator_t=cluster_iterator<list_traits, true>;
 using size_t=_size_t;
 static constexpr uint16_t group_size=_group_size;
 };
@@ -399,12 +401,12 @@ private:
 //======
 
 template <typename _item_t, typename _size_t=uint32_t, uint16_t _group_size=10>
-class list: public iterable_cluster<list_traits<_item_t, _size_t, _group_size>>
+class list: public cluster<list_traits<_item_t, _size_t, _group_size>>
 {
 public:
 	// Using
 	using _traits_t=list_traits<_item_t, _size_t, _group_size>;
-	using _base_t=iterable_cluster<_traits_t>;
+	using _base_t=cluster<_traits_t>;
 
 	// Con-/Destructors
 	using _base_t::_base_t;
@@ -482,6 +484,23 @@ public:
 			}
 		append(&items[pos], count-pos);
 		}
+};
+
+
+//==========
+// Iterator
+//==========
+
+template <typename _item_t, typename _size_t, uint16_t _group_size, bool _is_const>
+class list_iterator: public cluster_iterator<list_traits<_item_t, _size_t, _group_size>, _is_const>
+{
+public:
+	// Using
+	using _traits_t=list_traits<_item_t, _size_t, _group_size>;
+	using _base_t=cluster_iterator<_traits_t, _is_const>;
+
+	// Con-/Destructors
+	using _base_t::_base_t;
 };
 
 

@@ -34,7 +34,7 @@ namespace Clusters {
 // Forward-Declarations
 //======================
 
-template <typename _traits_t, bool is_const> class cluster_iterator_base;
+template <class _traits_t, bool _is_const> class cluster_iterator_base;
 
 
 //=======
@@ -471,18 +471,31 @@ template <typename _traits_t>
 class cluster
 {
 public:
-	// Friends
-	friend class cluster_iterator_base<_traits_t, false>;
-	friend class cluster_iterator_base<_traits_t, true>;
-
 	// Using
 	using _item_t=typename _traits_t::item_t;
 	using _group_t=typename _traits_t::group_t;
 	using _item_group_t=typename _traits_t::item_group_t;
 	using _parent_group_t=typename _traits_t::parent_group_t;
 	using _size_t=typename _traits_t::size_t;
+	using iterator=typename _traits_t::iterator_t;
+	using const_iterator=typename _traits_t::const_iterator_t;
+
+	// Friends
+	friend iterator;
+	friend const_iterator;
+	friend cluster_iterator_base<_traits_t, false>;
+	friend cluster_iterator_base<_traits_t, true>;
 
 	// Access
+	inline iterator begin() { return iterator(this, 0); }
+	inline iterator begin(_size_t position) { return iterator(this, position); }
+	inline const_iterator begin()const { return const_iterator(this, 0); }
+	inline const_iterator begin(_size_t position)const { return const_iterator(this, position); }
+	inline const_iterator cbegin()const { return const_iterator(this, 0); }
+	inline const_iterator cbegin(_size_t position)const { return const_iterator(this, position); }
+	inline const_iterator cend()const { return const_iterator(this, -2); }
+	inline const_iterator crend()const { return const_iterator(this, -1); }
+	inline iterator end() { return iterator(this, -2); }
 	_item_t& get_at(_size_t position)
 		{
 		if(!m_root)
@@ -507,6 +520,7 @@ public:
 			return 0;
 		return m_root->get_item_count();
 		}
+	inline iterator rend() { return iterator(this, -1); }
 
 	// Modification
 	void clear()noexcept
@@ -571,22 +585,17 @@ protected:
 };
 
 
-//==========
-// Iterator
-//==========
-
-template <typename _group_t> class cluster_position
-{
-public:
-	_group_t* group;
-	uint16_t position;
-};
+//=====================
+// Iterator Base-Class
+//=====================
 
 template <typename _traits_t, bool _is_const>
 class cluster_iterator_base
 {
 public:
 	// Using
+	using _cluster_t=cluster<_traits_t>;
+	using _cluster_ptr=typename std::conditional<_is_const, _cluster_t const*, _cluster_t*>::type;
 	using _item_t=typename _traits_t::item_t;
 	using _item_ptr=typename std::conditional<_is_const, _item_t const*, _item_t*>::type;
 	using _item_ref=typename std::conditional<_is_const, _item_t const&, _item_t&>::type;
@@ -595,62 +604,38 @@ public:
 	using _parent_group_t=typename _traits_t::parent_group_t;
 	using _size_t=typename _traits_t::size_t;
 	static constexpr uint16_t _group_size=_traits_t::group_size;
-	using _cluster_t=cluster<_traits_t>;
-	using _cluster_ptr=typename std::conditional<_is_const, _cluster_t const*, _cluster_t*>::type;
-	using _cluster_pos_t=cluster_position<_group_t>;
 	static constexpr _size_t end_pos=-2;
 	static constexpr _size_t rend_pos=-1;
 
 	// Con-/Destructors
 	cluster_iterator_base(cluster_iterator_base const& it):
-		m_cluster(it.m_cluster), m_current(nullptr), m_level_count(0), m_position(end_pos), m_positions(nullptr)
+		m_cluster(it.m_cluster), m_current(nullptr), m_level_count(0), m_position(end_pos), m_its(nullptr)
 		{
 		set_position(it.m_position);
 		}
-	cluster_iterator_base(cluster_iterator_base&& it):
-		m_cluster(it.m_cluster), m_current(it.m_current), m_level_count(it.m_level_count), m_position(it.m_position), m_positions(it.m_positions)
-		{
-		it.m_cluster=nullptr;
-		it.m_current=nullptr;
-		it.m_level_count=0;
-		it.m_position=end_pos;
-		it.m_positions=nullptr;
-		}
 	cluster_iterator_base(_cluster_ptr cluster)noexcept:
-		m_cluster(cluster), m_current(nullptr), m_level_count(0), m_position(end_pos), m_positions(nullptr)
+		m_cluster(cluster), m_current(nullptr), m_level_count(0), m_position(end_pos), m_its(nullptr)
 		{}
 	cluster_iterator_base(_cluster_ptr cluster, _size_t position)noexcept:
-		m_cluster(cluster), m_current(nullptr), m_level_count(0), m_position(end_pos), m_positions(nullptr)
+		m_cluster(cluster), m_current(nullptr), m_level_count(0), m_position(end_pos), m_its(nullptr)
 		{
 		set_position(position);
 		}
-	cluster_iterator_base(_cluster_ptr cluster, _size_t position, _cluster_pos_t* positions, uint16_t level_count)noexcept:
-		m_cluster(cluster), m_level_count(level_count), m_position(position), m_positions(positions)
-		{
-		auto pos_ptr=&m_positions[level_count-1];
-		auto item_group=(_item_group_t*)pos_ptr->group;
-		m_current=item_group->get_at(pos_ptr->position);
-		}
 	~cluster_iterator_base()
 		{
-		if(m_positions)
-			operator delete(m_positions);
+		if(m_its)
+			operator delete(m_its);
 		}
 
 	// Access
-	inline _item_ref operator*()const { return get_current(); }
+	inline _item_ref operator*()const { return *operator->(); }
 	inline _item_ptr operator->()const
 		{
 		if(!m_current)
 			throw std::out_of_range(nullptr);
 		return m_current;
 		}
-	inline _item_ref get_current()const
-		{
-		if(!m_current)
-			throw std::out_of_range(nullptr);
-		return *m_current;
-		}
+	inline _item_ref get_current()const { return *operator->(); }
 	inline bool has_current()const noexcept { return m_current!=nullptr; }
 
 	// Comparison
@@ -663,14 +648,16 @@ public:
 	// Navigation
 	inline cluster_iterator_base& operator++()
 		{
-		move_next();
+		this->move_next();
 		return *this;
 		}
 	inline cluster_iterator_base& operator--()
 		{
-		move_previous();
+		this->move_previous();
 		return *this;
 		}
+	inline bool begin() { return set_position(0); }
+	inline void end() { reset(end_pos); }
 	inline _size_t get_position()const noexcept { return m_position; }
 	bool move_next()noexcept
 		{
@@ -678,32 +665,32 @@ public:
 			return false;
 		if(m_position==rend_pos)
 			return set_position(0);
-		auto pos_ptr=&m_positions[m_level_count-1];
-		_item_group_t* item_group=(_item_group_t*)pos_ptr->group;
+		auto it_ptr=&m_its[m_level_count-1];
+		_item_group_t* item_group=(_item_group_t*)it_ptr->group;
 		uint16_t count=item_group->get_child_count();
-		if(pos_ptr->position+1<count)
+		if(it_ptr->position+1<count)
 			{
-			pos_ptr->position++;
-			m_current=item_group->get_at(pos_ptr->position);
+			it_ptr->position++;
+			m_current=item_group->get_at(it_ptr->position);
 			m_position++;
 			return true;
 			}
 		for(uint16_t u=(uint16_t)(m_level_count-1); u>0; u--)
 			{
-			pos_ptr--;
-			_parent_group_t* parent_group=(_parent_group_t*)pos_ptr->group;
+			it_ptr--;
+			_parent_group_t* parent_group=(_parent_group_t*)it_ptr->group;
 			count=parent_group->get_child_count();
-			if(pos_ptr->position+1>=count)
+			if(it_ptr->position+1>=count)
 				continue;
-			pos_ptr->position++;
-			_group_t* group=pos_ptr->group;
+			it_ptr->position++;
+			_group_t* group=it_ptr->group;
 			for(; u<m_level_count; u++)
 				{
 				parent_group=(_parent_group_t*)group;
-				group=parent_group->get_child(pos_ptr->position);
-				pos_ptr++;
-				pos_ptr->group=group;
-				pos_ptr->position=0;
+				group=parent_group->get_child(it_ptr->position);
+				it_ptr++;
+				it_ptr->group=group;
+				it_ptr->position=0;
 				}
 			item_group=(_item_group_t*)group;
 			m_current=item_group->get_at(0);
@@ -724,39 +711,40 @@ public:
 				return false;
 			return set_position(item_count-1);
 			}
-		auto pos_ptr=&m_positions[m_level_count-1];
-		_item_group_t* item_group=(_item_group_t*)pos_ptr->group;
-		if(pos_ptr->position>0)
+		auto it_ptr=&m_its[m_level_count-1];
+		_item_group_t* item_group=(_item_group_t*)it_ptr->group;
+		if(it_ptr->position>0)
 			{
-			pos_ptr->position--;
-			m_current=item_group->get_at(pos_ptr->position);
+			it_ptr->position--;
+			m_current=item_group->get_at(it_ptr->position);
 			m_position--;
 			return true;
 			}
 		for(uint16_t u=(uint16_t)(m_level_count-1); u>0; u--)
 			{
-			pos_ptr--;
-			_parent_group_t* parent_group=(_parent_group_t*)pos_ptr->group;
-			if(pos_ptr->position==0)
+			it_ptr--;
+			_parent_group_t* parent_group=(_parent_group_t*)it_ptr->group;
+			if(it_ptr->position==0)
 				continue;
-			pos_ptr->position--;
-			_group_t* group=pos_ptr->group;
+			it_ptr->position--;
+			_group_t* group=it_ptr->group;
 			for(; u<m_level_count; u++)
 				{
 				parent_group=(_parent_group_t*)group;
-				group=parent_group->get_child(pos_ptr->position);
-				pos_ptr++;
-				pos_ptr->group=group;
-				pos_ptr->position=(uint16_t)(group->get_child_count()-1);
+				group=parent_group->get_child(it_ptr->position);
+				it_ptr++;
+				it_ptr->group=group;
+				it_ptr->position=(uint16_t)(group->get_child_count()-1);
 				}
 			item_group=(_item_group_t*)group;
-			m_current=item_group->get_at(pos_ptr->position);
+			m_current=item_group->get_at(it_ptr->position);
 			m_position--;
 			return true;
 			}
 		reset(rend_pos);
 		return false;
 		}
+	inline void rend() { reset(rend_pos); }
 	bool set_position(_size_t position)noexcept
 		{
 		if(is_outside(position))
@@ -779,12 +767,12 @@ public:
 			}
 		uint16_t level_count=(uint16_t)(group->get_level()+1);
 		set_level_count(level_count);
-		auto pos_ptr=&m_positions[0];
-		pos_ptr->group=group;
-		pos_ptr->position=group_pos;
+		auto it_ptr=&m_its[0];
+		it_ptr->group=group;
+		it_ptr->position=group_pos;
 		for(uint16_t u=0; u<m_level_count-1; u++)
 			{
-			_parent_group_t* parent_group=(_parent_group_t*)pos_ptr->group;
+			_parent_group_t* parent_group=(_parent_group_t*)it_ptr->group;
 			group=parent_group->get_child(group_pos);
 			group_pos=get_position_internal(group, &offset);
 			if(group_pos==_group_size)
@@ -792,9 +780,9 @@ public:
 				reset(end_pos);
 				return false;
 				}
-			pos_ptr++;
-			pos_ptr->group=group;
-			pos_ptr->position=group_pos;
+			it_ptr++;
+			it_ptr->group=group;
+			it_ptr->position=group_pos;
 			}
 		_item_group_t* item_group=(_item_group_t*)group;
 		m_current=item_group->get_at(group_pos);
@@ -803,7 +791,15 @@ public:
 		}
 
 protected:
+	// Iterator-Pointer
+	struct it_pointer
+		{
+		_group_t* group;
+		uint16_t position;
+		};
+
 	// Common
+	inline _group_t* create_root() { return m_cluster->create_root(); }
 	uint16_t get_position_internal(_group_t* group, _size_t* position)const noexcept
 		{
 		uint16_t child_count=group->get_child_count();
@@ -832,6 +828,7 @@ protected:
 		{
 		return (position==end_pos||position==rend_pos);
 		}
+	inline _group_t* lift_root() { return m_cluster->lift_root(); }
 	inline void reset(_size_t position)
 		{
 		set_level_count(0);
@@ -842,29 +839,33 @@ protected:
 		{
 		if(m_level_count==level_count)
 			return;
-		if(m_positions)
+		if(m_its)
 			{
-			operator delete(m_positions);
-			m_positions=nullptr;
+			operator delete(m_its);
+			m_its=nullptr;
 			}
 		if(level_count>0)
-			m_positions=(_cluster_pos_t*)operator new(level_count*sizeof(_cluster_pos_t));
+			m_its=(it_pointer*)operator new(level_count*sizeof(it_pointer));
 		m_level_count=level_count;
 		}
 	_cluster_ptr m_cluster;
 	_item_ptr m_current;
+	it_pointer* m_its;
 	uint16_t m_level_count;
 	_size_t m_position;
-	_cluster_pos_t* m_positions;
 };
 
-template <typename _traits_t, bool is_const>
+
+//==========
+// Iterator
+//==========
+
+template <typename _traits_t, bool _is_const>
 class cluster_iterator: public cluster_iterator_base<_traits_t, false>
 {
 public:
 	// Using
 	using _base_t=cluster_iterator_base<_traits_t, false>;
-	using _size_t=typename _traits_t::size_t;
 
 	// Con-/Destructors
 	using _base_t::_base_t;
@@ -874,12 +875,17 @@ public:
 		{
 		if(!this->has_current())
 			return false;
-		_size_t position=this->m_position;
+		auto position=this->m_position;
 		this->m_cluster->remove_at(position);
 		this->set_position(position);
 		return true;
 		}
 };
+
+
+//================
+// Const-Iterator
+//================
 
 template <typename _traits_t>
 class cluster_iterator<_traits_t, true>: public cluster_iterator_base<_traits_t, true>
@@ -890,33 +896,6 @@ public:
 
 	// Con-/Destructors
 	using _base_t::_base_t;
-};
-
-
-//==================
-// Iterable Cluster
-//==================
-
-template <typename _traits_t>
-class iterable_cluster: public cluster<_traits_t>
-{
-public:
-	// Using
-	using _size_t=typename _traits_t::size_t;
-	using iterator=cluster_iterator<_traits_t, false>;
-	using const_iterator=cluster_iterator<_traits_t, true>;
-
-	// Access
-	inline iterator begin() { return iterator(this, 0); }
-	inline iterator begin(_size_t position) { return iterator(this, position); }
-	inline const_iterator begin()const { return const_iterator(this, 0); }
-	inline const_iterator begin(_size_t position)const { return const_iterator(this, position); }
-	inline const_iterator cbegin()const { return const_iterator(this, 0); }
-	inline const_iterator cbegin(_size_t position)const { return const_iterator(this, position); }
-	inline const_iterator cend()const { return const_iterator(this, -2); }
-	inline const_iterator crend()const { return const_iterator(this, -1); }
-	inline iterator end() { return iterator(this, -2); }
-	inline iterator rend() { return iterator(this, -1); }
 };
 
 

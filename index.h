@@ -35,28 +35,21 @@ template <typename _item_t, typename _size_t, uint16_t _group_size> class index;
 template <typename _key_t, typename _item_t, typename _size_t, uint16_t _group_size> class index_group;
 template <typename _key_t, typename _item_t, typename _size_t, uint16_t _group_size> class index_item_group;
 template <typename _key_t, typename _item_t, typename _size_t, uint16_t _group_size> class index_parent_group;
+template <typename _traits_t, bool _is_const> class index_iterator;
 
 template <typename _key_t, typename _item_t, typename _size_t, uint16_t _group_size>
 struct index_traits
 {
+using key_t=_key_t;
 using item_t=_item_t;
 using group_t=index_group<_key_t, _item_t, _size_t, _group_size>;
 using item_group_t=index_item_group<_key_t, _item_t, _size_t, _group_size>;
 using parent_group_t=index_parent_group<_key_t, _item_t, _size_t, _group_size>;
 using cluster_t=index<_item_t, _size_t, _group_size>;
+using iterator_t=index_iterator<index_traits, false>;
+using const_iterator_t=index_iterator<index_traits, true>;
 using size_t=_size_t;
 static constexpr uint16_t group_size=_group_size;
-};
-
-
-//=============
-// Find-Method
-//=============
-
-enum class index_find_method
-{
-below_or_equal,
-above_or_equal
 };
 
 
@@ -69,7 +62,7 @@ class index_group: public cluster_group<index_traits<_key_t, _item_t, _size_t, _
 {
 public:
 	// Access
-	virtual uint16_t find(_key_t const& key, _size_t* position, bool* exists, index_find_method method)const noexcept=0;
+	virtual uint16_t find(_key_t const& key, _size_t* position, bool* exists, bool above_or_equal)const noexcept=0;
 	virtual _item_t* get(_key_t const& key, _item_t* create=nullptr, bool* created=nullptr, bool again=false)noexcept=0;
 	virtual _item_t* get_first()noexcept=0;
 	virtual _item_t* get_last()noexcept=0;
@@ -97,27 +90,22 @@ public:
 	using _base_t::_base_t;
 
 	// Access
-	inline uint16_t find(_key_t const& key, _size_t* position, bool* exists, index_find_method method)const noexcept override
+	inline uint16_t find(_key_t const& key, _size_t* position, bool* exists, bool above_or_equal)const noexcept override
 		{
 		uint16_t pos=get_item_pos(key, exists);
 		if(!(*exists))
 			{
-			switch(method)
+			if(above_or_equal)
 				{
-				case index_find_method::below_or_equal:
-					{
-					if(pos==0)
-						return _group_size;
-					pos--;
-					break;
-					}
-				case index_find_method::above_or_equal:
-					{
-					uint16_t item_count=this->m_item_count;
-					if(pos==item_count)
-						return _group_size;
-					break;
-					}
+				uint16_t item_count=this->m_item_count;
+				if(pos==item_count)
+					return _group_size;
+				}
+			else
+				{
+				if(pos==0)
+					return _group_size;
+				pos--;
 				}
 			}
 		*position+=pos;
@@ -205,11 +193,11 @@ public:
 		}
 
 	// Access
-	inline uint16_t find(_key_t const& key, _size_t* position, bool* exists, index_find_method method)const noexcept override
+	uint16_t find(_key_t const& key, _size_t* position, bool* exists, bool above_or_equal)const noexcept override
 		{
 		uint16_t pos=0;
 		uint16_t count=get_item_pos(key, &pos, false);
-		if(method==index_find_method::above_or_equal)
+		if(above_or_equal)
 			{
 			if(count>1)
 				pos++;
@@ -385,18 +373,14 @@ private:
 //=======
 
 template <typename _item_t, typename _size_t=uint32_t, uint16_t _group_size=10>
-class index: public iterable_cluster<index_traits<_item_t, _item_t, _size_t, _group_size>>
+class index: public cluster<index_traits<_item_t, _item_t, _size_t, _group_size>>
 {
 public:
 	// Using
 	using _traits_t=index_traits<_item_t, _item_t, _size_t, _group_size>;
-	using _base_t=iterable_cluster<_traits_t>;
-	using _group_t=typename _traits_t::group_t;
-	using _item_group_t=typename _traits_t::item_group_t;
-	using _parent_group_t=typename _traits_t::parent_group_t;
-	using _cluster_pos_t=cluster_position<_group_t>;
-	using iterator=typename _base_t::iterator;
-	using const_iterator=typename _base_t::const_iterator;
+	using _base_t=cluster<_traits_t>;
+	using iterator=typename _traits_t::iterator_t;
+	using const_iterator=typename _traits_t::const_iterator_t;
 
 	// Con-/Destructors
 	using _base_t::_base_t;
@@ -411,8 +395,18 @@ public:
 			return false;
 		return root->get(item)!=nullptr;
 		}
-	inline iterator find(_item_t const& item, index_find_method method=index_find_method::above_or_equal)noexcept { return find_internal<iterator>(item, method); }
-	inline const_iterator find(_item_t const& item, index_find_method method=index_find_method::above_or_equal)const noexcept { return find_internal<const_iterator>(item, method); }
+	inline iterator find(_item_t const& item, bool above_or_equal=true)noexcept
+		{
+		iterator it(this);
+		it.find(item, above_or_equal);
+		return it;
+		}
+	inline const_iterator find(_item_t const& item, bool above_or_equal=true)const noexcept
+		{
+		const_iterator it(this);
+		it.find(item, above_or_equal);
+		return it;
+		}
 
 	// Modification
 	template <typename _item_param_t> bool add(_item_param_t&& item)noexcept
@@ -433,42 +427,13 @@ public:
 		{
 		_item_t create(std::forward<_item_param_t>(item));
 		bool created=false;
-		auto item=get_internal(&create, &created);
+		auto got=get_internal(&create, &created);
 		if(!created)
-			*item=std::move(create);
+			*got=std::move(create);
 		}
 
 private:
 	// Common
-	template <class _it_t> _it_t find_internal(_item_t const& item, index_find_method method)const noexcept
-		{
-		auto group=this->m_root;
-		if(!group)
-			return _it_t((_base_t*)this, -2);
-		uint16_t level_count=group->get_level()+1;
-		auto pointers=(_cluster_pos_t*)operator new(level_count*sizeof(_cluster_pos_t));
-		auto pos_ptr=&pointers[0];
-		_size_t position=0;
-		bool exists=false;
-		while(group)
-			{
-			uint16_t group_pos=group->find(item, &position, &exists, method);
-			if(group_pos==_group_size)
-				break;
-			pos_ptr->group=group;
-			pos_ptr->position=group_pos;
-			pos_ptr++;
-			if(group->get_level()>0)
-				{
-				auto parent_group=(_parent_group_t*)group;
-				group=parent_group->get_child(group_pos);
-				continue;
-				}
-			return _it_t((_base_t*)this, position, pointers, level_count);
-			}
-		operator delete(pointers);
-		return _it_t((_base_t*)this, -2);
-		}
 	_item_t* get_internal(_item_t* create, bool* created)
 		{
 		auto root=this->create_root();
@@ -477,6 +442,63 @@ private:
 			return got;
 		root=this->lift_root();
 		return root->get(*create, create, created, true);
+		}
+};
+
+
+//==========
+// Iterator
+//==========
+
+template <typename _traits_t, bool _is_const>
+class index_iterator: public cluster_iterator<_traits_t, _is_const>
+{
+public:
+	// Using
+	using _base_t=cluster_iterator<_traits_t, _is_const>;
+	using _key_t=typename _traits_t::key_t;
+	using _item_group_t=typename _traits_t::item_group_t;
+	using _parent_group_t=typename _traits_t::parent_group_t;
+
+	// Con-/Destructors
+	using _base_t::_base_t;
+
+public:
+	// Navigation
+	bool find(_key_t const& key, bool above_or_equal=true)noexcept
+		{
+		auto group=this->m_cluster->get_root();
+		if(!group)
+			{
+			this->end();
+			return false;
+			}
+		uint16_t level_count=(uint16_t)(group->get_level()+1);
+		this->set_level_count(level_count);
+		auto it_ptr=&this->m_its[0];
+		_size_t position=0;
+		bool exists=false;
+		while(group)
+			{
+			uint16_t group_pos=group->find(key, &position, &exists, above_or_equal);
+			if(group_pos==_group_size)
+				break;
+			it_ptr->group=group;
+			it_ptr->position=group_pos;
+			it_ptr++;
+			if(group->get_level()>0)
+				{
+				auto parent_group=(_parent_group_t*)group;
+				group=parent_group->get_child(group_pos);
+				continue;
+				}
+			auto item_group=(_item_group_t*)group;
+			this->m_current=item_group->get_at(group_pos);
+			this->m_position=position;
+			return true;
+			}
+		this->end();
+		return false;
 		}
 };
 
