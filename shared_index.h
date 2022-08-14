@@ -53,7 +53,7 @@ public:
 		this->m_mutex.unlock_shared();
 		return contains;
 		}
-	iterator find(_item_t const& item, bool above_or_equal)
+	iterator find(_item_t const& item, bool above_or_equal=true)
 		{
 		this->m_mutex.lock_shared();
 		_iterator_t found=_cluster_t::find(item, above_or_equal);
