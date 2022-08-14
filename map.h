@@ -91,12 +91,12 @@ public:
 	inline bool operator<=(_key_t const& key)const noexcept { return m_key<=key; }
 
 	// Access
-	_key_t const& get_key()const noexcept { return m_key; }
-	_value_t& get_value()noexcept { return m_value; }
-	_value_t const& get_value()const noexcept { return m_value; }
+	inline _key_t const& get_key()const noexcept { return m_key; }
+	inline _value_t& get_value()noexcept { return m_value; }
+	inline _value_t const& get_value()const noexcept { return m_value; }
 
 	// Modification
-	template <typename _value_param_t> void set_value(_value_param_t&& value)noexcept
+	template <typename _value_param_t> inline void set_value(_value_param_t&& value)noexcept
 		{
 		_value_t set(std::forward<_value_param_t>(value));
 		m_value=std::move(set);
@@ -131,14 +131,8 @@ public:
 	using _base_t::_base_t;
 
 	// Access
-	template <class _key_param_t> inline _value_t& operator[](_key_param_t&& key)noexcept
-		{
-		_item_t create(std::forward<_key_param_t>(key), _value_t());
-		bool created=false;
-		_item_t* got=get_internal(&create, &created);
-		return got->get_value();
-		}
-	inline _value_t operator[](_key_t const& key)const noexcept { return get(key); }
+	template <class _key_param_t> inline _value_t& operator[](_key_param_t&& key)noexcept { return get(std::forward<_key_param_t>(key)); }
+	inline _value_t const& operator[](_key_t const& key)const noexcept { return get(key); }
 	bool contains(_key_t const& key)const noexcept
 		{
 		auto root=this->m_root;
@@ -158,15 +152,33 @@ public:
 		it.find(key);
 		return it;
 		}
-	_value_t get(_key_t const& key)const noexcept
+	template <class _key_param_t> _value_t& get(_key_param_t&& key)noexcept
+		{
+		_item_t create(std::forward<_key_param_t>(key), _value_t());
+		bool created=false;
+		_item_t* got=get_internal(&create, &created);
+		return got->get_value();
+		}
+	_value_t const& get(_key_t const& key)const noexcept
 		{
 		auto root=this->m_root;
 		if(!root)
-			return _value_t();
+			throw std::out_of_range(nullptr);
 		_item_t* item=root->get(key);
 		if(!item)
-			return _value_t();
+			throw std::out_of_range(nullptr);
 		return item->get_value();
+		}
+	bool try_get(_key_t const& key, _value_t* value)const noexcept
+		{
+		auto root=this->m_root;
+		if(!root)
+			return false;
+		_item_t* item=root->get(key);
+		if(!item)
+			return false;
+		*value=item->get_value();
+		return true;
 		}
 
 	// Modification

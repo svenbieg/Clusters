@@ -664,7 +664,7 @@ public:
 		if(m_position==end_pos)
 			return false;
 		if(m_position==rend_pos)
-			return set_position(0);
+			return begin();
 		auto it_ptr=&m_its[m_level_count-1];
 		_item_group_t* item_group=(_item_group_t*)it_ptr->group;
 		uint16_t count=item_group->get_child_count();
@@ -705,12 +705,7 @@ public:
 		if(m_position==rend_pos)
 			return false;
 		if(m_position==end_pos)
-			{
-			_size_t item_count=m_cluster->get_count();
-			if(item_count==0)
-				return false;
-			return set_position(item_count-1);
-			}
+			return rbegin();
 		auto it_ptr=&m_its[m_level_count-1];
 		_item_group_t* item_group=(_item_group_t*)it_ptr->group;
 		if(it_ptr->position>0)
@@ -743,6 +738,16 @@ public:
 			}
 		reset(rend_pos);
 		return false;
+		}
+	bool rbegin()
+		{
+		_size_t item_count=m_cluster->get_count();
+		if(item_count==0||!set_position(item_count-1))
+			{
+			rend();
+			return false;
+			}
+		return true;
 		}
 	inline void rend() { reset(rend_pos); }
 	bool set_position(_size_t position)noexcept

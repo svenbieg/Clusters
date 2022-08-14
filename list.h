@@ -464,8 +464,8 @@ public:
 		}
 	template <typename _item_param_t> void set_at(_size_t position, _item_param_t&& item)
 		{
-		_item_t& item=get_at(position);
-		item=std::forward<_item_param_t>(item);
+		_item_t& got=get_at(position);
+		got=std::forward<_item_param_t>(item);
 		}
 	void set_many(_size_t position, _item_t const* items, _size_t count)noexcept
 		{
@@ -484,23 +484,6 @@ public:
 			}
 		append(&items[pos], count-pos);
 		}
-};
-
-
-//==========
-// Iterator
-//==========
-
-template <typename _item_t, typename _size_t, uint16_t _group_size, bool _is_const>
-class list_iterator: public cluster_iterator<list_traits<_item_t, _size_t, _group_size>, _is_const>
-{
-public:
-	// Using
-	using _traits_t=list_traits<_item_t, _size_t, _group_size>;
-	using _base_t=cluster_iterator<_traits_t, _is_const>;
-
-	// Con-/Destructors
-	using _base_t::_base_t;
 };
 
 

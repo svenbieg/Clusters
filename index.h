@@ -459,6 +459,8 @@ public:
 	using _key_t=typename _traits_t::key_t;
 	using _item_group_t=typename _traits_t::item_group_t;
 	using _parent_group_t=typename _traits_t::parent_group_t;
+	using _size_t=typename _traits_t::size_t;
+	static constexpr uint16_t _group_size=_traits_t::group_size;
 
 	// Con-/Destructors
 	using _base_t::_base_t;
