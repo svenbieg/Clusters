@@ -18,6 +18,7 @@
 //=======
 
 #include <new>
+#include <stdexcept>
 #include <stdint.h>
 #include <type_traits>
 
@@ -499,17 +500,23 @@ public:
 	inline const_iterator cend()const noexcept { return const_iterator(this, -2); }
 	inline const_iterator crend()const noexcept { return const_iterator(this, -1); }
 	inline iterator end()noexcept { return iterator(this, -2); }
-	_item_t* get_at(_size_t position)noexcept
+	_item_t get_at(_size_t position)const noexcept
 		{
 		if(!m_root)
-			return nullptr;
-		return m_root->get_at(position);
+			return _item_t();
+		_item_t* item=m_root->get_at(position);
+		if(!item)
+			return _item_t();
+		return *item;
 		}
-	_item_t const* get_at(_size_t position)const noexcept
+	_item_t& get_at(_size_t position)
 		{
 		if(!m_root)
-			return nullptr;
-		return m_root->get_at(position);
+			throw std::out_of_range(nullptr);
+		_item_t* item=m_root->get_at(position);
+		if(!item)
+			throw std::out_of_range(nullptr);
+		return *item;
 		}
 	_size_t get_count()const noexcept
 		{
