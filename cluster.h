@@ -241,11 +241,15 @@ public:
 	_item_t* get_at(_size_t position)noexcept override
 		{
 		uint16_t group=get_group(&position);
+		if(group==_group_size)
+			return nullptr;
 		return m_children[group]->get_at(position);
 		}
 	_item_t const* get_at(_size_t position)const noexcept override
 		{
 		uint16_t group=get_group(&position);
+		if(group==_group_size)
+			return nullptr;
 		return m_children[group]->get_at(position);
 		}
 	inline _group_t* get_child(uint16_t position)const noexcept
