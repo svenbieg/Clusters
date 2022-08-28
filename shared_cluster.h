@@ -53,16 +53,18 @@ public:
 	using _size_t=typename _traits_t::size_t;
 
 	// Con-/Destructors
-	shared_cluster() {}
-	virtual ~shared_cluster() {}
+	shared_cluster()noexcept {}
+	virtual ~shared_cluster()noexcept {}
 
 	// Access
 	_item_t get_at(_size_t position)
 		{
 		m_mutex.lock_shared();
-		_item_t const& item=_cluster_t::get_at(position);
+		_item_t* item=_cluster_t::get_at(position);
 		m_mutex.unlock_shared();
-		return item;
+		if(!item)
+			return _item_t();
+		return *item;
 		}
 
 	// Modification
