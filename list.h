@@ -66,7 +66,7 @@ public:
 	virtual bool append(_item_t* item, bool again)noexcept=0;
 	virtual _size_t append(_item_t const* append, _size_t count)noexcept=0;
 	virtual bool insert_at(_size_t position, _item_t* item, bool again)noexcept=0;
-	virtual _size_t set_many(_size_t position, _item_t const* many, _size_t count)=0;
+	virtual _size_t set_many(_size_t position, _item_t const* many, _size_t count)noexcept=0;
 };
 
 
@@ -123,7 +123,7 @@ public:
 		{
 		return this->insert_items(position, item, 1);
 		}
-	_size_t set_many(_size_t position, _item_t const* many, _size_t count)override
+	_size_t set_many(_size_t position, _item_t const* many, _size_t count)noexcept override
 		{
 		uint16_t item_count=this->get_child_count();
 		if(position>=item_count)
@@ -311,7 +311,7 @@ public:
 		this->m_item_count++;
 		return true;
 		}
-	_size_t set_many(_size_t position, _item_t const* many, _size_t count)override
+	_size_t set_many(_size_t position, _item_t const* many, _size_t count)noexcept override
 		{
 		uint16_t group=this->get_group(&position);
 		if(group==_group_size)
@@ -412,8 +412,6 @@ public:
 	using _base_t::_base_t;
 
 	// Access
-	inline _item_t& operator[](_size_t position) { return this->get_at(position); }
-	inline _item_t operator[](_size_t position)const noexcept { return this->get_at(position); }
 	_size_t get_many(_size_t position, _item_t* items, _size_t count)const noexcept
 		{
 		auto root=this->m_root;
@@ -444,45 +442,49 @@ public:
 			root=this->lift_root();
 			}
 		}
-	template <typename _item_param_t> void insert_at(_size_t position, _item_param_t&& item)
+	template <typename _item_param_t> bool insert_at(_size_t position, _item_param_t&& item)noexcept
 		{
 		_item_t fwd(std::forward<_item_param_t>(item));
 		auto root=this->m_root;
 		if(!root)
 			{
 			if(position>0)
-				throw std::out_of_range(nullptr);
+				return false;
 			root=this->create_root();
 			}
 		auto count=root->get_item_count();
 		if(position>count)
-			throw std::out_of_range(nullptr);
+			return false;
 		if(root->insert_at(position, &fwd, false))
-			return;
+			return true;
 		root=this->lift_root();
-		root->insert_at(position, &fwd, true);
+		return root->insert_at(position, &fwd, true);
 		}
-	template <typename _item_param_t> void set_at(_size_t position, _item_param_t&& item)
+	template <typename _item_param_t> bool set_at(_size_t position, _item_param_t&& item)noexcept
 		{
-		_item_t& got=get_at(position);
-		got=std::forward<_item_param_t>(item);
+		_item_t* got=get_at(position);
+		if(!got)
+			return false;
+		*got=std::forward<_item_param_t>(item);
+		return true;
 		}
-	void set_many(_size_t position, _item_t const* items, _size_t count)noexcept
+	_size_t set_many(_size_t position, _item_t const* items, _size_t count)noexcept
 		{
 		_size_t item_count=0;
 		auto root=this->get_root();
 		if(root)
 			item_count=root->get_item_count();
 		if(position>item_count)
-			throw std::out_of_range(nullptr);
+			return 0;
 		_size_t pos=0;
 		if(root&&position<item_count)
 			{
 			pos+=root->set_many(position, items, count);
 			if(pos==count)
-				return;
+				return count;
 			}
 		append(&items[pos], count-pos);
+		return count;
 		}
 };
 

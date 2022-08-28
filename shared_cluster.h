@@ -123,10 +123,10 @@ public:
 		}
 
 	// Access
-	_item_ref operator*()const { return _base_t::get_current(); }
-	_item_ptr operator->()const { return _base_t::operator->(); }
-	_item_ref get_current()const { return _base_t::get_current(); }
-	inline bool has_current()const { return _base_t::has_current(); }
+	_item_ref operator*()const noexcept { return _base_t::operator*(); }
+	_item_ptr operator->()const noexcept { return _base_t::operator->(); }
+	_item_ref get_current()const noexcept { return _base_t::get_current(); }
+	inline bool has_current()const noexcept { return _base_t::has_current(); }
 
 	// Comparison
 	inline bool operator==(shared_cluster_iterator_base const& it) { return _base_t::operator==(it); }
