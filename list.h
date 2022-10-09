@@ -412,7 +412,6 @@ public:
 	using _base_t::_base_t;
 
 	// Access
-	_item_t operator[](_size_t position)const noexcept { return _base_t::get_at(position); }
 	_item_t& operator[](_size_t position) { return _base_t::get_at(position); }
 	_item_t const& operator[](_size_t position)const { return _base_t::get_at(position); }
 	_size_t get_many(_size_t position, _item_t* items, _size_t count)const noexcept

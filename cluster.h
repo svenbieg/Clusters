@@ -632,7 +632,7 @@ public:
 	// Access
 	inline _item_ref operator*()const noexcept { return get_current(); }
 	inline _item_ptr operator->()const noexcept { return m_current; }
-	_item_ref get_current()const noexcept
+	inline _item_ref get_current()const
 		{
 		if(!m_current)
 			throw std::out_of_range(nullptr);
