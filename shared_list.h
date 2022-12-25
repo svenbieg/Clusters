@@ -43,61 +43,39 @@ public:
 	// Con-/Destructors
 	shared_list() {}
 
+	// Access
+	inline _size_t get_many(_size_t position, _item_t* items, _size_t count)
+		{
+		std::shared_lock lock(this->m_mutex);
+		return _cluster_t::get_many(position, items, count);
+		}
+
 	// Modification
-	template <typename _item_param_t> void append(_item_param_t&& item)
+	template <typename _item_param_t> inline void append(_item_param_t&& item)
 		{
-		this->m_mutex.lock();
+		std::unique_lock lock(this->m_mutex);
 		_cluster_t::append(std::forward<_item_param_t>(item));
-		this->m_mutex.unlock();
 		}
-	void append(_item_t const* items, _size_t count)
+	inline void append(_item_t const* items, _size_t count)
 		{
-		this->m_mutex.lock();
+		std::unique_lock lock(this->m_mutex);
 		_cluster_t::append(items, count);
-		this->m_mutex.unlock();
 		}
-	template <typename _item_param_t> void insert_at(_size_t position, _item_param_t&& item)
+	template <typename _item_param_t> inline void insert_at(_size_t position, _item_param_t&& item)
 		{
-		this->m_mutex.lock();
-		try
-			{
-			_cluster_t::insert_at(position, std::forward<_item_param_t>(item));
-			}
-		catch(std::exception& e)
-			{
-			this->m_mutex.unlock();
-			throw e;
-			}
-		this->m_mutex.unlock();
+		std::unique_lock lock(this->m_mutex);
+		_cluster_t::insert_at(position, std::forward<_item_param_t>(item));
 		}
 	template <typename _item_param_t> void set_at(_size_t position, _item_param_t&& item)
 		{
-		this->m_mutex.lock();
-		try
-			{
-			_item_t& item=_cluster_t::get_at(position);
-			item=std::forward<_item_param_t>(item);
-			}
-		catch(std::exception& e)
-			{
-			this->m_mutex.unlock();
-			throw e;
-			}
-		this->m_mutex.unlock();
+		std::unique_lock lock(this->m_mutex);
+		_item_t& item=_cluster_t::get_at(position);
+		item=std::forward<_item_param_t>(item);
 		}
-	void set_many(_size_t position, _item_t const* items, _size_t count)noexcept
+	inline void set_many(_size_t position, _item_t const* items, _size_t count)noexcept
 		{
-		this->m_mutex.lock();
-		try
-			{
-			_cluster_t::set_many(position, items, count);
-			}
-		catch(std::exception& e)
-			{
-			this->m_mutex.unlock();
-			throw e;
-			}
-		this->m_mutex.unlock();
+		std::unique_lock lock(this->m_mutex);
+		_cluster_t::set_many(position, items, count);
 		}
 };
 

@@ -46,42 +46,33 @@ public:
 	shared_index() {}
 
 	// Access
-	bool contains(_item_t const& item)
+	inline bool contains(_item_t const& item)
 		{
-		this->m_mutex.lock_shared();
-		bool contains=_cluster_t::contains(item);
-		this->m_mutex.unlock_shared();
-		return contains;
+		std::shared_lock lock(this->m_mutex);
+		return _cluster_t::contains(item);
 		}
 	iterator find(_item_t const& item, bool above_or_equal=true)
 		{
-		this->m_mutex.lock_shared();
+		std::shared_lock lock(this->m_mutex);
 		_iterator_t found=_cluster_t::find(item, above_or_equal);
-		iterator it(std::forward<_iterator_t>(found));
-		this->m_mutex.unlock_shared();
-		return it;
+		return iterator(std::forward<_iterator_t>(found));
 		}
 
 	// Modification
-	template <typename _item_param_t> bool add(_item_param_t&& item)noexcept
+	template <typename _item_param_t> inline bool add(_item_param_t&& item)noexcept
 		{
-		this->m_mutex.lock();
-		bool added=_cluster_t::add(std::forward<_item_param_t>(item));
-		this->m_mutex.unlock();
-		return added;
+		std::unique_lock lock(this->m_mutex);
+		return _cluster_t::add(std::forward<_item_param_t>(item));
 		}
-	bool remove(_item_t const& item)
+	inline bool remove(_item_t const& item)
 		{
-		this->m_mutex.lock();
-		bool removed=_cluster_t::remove(item);
-		this->m_mutex.unlock();
-		return removed;
+		std::unique_lock lock(this->m_mutex);
+		return _cluster_t::remove(item);
 		}
-	template <typename _item_param_t> void set(_item_param_t&& item)noexcept
+	template <typename _item_param_t> inline void set(_item_param_t&& item)noexcept
 		{
-		this->m_mutex.lock();
+		std::unique_lock lock(this->m_mutex);
 		_cluster_t::set(std::forward<_item_param_t>(item));
-		this->m_mutex.unlock();
 		}
 };
 

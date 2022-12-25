@@ -48,49 +48,38 @@ public:
 
 	// Access
 	inline _value_t operator[](_key_t const& key) { return get(key); }
-	bool contains(_key_t const& key)
+	inline bool contains(_key_t const& key)
 		{
-		this->m_mutex.lock_shared();
-		bool contains=_cluster_t::contains(key);
-		this->m_mutex.unlock_shared();
-		return contains;
+		std::shared_lock lock(this->m_mutex);
+		return _cluster_t::contains(key);
 		}
 	iterator find(_key_t const& key, bool above_or_equal=true)
 		{
-		this->m_mutex.lock_shared();
+		std::shared_lock lock(this->m_mutex);
 		_iterator_t found=_cluster_t::find(key, above_or_equal);
-		iterator it(std::forward<_iterator_t>(found));
-		this->m_mutex.unlock_shared();
-		return it;
+		return iterator(std::forward<_iterator_t>(found));
 		}
 	_value_t get(_key_t const& key)
 		{
-		this->m_mutex.lock_shared();
-		_value_t value=_cluster_t::get(key);
-		this->m_mutex.unlock_shared();
-		return value;
+		std::shared_lock lock(this->m_mutex);
+		return _cluster_t::get(key);
 		}
 
 	// Modification
-	template <typename _key_param_t, typename _value_param_t> bool add(_key_param_t&& key, _value_param_t&& value)
+	template <typename _key_param_t, typename _value_param_t> inline bool add(_key_param_t&& key, _value_param_t&& value)
 		{
-		this->m_mutex.lock();
-		bool added=_cluster_t::add(std::forward<_key_param_t>(key), std::forward<_value_param_t>(value));
-		this->m_mutex.unlock();
-		return added;
+		std::unique_lock lock(this->m_mutex);
+		return _cluster_t::add(std::forward<_key_param_t>(key), std::forward<_value_param_t>(value));
 		}
-	bool remove(_key_t const& key)
+	inline bool remove(_key_t const& key)
 		{
-		this->m_mutex.lock();
-		bool removed=_cluster_t::remove(key);
-		this->m_mutex.unlock();
-		return removed;
+		std::unique_lock lock(this->m_mutex);
+		return _cluster_t::remove(key);
 		}
-	template <typename _key_param_t, typename _value_param_t> void set(_key_param_t&& key, _value_param_t&& value)
+	template <typename _key_param_t, typename _value_param_t> inline void set(_key_param_t&& key, _value_param_t&& value)
 		{
-		this->m_mutex.lock();
+		std::unique_lock lock(this->m_mutex);
 		_cluster_t::set(std::forward<_key_param_t>(key), std::forward<_value_param_t>(value));
-		this->m_mutex.unlock();
 		}
 };
 

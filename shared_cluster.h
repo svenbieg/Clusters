@@ -59,27 +59,28 @@ public:
 	// Access
 	_item_t get_at(_size_t position)
 		{
-		m_mutex.lock_shared();
+		std::shared_lock lock(m_mutex);
 		_item_t* item=_cluster_t::get_at(position);
-		m_mutex.unlock_shared();
 		if(!item)
 			return _item_t();
 		return *item;
 		}
+	inline _size_t get_count()
+		{
+		std::shared_lock lock(m_mutex);
+		return _cluster_t::get_count();
+		}
 
 	// Modification
-	void clear()
+	inline void clear()
 		{
-		m_mutex.lock();
+		std::unique_lock lock(m_mutex);
 		_cluster_t::clear();
-		m_mutex.unlock();
 		}
-	bool remove_at(_size_t position)
+	inline bool remove_at(_size_t position)
 		{
-		m_mutex.lock();
-		bool removed=_cluster_t::remove_at(position);
-		m_mutex.unlock();
-		return removed;
+		std::unique_lock lock(m_mutex);
+		return _cluster_t::remove_at(position);
 		}
 
 protected:
