@@ -195,13 +195,19 @@ public:
 			return false;
 		return root->remove(key);
 		}
-	template <typename _key_param_t, typename _value_param_t> void set(_key_param_t&& key, _value_param_t&& value)noexcept
+	template <typename _key_param_t, typename _value_param_t> bool set(_key_param_t&& key, _value_param_t&& value)noexcept
 		{
 		_item_t create(std::forward<_key_param_t>(key), std::forward<_value_param_t>(value));
 		bool created=false;
 		auto item=get_internal(&create, &created);
 		if(!created)
+			{
+			if(item->get_value()==create.get_value())
+				return false;
 			*item=std::move(create);
+			return true;
+			}
+		return true;
 		}
 
 private:
