@@ -42,21 +42,28 @@ public:
 	using _cluster_t=typename _traits_t::cluster_t;
 	using _iterator_base_t=typename shared_cluster_iterator_base<_traits_t, false>::_base_t;
 	using iterator=typename _traits_t::shared_iterator_t;
+	using const_iterator=typename _traits_t::shared_const_iterator_t;
 
 	// Con-/Destructors
 	shared_map() {}
 
 	// Access
 	inline _value_t operator[](_key_t const& key) { return get(key); }
+	inline const_iterator cfind(_key_t const& key, find_func func=find_func::equal)
+		{
+		const_iterator it(this);
+		it.find(key, func);
+		return it;
+		}
 	inline bool contains(_key_t const& key)
 		{
 		std::shared_lock lock(this->m_mutex);
 		return _cluster_t::contains(key);
 		}
-	inline iterator find(_key_t const& key, bool above_or_equal=true)
+	inline iterator find(_key_t const& key, find_func func=find_func::equal)
 		{
 		iterator it(this);
-		it.find(key, above_or_equal);
+		it.find(key, func);
 		return it;
 		}
 	_value_t get(_key_t const& key)
@@ -106,11 +113,11 @@ public:
 	using _base_t::_base_t;
 
 	// Navigation
-	bool find(_key_t const& key, bool above_or_equal=true)
+	bool find(_key_t const& key, find_func func=find_func::equal)
 		{
 		if(this->is_outside())
 			this->lock();
-		if(!_iterator_t::find(key, above_or_equal))
+		if(!_iterator_t::find(key, func))
 			{
 			this->unlock();
 			return false;

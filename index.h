@@ -27,6 +27,20 @@
 namespace Clusters {
 
 
+//===============
+// Find-Function
+//===============
+
+enum class find_func
+{
+above,
+above_or_equal,
+below,
+below_or_equal,
+equal
+};
+
+
 //======================
 // Forward-Declarations
 //======================
@@ -65,7 +79,7 @@ class index_group: public cluster_group<index_traits<_key_t, _item_t, _size_t, _
 {
 public:
 	// Access
-	virtual uint16_t find(_key_t const& key, _size_t* position, bool* exists, bool above_or_equal)const noexcept=0;
+	virtual uint16_t find(_key_t const& key, bool* exists, find_func func)const noexcept=0;
 	virtual _item_t* get(_key_t const& key, _item_t* create=nullptr, bool* created=nullptr, bool again=false)noexcept=0;
 	virtual _item_t* get_first()noexcept=0;
 	virtual _item_t* get_last()noexcept=0;
@@ -93,25 +107,55 @@ public:
 	using _base_t::_base_t;
 
 	// Access
-	inline uint16_t find(_key_t const& key, _size_t* position, bool* exists, bool above_or_equal)const noexcept override
+	inline uint16_t find(_key_t const& key, bool* exists_ptr, find_func func)const noexcept override
 		{
-		uint16_t pos=get_item_pos(key, exists);
-		if(!(*exists))
+		bool exists=false;
+		uint16_t pos=get_item_pos(key, &exists);
+		if(exists)
 			{
-			if(above_or_equal)
+			*exists_ptr=true;
+			switch(func)
 				{
-				uint16_t item_count=this->m_item_count;
-				if(pos==item_count)
-					return _group_size;
+				case find_func::above:
+					{
+					if(pos+1>=this->m_item_count)
+						return _group_size;
+					return pos+1;
+					}
+				case find_func::below:
+					{
+					if(pos==0)
+						return _group_size;
+					return pos-1;
+					}
+				default:
+					{
+					break;
+					}
 				}
-			else
+			return pos;
+			}
+		switch(func)
+			{
+			case find_func::above:
+			case find_func::above_or_equal:
+				{
+				if(pos==this->m_item_count)
+					return _group_size;
+				return pos;
+				}
+			case find_func::below:
+			case find_func::below_or_equal:
 				{
 				if(pos==0)
 					return _group_size;
-				pos--;
+				return pos-1;
+				}
+			case find_func::equal:
+				{
+				return _group_size;
 				}
 			}
-		*position+=pos;
 		return pos;
 		}
 	_item_t* get(_key_t const& key, _item_t* create, bool* created, bool again)noexcept override
@@ -196,17 +240,53 @@ public:
 		}
 
 	// Access
-	uint16_t find(_key_t const& key, _size_t* position, bool* exists, bool above_or_equal)const noexcept override
+	uint16_t find(_key_t const& key, bool* exists_ptr, find_func func)const noexcept override
 		{
 		uint16_t pos=0;
 		uint16_t count=get_item_pos(key, &pos, false);
-		if(above_or_equal)
+		if(count==2)
 			{
-			if(count>1)
-				pos++;
+			switch(func)
+				{
+				case find_func::above:
+				case find_func::above_or_equal:
+					return pos+1;
+				case find_func::equal:
+					return _group_size;
+				default:
+					break;
+				}
+			return pos;
 			}
-		for(uint16_t u=0; u<pos; u++)
-			*position+=this->m_children[u]->get_item_count();
+		switch(func)
+			{
+			case find_func::above:
+				{
+				auto group=this->get_child(pos);
+				auto last=group->get_last();
+				if(*last==key)
+					{
+					if(pos+1>=this->m_child_count)
+						return _group_size;
+					return pos+1;
+					}
+				break;
+				}
+			case find_func::below:
+				{
+				auto group=this->get_child(pos);
+				auto first=group->get_first();
+				if(*first==key)
+					{
+					if(pos==0)
+						return _group_size;
+					return pos-1;
+					}
+				break;
+				}
+			default:
+				break;
+			}
 		return pos;
 		}
 	_item_t* get(_key_t const& key, _item_t* create, bool* created, bool again)noexcept override
@@ -389,6 +469,12 @@ public:
 	using _base_t::_base_t;
 
 	// Access
+	inline const_iterator cfind(_item_t const& item, find_func func=find_func::equal)const noexcept
+		{
+		const_iterator it(this);
+		it.find(item, func);
+		return it;
+		}
 	bool contains(_item_t const& item)const noexcept
 		{
 		auto root=this->m_root;
@@ -396,16 +482,10 @@ public:
 			return false;
 		return root->get(item)!=nullptr;
 		}
-	inline iterator find(_item_t const& item, bool above_or_equal=true)noexcept
+	inline iterator find(_item_t const& item, find_func func=find_func::equal)noexcept
 		{
 		iterator it(this);
-		it.find(item, above_or_equal);
-		return it;
-		}
-	inline const_iterator find(_item_t const& item, bool above_or_equal=true)const noexcept
-		{
-		const_iterator it(this);
-		it.find(item, above_or_equal);
+		it.find(item, func);
 		return it;
 		}
 
@@ -469,7 +549,7 @@ public:
 
 public:
 	// Navigation
-	bool find(_key_t const& key, bool above_or_equal=true)noexcept
+	bool find(_key_t const& key, find_func func=find_func::equal)noexcept
 		{
 		auto group=this->m_cluster->get_root();
 		if(!group)
@@ -480,11 +560,11 @@ public:
 		uint16_t level_count=(uint16_t)(group->get_level()+1);
 		this->set_level_count(level_count);
 		auto it_ptr=&this->m_its[0];
-		_size_t position=0;
+		this->m_position=0;
 		bool exists=false;
 		while(group)
 			{
-			uint16_t group_pos=group->find(key, &position, &exists, above_or_equal);
+			uint16_t group_pos=group->find(key, &exists, func);
 			if(group_pos==_group_size)
 				break;
 			it_ptr->group=group;
@@ -494,11 +574,13 @@ public:
 				{
 				auto parent_group=(_parent_group_t*)group;
 				group=parent_group->get_child(group_pos);
+				for(uint16_t u=0; u<group_pos; u++)
+					this->m_position+=parent_group->get_child(u)->get_item_count();
 				continue;
 				}
 			auto item_group=(_item_group_t*)group;
 			this->m_current=item_group->get_at(group_pos);
-			this->m_position=position;
+			this->m_position+=group_pos;
 			return true;
 			}
 		this->end();

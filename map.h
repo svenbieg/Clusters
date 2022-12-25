@@ -135,6 +135,12 @@ public:
 
 	// Access
 	template <class _key_param_t> inline _value_t& operator[](_key_param_t&& key)noexcept { return get(std::forward<_key_param_t>(key)); }
+	inline const_iterator cfind(_key_t const& key, find_func func=find_func::equal)const noexcept
+		{
+		const_iterator it(this);
+		it.find(key, func);
+		return it;
+		}
 	bool contains(_key_t const& key)const noexcept
 		{
 		auto root=this->m_root;
@@ -142,16 +148,10 @@ public:
 			return false;
 		return root->get(key)!=nullptr;
 		}
-	inline iterator find(_key_t const& key, bool above_or_equal=true)noexcept
+	inline iterator find(_key_t const& key, find_func func=find_func::equal)noexcept
 		{
 		iterator it(this);
-		it.find(key, above_or_equal);
-		return it;
-		}
-	inline const_iterator find(_key_t const& key, bool above_or_equal)const noexcept
-		{
-		const_iterator it(this);
-		it.find(key, above_or_equal);
+		it.find(key, func);
 		return it;
 		}
 	template <class _key_param_t> _value_t& get(_key_param_t&& key)noexcept
