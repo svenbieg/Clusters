@@ -36,6 +36,7 @@ template <typename _key_t, typename _item_t, typename _size_t, uint16_t _group_s
 template <typename _key_t, typename _item_t, typename _size_t, uint16_t _group_size> class index_item_group;
 template <typename _key_t, typename _item_t, typename _size_t, uint16_t _group_size> class index_parent_group;
 template <typename _traits_t, bool _is_const> class index_iterator;
+template <typename _traits_t, bool _is_const> class shared_index_iterator;
 
 template <typename _key_t, typename _item_t, typename _size_t, uint16_t _group_size>
 struct index_traits
@@ -48,6 +49,8 @@ using parent_group_t=index_parent_group<_key_t, _item_t, _size_t, _group_size>;
 using cluster_t=index<_item_t, _size_t, _group_size>;
 using iterator_t=index_iterator<index_traits, false>;
 using const_iterator_t=index_iterator<index_traits, true>;
+using shared_iterator_t=shared_index_iterator<index_traits, false>;
+using shared_const_iterator_t=shared_index_iterator<index_traits, true>;
 using size_t=_size_t;
 static constexpr uint16_t group_size=_group_size;
 };
@@ -421,13 +424,14 @@ public:
 			return false;
 		return root->remove(item);
 		}
-	template <typename _item_param_t> void set(_item_param_t&& item)noexcept
+	template <typename _item_param_t> bool set(_item_param_t&& item)noexcept
 		{
 		_item_t create(std::forward<_item_param_t>(item));
 		bool created=false;
-		auto got=get_internal(&create, &created);
+		get_internal(&create, &created);
 		if(!created)
-			*got=std::move(create);
+			return false;
+		return true;
 		}
 
 private:

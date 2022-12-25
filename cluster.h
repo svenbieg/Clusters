@@ -624,9 +624,9 @@ protected:
 };
 
 
-//=====================
-// Iterator Base-Class
-//=====================
+//==========
+// Iterator
+//==========
 
 template <typename _traits_t, bool _is_const>
 class cluster_iterator_base
@@ -895,11 +895,6 @@ protected:
 	_size_t m_position;
 };
 
-
-//==========
-// Iterator
-//==========
-
 template <typename _traits_t, bool _is_const>
 class cluster_iterator: public cluster_iterator_base<_traits_t, false>
 {
@@ -921,11 +916,6 @@ public:
 		return true;
 		}
 };
-
-
-//================
-// Const-Iterator
-//================
 
 template <typename _traits_t>
 class cluster_iterator<_traits_t, true>: public cluster_iterator_base<_traits_t, true>

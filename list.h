@@ -35,6 +35,7 @@ template <typename _item_t, typename _size_t, uint16_t _group_size> class list;
 template <typename _item_t, typename _size_t, uint16_t _group_size> class list_group;
 template <typename _item_t, typename _size_t, uint16_t _group_size> class list_item_group;
 template <typename _item_t, typename _size_t, uint16_t _group_size> class list_parent_group;
+template <class _traits_t, bool _is_const> class shared_cluster_iterator;
 
 template <typename _item_t, typename _size_t, uint16_t _group_size>
 struct list_traits
@@ -46,6 +47,8 @@ using parent_group_t=list_parent_group<_item_t, _size_t, _group_size>;
 using cluster_t=list<_item_t, _size_t, _group_size>;
 using iterator_t=cluster_iterator<list_traits, false>;
 using const_iterator_t=cluster_iterator<list_traits, true>;
+using shared_iterator_t=shared_cluster_iterator<list_traits, false>;
+using shared_const_iterator_t=shared_cluster_iterator<list_traits, true>;
 using size_t=_size_t;
 static constexpr uint16_t group_size=_group_size;
 };

@@ -33,6 +33,7 @@ namespace Clusters {
 
 template <typename _key_t, typename _value_t, typename _size_t, uint16_t _group_size> class map;
 template <typename _key_t, typename _value_t> class map_item;
+template <typename _traits_t, bool _is_const> class shared_map_iterator;
 
 template <typename _key_t, typename _value_t, typename _size_t, uint16_t _group_size>
 struct map_traits
@@ -45,6 +46,8 @@ using parent_group_t=index_parent_group<_key_t, item_t, _size_t, _group_size>;
 using cluster_t=map<_key_t, _value_t, _size_t, _group_size>;
 using iterator_t=index_iterator<map_traits, false>;
 using const_iterator_t=index_iterator<map_traits, true>;
+using shared_iterator_t=shared_map_iterator<map_traits, false>;
+using shared_const_iterator_t=shared_map_iterator<map_traits, true>;
 using size_t=_size_t;
 static constexpr uint16_t group_size=_group_size;
 };
@@ -142,13 +145,13 @@ public:
 	inline iterator find(_key_t const& key, bool above_or_equal=true)noexcept
 		{
 		iterator it(this);
-		it.find(key);
+		it.find(key, above_or_equal);
 		return it;
 		}
 	inline const_iterator find(_key_t const& key, bool above_or_equal)const noexcept
 		{
 		const_iterator it(this);
-		it.find(key);
+		it.find(key, above_or_euqal);
 		return it;
 		}
 	template <class _key_param_t> _value_t& get(_key_param_t&& key)noexcept

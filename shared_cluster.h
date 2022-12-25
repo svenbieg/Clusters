@@ -2,7 +2,7 @@
 // shared_cluster.h
 //==================
 
-// Tread-safe implementation of a pyramidal directory
+// Thread-safe implementation of a pyramidal directory
 // Shared classes for shared_list and shared_index
 
 // Copyright 2022, Sven Bieg (svenbieg@web.de)
@@ -135,11 +135,11 @@ protected:
 //==========
 
 template <typename _traits_t, bool _is_const>
-class shared_cluster_iterator_base: protected cluster_iterator<_traits_t, _is_const>
+class shared_cluster_iterator_base: protected std::conditional<_is_const, typename _traits_t::const_iterator_t, typename _traits_t::iterator_t>::type
 {
 public:
 	// Using
-	using _base_t=cluster_iterator<_traits_t, _is_const>;
+	using _base_t=typename std::conditional<_is_const, typename _traits_t::const_iterator_t, typename _traits_t::iterator_t>::type;
 	using _cluster_t=cluster<_traits_t>;
 	using _cluster_ptr=typename std::conditional<_is_const, _cluster_t const*, _cluster_t*>::type;
 	using _shared_cluster_t=shared_cluster<_traits_t>;
@@ -149,11 +149,11 @@ public:
 	using _size_t=typename _traits_t::size_t;
 
 	// Con-/Destructors
+	shared_cluster_iterator_base(_shared_cluster_t* cluster): _base_t((_cluster_ptr)cluster) {}
 	shared_cluster_iterator_base(_shared_cluster_t* cluster, _size_t position): _base_t((_cluster_ptr)cluster)
 		{
 		set_position(position);
 		}
-	shared_cluster_iterator_base(_base_t&& it): _base_t(std::forward<_base_t>(it)) {}
 	~shared_cluster_iterator_base()
 		{
 		if(!this->is_outside())
@@ -260,8 +260,8 @@ class shared_cluster_iterator: public shared_cluster_iterator_base<_traits_t, fa
 public:
 	// Using
 	using _base_t=shared_cluster_iterator_base<_traits_t, false>;
+	using _iterator_t=typename _traits_t::iterator_t;
 	using _size_t=typename _traits_t::size_t;
-	using iterator_base_t=cluster_iterator<_traits_t, false>;
 
 	// Con-/Destructors
 	using _base_t::_base_t;
@@ -274,7 +274,7 @@ public:
 	inline bool rend() { return _base_t::set_position(-1); }
 
 	// Modification
-	inline bool remove_current() { return iterator_base_t::remove_current(); }
+	inline bool remove_current() { return _iterator_t::remove_current(); }
 };
 
 template <class _traits_t>
@@ -282,7 +282,7 @@ class shared_cluster_iterator<_traits_t, true>: public shared_cluster_iterator_b
 {
 public:
 	// Using
-	using _base_t=cluster_iterator_base<_traits_t, true>;
+	using _base_t=shared_cluster_iterator_base<_traits_t, true>;
 	using _size_t=typename _traits_t::size_t;
 
 	// Navigation
@@ -307,8 +307,8 @@ class iterable_shared_cluster: public shared_cluster<_traits_t>
 public:
 	// Using
 	using _size_t=typename _traits_t::size_t;
-	using iterator=shared_cluster_iterator<_traits_t, false>;
-	using const_iterator=shared_cluster_iterator<_traits_t, true>;
+	using iterator=typename _traits_t::shared_iterator_t;
+	using const_iterator=typename _traits_t::shared_const_iterator_t;
 
 	// Access
 	inline iterator begin() { return iterator(this, 0); }

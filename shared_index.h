@@ -39,8 +39,7 @@ public:
 	// Using
 	using _traits_t=index_traits<_item_t, _item_t, _size_t, _group_size>;
 	using _cluster_t=typename _traits_t::cluster_t;
-	using _iterator_t=cluster_iterator<_traits_t, false>;
-	using iterator=shared_cluster_iterator<_traits_t, false>;
+	using iterator=typename _traits_t::shared_iterator_t;
 
 	// Con-/Destructors
 	shared_index() {}
@@ -51,11 +50,11 @@ public:
 		std::shared_lock lock(this->m_mutex);
 		return _cluster_t::contains(item);
 		}
-	iterator find(_item_t const& item, bool above_or_equal=true)
+	inline iterator find(_item_t const& item, bool above_or_equal=true)
 		{
-		std::shared_lock lock(this->m_mutex);
-		_iterator_t found=_cluster_t::find(item, above_or_equal);
-		return iterator(std::forward<_iterator_t>(found));
+		iterator it(this);
+		it.find(item, above_or_equal);
+		return it;
 		}
 
 	// Modification
@@ -69,12 +68,44 @@ public:
 		std::unique_lock lock(this->m_mutex);
 		return _cluster_t::remove(item);
 		}
-	template <typename _item_param_t> inline void set(_item_param_t&& item)noexcept
+	template <typename _item_param_t> inline bool set(_item_param_t&& item)noexcept
 		{
 		std::unique_lock lock(this->m_mutex);
-		_cluster_t::set(std::forward<_item_param_t>(item));
+		return _cluster_t::set(std::forward<_item_param_t>(item));
 		}
 };
+
+
+//==========
+// Iterator
+//==========
+
+template <typename _traits_t, bool _is_const>
+class shared_index_iterator: public shared_cluster_iterator<_traits_t, _is_const>
+{
+public:
+	// Using
+	using _base_t=shared_cluster_iterator<_traits_t, _is_const>;
+	using _item_t=typename _traits_t::item_t;
+	using _iterator_t=typename _traits_t::iterator_t;
+
+	// Con-/Destructors
+	using _base_t::_base_t;
+
+	// Navigation
+	bool find(_item_t const& item, bool above_or_equal=true)
+		{
+		if(this->is_outside())
+			this->lock();
+		if(!_iterator_t::find(item, above_or_equal))
+			{
+			this->unlock();
+			return false;
+			}
+		return true;
+		}
+};
+
 
 } // namespace
 

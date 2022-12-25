@@ -40,8 +40,8 @@ public:
 	using _traits_t=map_traits<_key_t, _value_t, _size_t, _group_size>;
 	using _item_t=typename _traits_t::item_t;
 	using _cluster_t=typename _traits_t::cluster_t;
-	using _iterator_t=cluster_iterator<_traits_t, false>;
-	using iterator=shared_cluster_iterator<_traits_t, false>;
+	using _iterator_base_t=typename shared_cluster_iterator_base<_traits_t, false>::_base_t;
+	using iterator=typename _traits_t::shared_iterator_t;
 
 	// Con-/Destructors
 	shared_map() {}
@@ -53,11 +53,11 @@ public:
 		std::shared_lock lock(this->m_mutex);
 		return _cluster_t::contains(key);
 		}
-	iterator find(_key_t const& key, bool above_or_equal=true)
+	inline iterator find(_key_t const& key, bool above_or_equal=true)
 		{
-		std::shared_lock lock(this->m_mutex);
-		_iterator_t found=_cluster_t::find(key, above_or_equal);
-		return iterator(std::forward<_iterator_t>(found));
+		iterator it(this);
+		it.find(key, above_or_equal);
+		return it;
 		}
 	_value_t get(_key_t const& key)
 		{
@@ -85,6 +85,37 @@ public:
 		{
 		std::unique_lock lock(this->m_mutex);
 		return _cluster_t::set(std::forward<_key_param_t>(key), std::forward<_value_param_t>(value));
+		}
+};
+
+
+//==========
+// Iterator
+//==========
+
+template <typename _traits_t, bool _is_const>
+class shared_map_iterator: public shared_cluster_iterator<_traits_t, _is_const>
+{
+public:
+	// Using
+	using _base_t=shared_cluster_iterator<_traits_t, _is_const>;
+	using _key_t=typename _traits_t::key_t;
+	using _iterator_t=typename _traits_t::iterator_t;
+
+	// Con-/Destructors
+	using _base_t::_base_t;
+
+	// Navigation
+	bool find(_key_t const& key, bool above_or_equal=true)
+		{
+		if(this->is_outside())
+			this->lock();
+		if(!_iterator_t::find(key, above_or_equal))
+			{
+			this->unlock();
+			return false;
+			}
+		return true;
 		}
 };
 
