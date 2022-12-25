@@ -151,7 +151,7 @@ public:
 	inline const_iterator find(_key_t const& key, bool above_or_equal)const noexcept
 		{
 		const_iterator it(this);
-		it.find(key, above_or_euqal);
+		it.find(key, above_or_equal);
 		return it;
 		}
 	template <class _key_param_t> _value_t& get(_key_param_t&& key)noexcept
