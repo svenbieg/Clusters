@@ -414,6 +414,10 @@ public:
 	// Access
 	_item_t& operator[](_size_t position) { return _base_t::get_at(position); }
 	_item_t const& operator[](_size_t position)const { return _base_t::get_at(position); }
+	inline bool contains(_item_t const& item)
+		{
+		return index_of(item, nullptr);
+		}
 	_size_t get_many(_size_t position, _item_t* items, _size_t count)const noexcept
 		{
 		auto root=this->m_root;
@@ -421,8 +425,31 @@ public:
 			return 0;
 		return root->get_many(position, items, count);
 		}
+	bool index_of(_item_t const& item, _size_t* position)noexcept
+		{
+		_size_t pos=0;
+		for(auto it=this->cbegin(); it.has_current(); it.move_next())
+			{
+			if(*it==item)
+				{
+				if(position!=nullptr)
+					*position=pos;
+				return true;
+				}
+			pos++;
+			}
+		return false;
+		}
 
 	// Modification
+	template <typename _item_param_t> bool add(_item_param_t&& item)noexcept
+		{
+		_item_t fwd(std::forward<_item_param_t>(item));
+		if(this->contains(fwd))
+			return false;
+		append(std::forward<_item_t>(fwd));
+		return true;
+		}
 	template <typename _item_param_t> void append(_item_param_t&& item)noexcept
 		{
 		_item_t fwd(std::forward<_item_param_t>(item));
@@ -461,6 +488,19 @@ public:
 			return true;
 		root=this->lift_root();
 		return root->insert_at(position, &fwd, true);
+		}
+	template <typename _item_param_t> bool remove(_item_param_t && item)noexcept
+		{
+		_item_t fwd(std::forward<_item_param_t>(item));
+		for(auto it=this->begin(); it.has_current(); it.move_next())
+			{
+			if(*it==fwd)
+				{
+				it.remove_current();
+				return true;
+				}
+			}
+		return false;
 		}
 	template <typename _item_param_t> bool set_at(_size_t position, _item_param_t&& item)noexcept
 		{

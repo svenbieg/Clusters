@@ -527,13 +527,15 @@ public:
 	inline iterator rend() { return iterator(this, -1); }
 
 	// Modification
-	void clear()noexcept
+	bool clear()noexcept
 		{
 		if(m_root)
 			{
 			delete m_root;
 			m_root=nullptr;
+			return true;
 			}
+		return false;
 		}
 	bool remove_at(_size_t position)noexcept
 		{

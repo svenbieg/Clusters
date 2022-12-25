@@ -57,13 +57,10 @@ public:
 	virtual ~shared_cluster()noexcept {}
 
 	// Access
-	_item_t get_at(_size_t position)
+	inline _item_t get_at(_size_t position)
 		{
 		std::shared_lock lock(m_mutex);
-		_item_t* item=_cluster_t::get_at(position);
-		if(!item)
-			return _item_t();
-		return *item;
+		return _cluster_t::get_at(position);
 		}
 	inline _size_t get_count()
 		{
@@ -72,10 +69,10 @@ public:
 		}
 
 	// Modification
-	inline void clear()
+	inline bool clear()
 		{
 		std::unique_lock lock(m_mutex);
-		_cluster_t::clear();
+		return _cluster_t::clear();
 		}
 	inline bool remove_at(_size_t position)
 		{
@@ -197,6 +194,21 @@ protected:
 		auto cluster=(_shared_cluster_t*)this->m_cluster;
 		_is_const? cluster->m_mutex.lock_shared(): cluster->m_mutex.lock();
 		}
+	bool rbegin()
+		{
+		if(this->is_outside())
+			this->lock();
+		_size_t count=this->m_cluster->get_count();
+		if(count==0)
+			{
+			this->unlock();
+			return false;
+			}
+		if(_base_t::set_position(count-1))
+			return true;
+		this->unlock();
+		return false;
+		}
 	void unlock()
 		{
 		auto cluster=(_shared_cluster_t*)this->m_cluster;
@@ -210,10 +222,18 @@ class shared_cluster_iterator: public shared_cluster_iterator_base<_traits_t, fa
 public:
 	// Using
 	using _base_t=shared_cluster_iterator_base<_traits_t, false>;
+	using _size_t=typename _traits_t::size_t;
 	using iterator_base_t=cluster_iterator<_traits_t, false>;
 
 	// Con-/Destructors
 	using _base_t::_base_t;
+
+	// Navigation
+	inline bool begin() { return _base_t::set_position(0); }
+	inline bool begin(_size_t position) { return _base_t::set_position(position); }
+	inline bool end() { return _base_t::set_position(-2); }
+	inline bool rbegin() { return _base_t::rbegin(); }
+	inline bool rend() { return _base_t::set_position(-1); }
 
 	// Modification
 	inline bool remove_current() { return iterator_base_t::remove_current(); }
@@ -225,6 +245,14 @@ class shared_cluster_iterator<_traits_t, true>: public shared_cluster_iterator_b
 public:
 	// Using
 	using _base_t=cluster_iterator_base<_traits_t, true>;
+	using _size_t=typename _traits_t::size_t;
+
+	// Navigation
+	inline bool cbegin() { return _base_t::set_position(0); }
+	inline bool cbegin(_size_t position) { return _base_t::set_position(position); }
+	inline bool cend() { return _base_t::set_position(-2); }
+	inline bool crbegin() { return _base_t::rbegin(); }
+	inline bool crend() { return _base_t::set_position(-1); }
 
 	// Con-/Destructors
 	using _base_t::_base_t;
@@ -250,6 +278,7 @@ public:
 	inline const_iterator cbegin() { return const_iterator(this, 0); }
 	inline const_iterator cbegin(_size_t position) { return const_iterator(this, position); }
 	inline const_iterator cend() { return const_iterator(this, -2); }
+	inline const_iterator crend() { return const_iterator(this, -1); }
 	inline iterator end() { return iterator(this, -2); }
 	inline iterator rend() { return iterator(this, -1); }
 };
