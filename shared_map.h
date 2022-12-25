@@ -64,6 +64,11 @@ public:
 		std::shared_lock lock(this->m_mutex);
 		return _cluster_t::get(key);
 		}
+	bool try_get(_key_t const& key, _value_t* value)
+		{
+		std::shared_lock lock(this->m_mutex);
+		return _cluster_t::try_get(key, value);
+		}
 
 	// Modification
 	template <typename _key_param_t, typename _value_param_t> inline bool add(_key_param_t&& key, _value_param_t&& value)
@@ -76,10 +81,10 @@ public:
 		std::unique_lock lock(this->m_mutex);
 		return _cluster_t::remove(key);
 		}
-	template <typename _key_param_t, typename _value_param_t> inline void set(_key_param_t&& key, _value_param_t&& value)
+	template <typename _key_param_t, typename _value_param_t> inline bool set(_key_param_t&& key, _value_param_t&& value)
 		{
 		std::unique_lock lock(this->m_mutex);
-		_cluster_t::set(std::forward<_key_param_t>(key), std::forward<_value_param_t>(value));
+		return _cluster_t::set(std::forward<_key_param_t>(key), std::forward<_value_param_t>(value));
 		}
 };
 

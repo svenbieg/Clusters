@@ -480,6 +480,7 @@ public:
 	using _group_t=typename _traits_t::group_t;
 	using _item_group_t=typename _traits_t::item_group_t;
 	using _parent_group_t=typename _traits_t::parent_group_t;
+	using _cluster_t=typename _traits_t::cluster_t;
 	using _size_t=typename _traits_t::size_t;
 	using iterator=typename _traits_t::iterator_t;
 	using const_iterator=typename _traits_t::const_iterator_t;
@@ -537,6 +538,30 @@ public:
 			}
 		return false;
 		}
+	void copy_from(_cluster_t&& cluster)
+		{
+		clear();
+		m_root=cluster.m_root;
+		cluster.m_root=nullptr;
+		}
+	void copy_from(_cluster_t const& cluster)
+		{
+		clear();
+		auto root=cluster.m_root;
+		if(!root)
+			return;
+		auto level=root->get_level();
+		if(level>0)
+			{
+			auto parent_group=(_parent_group_t*)root;
+			m_root=new _parent_group_t(*parent_group);
+			}
+		else
+			{
+			auto item_group=(_item_group_t*)root;
+			m_root=new _item_group_t(*item_group);
+			}
+		}
 	bool remove_at(_size_t position)noexcept
 		{
 		if(!m_root)
@@ -550,6 +575,14 @@ public:
 protected:
 	// Con-/Destructors
 	cluster(): m_root(nullptr) {}
+	cluster(_cluster_t&& cluster): m_root(nullptr)
+		{
+		copy_from(std::forward<_cluster_t>(cluster));
+		}
+	cluster(_cluster_t const& cluster): m_root(nullptr)
+		{
+		copy_from(cluster);
+		}
 	~cluster()
 		{
 		if(m_root)

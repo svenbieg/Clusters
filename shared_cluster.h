@@ -54,6 +54,22 @@ public:
 
 	// Con-/Destructors
 	shared_cluster()noexcept {}
+	shared_cluster(_cluster_t&& cluster)
+		{
+		copy_from(std::forward<_cluster_t>(cluster));
+		}
+	shared_cluster(_cluster_t const& cluster)
+		{
+		copy_from(cluster);
+		}
+	shared_cluster(shared_cluster& cluster)
+		{
+		copy_from(cluster);
+		}
+	shared_cluster(shared_cluster&& cluster)
+		{
+		copy_from(std::forward<shared_cluster>(cluster));
+		}
 	virtual ~shared_cluster()noexcept {}
 
 	// Access
@@ -73,6 +89,28 @@ public:
 		{
 		std::unique_lock lock(m_mutex);
 		return _cluster_t::clear();
+		}
+	inline void copy_from(_cluster_t&& cluster)
+		{
+		std::unique_lock lock(m_mutex);
+		_cluster_t::copy_from(std::forward<_cluster_t>(cluster));
+		}
+	inline void copy_from(_cluster_t const& cluster)
+		{
+		std::unique_lock lock(m_mutex);
+		_cluster_t::copy_from(cluster);
+		}
+	inline void copy_from(shared_cluster& cluster)
+		{
+		std::unique_lock lock(m_mutex);
+		std::shared_lock shared_lock(cluster.m_mutex);
+		_cluster_t::copy_from(cluster);
+		}
+	inline void copy_from(shared_cluster&& cluster)
+		{
+		std::unique_lock lock(m_mutex);
+		std::unique_lock src_lock(cluster.m_mutex);
+		_cluster_t::copy_from(std::forward<_cluster_t>(cluster));
 		}
 	inline bool remove_at(_size_t position)
 		{
