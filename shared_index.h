@@ -65,7 +65,7 @@ public:
 		}
 
 	// Modification
-	template <typename _item_param_t> inline bool add(_item_param_t&& item)noexcept
+	template <typename _item_param_t> inline bool add(_item_param_t&& item)
 		{
 		std::unique_lock lock(this->m_mutex);
 		return _cluster_t::add(std::forward<_item_param_t>(item));
@@ -75,7 +75,7 @@ public:
 		std::unique_lock lock(this->m_mutex);
 		return _cluster_t::remove(item);
 		}
-	template <typename _item_param_t> inline bool set(_item_param_t&& item)noexcept
+	template <typename _item_param_t> inline bool set(_item_param_t&& item)
 		{
 		std::unique_lock lock(this->m_mutex);
 		return _cluster_t::set(std::forward<_item_param_t>(item));
