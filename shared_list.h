@@ -46,54 +46,54 @@ public:
 	// Access
 	inline bool contains(_item_t const& item)
 		{
-		std::shared_lock lock(this->m_mutex);
+		std::shared_lock<std::shared_mutex> lock(this->m_mutex);
 		return _cluster_t::contains(item);
 		}
 	inline _size_t get_many(_size_t position, _item_t* items, _size_t count)
 		{
-		std::shared_lock lock(this->m_mutex);
+		std::shared_lock<std::shared_mutex> lock(this->m_mutex);
 		return _cluster_t::get_many(position, items, count);
 		}
 	inline bool index_of(_item_t const& item, _size_t* position)
 		{
-		std::shared_lock lock(this->m_mutex);
+		std::shared_lock<std::shared_mutex> lock(this->m_mutex);
 		return _cluster_t::index_of(item, position);
 		}
 
 	// Modification
 	template <typename _item_param_t> inline bool add(_item_param_t&& item)
 		{
-		std::unique_lock lock(this->m_mutex);
+		std::unique_lock<std::shared_mutex> lock(this->m_mutex);
 		return _cluster_t::add(std::forward<_item_param_t>(item));
 		}
 	template <typename _item_param_t> inline void append(_item_param_t&& item)
 		{
-		std::unique_lock lock(this->m_mutex);
+		std::unique_lock<std::shared_mutex> lock(this->m_mutex);
 		_cluster_t::append(std::forward<_item_param_t>(item));
 		}
 	inline void append(_item_t const* items, _size_t count)
 		{
-		std::unique_lock lock(this->m_mutex);
+		std::unique_lock<std::shared_mutex> lock(this->m_mutex);
 		_cluster_t::append(items, count);
 		}
 	template <typename _item_param_t> inline bool insert_at(_size_t position, _item_param_t&& item)
 		{
-		std::unique_lock lock(this->m_mutex);
+		std::unique_lock<std::shared_mutex> lock(this->m_mutex);
 		return _cluster_t::insert_at(position, std::forward<_item_param_t>(item));
 		}
 	template <typename _item_param_t> inline bool remove(_item_param_t&& item)
 		{
-		std::unique_lock lock(this->m_mutex);
+		std::unique_lock<std::shared_mutex> lock(this->m_mutex);
 		return _cluster_t::remove(std::forward<_item_param_t>(item));
 		}
 	template <typename _item_param_t> inline bool set_at(_size_t position, _item_param_t&& item)
 		{
-		std::unique_lock lock(this->m_mutex);
+		std::unique_lock<std::shared_mutex> lock(this->m_mutex);
 		return _cluster_t::set_at(position, std::forward<_item_param_t>(item));
 		}
 	inline _size_t set_many(_size_t position, _item_t const* items, _size_t count)
 		{
-		std::unique_lock lock(this->m_mutex);
+		std::unique_lock<std::shared_mutex> lock(this->m_mutex);
 		return _cluster_t::set_many(position, items, count);
 		}
 };

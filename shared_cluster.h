@@ -75,46 +75,46 @@ public:
 	// Access
 	inline _item_t get_at(_size_t position)
 		{
-		std::shared_lock lock(m_mutex);
+		std::shared_lock<std::shared_mutex> lock(m_mutex);
 		return _cluster_t::get_at(position);
 		}
 	inline _size_t get_count()
 		{
-		std::shared_lock lock(m_mutex);
+		std::shared_lock<std::shared_mutex> lock(m_mutex);
 		return _cluster_t::get_count();
 		}
 
 	// Modification
 	inline bool clear()
 		{
-		std::unique_lock lock(m_mutex);
+		std::unique_lock<std::shared_mutex> lock(m_mutex);
 		return _cluster_t::clear();
 		}
 	inline void copy_from(_cluster_t&& cluster)
 		{
-		std::unique_lock lock(m_mutex);
+		std::unique_lock<std::shared_mutex> lock(m_mutex);
 		_cluster_t::copy_from(std::forward<_cluster_t>(cluster));
 		}
 	inline void copy_from(_cluster_t const& cluster)
 		{
-		std::unique_lock lock(m_mutex);
+		std::unique_lock<std::shared_mutex> lock(m_mutex);
 		_cluster_t::copy_from(cluster);
 		}
 	inline void copy_from(shared_cluster& cluster)
 		{
-		std::unique_lock lock(m_mutex);
-		std::shared_lock shared_lock(cluster.m_mutex);
+		std::unique_lock<std::shared_mutex> lock(m_mutex);
+		std::shared_lock<std::shared_mutex> shared_lock(cluster.m_mutex);
 		_cluster_t::copy_from(cluster);
 		}
 	inline void copy_from(shared_cluster&& cluster)
 		{
-		std::unique_lock lock(m_mutex);
-		std::unique_lock src_lock(cluster.m_mutex);
+		std::unique_lock<std::shared_mutex> lock(m_mutex);
+		std::unique_lock<std::shared_mutex> src_lock(cluster.m_mutex);
 		_cluster_t::copy_from(std::forward<_cluster_t>(cluster));
 		}
 	inline bool remove_at(_size_t position)
 		{
-		std::unique_lock lock(m_mutex);
+		std::unique_lock<std::shared_mutex> lock(m_mutex);
 		return _cluster_t::remove_at(position);
 		}
 
