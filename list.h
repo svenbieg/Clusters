@@ -124,7 +124,7 @@ public:
 		}
 	bool insert_at(_size_t position, _item_t* item, bool)noexcept override
 		{
-		return this->insert_items(position, item, 1);
+		return this->insert_items((uint16_t)position, item, 1);
 		}
 	_size_t set_many(_size_t position, _item_t const* many, _size_t count)noexcept override
 		{

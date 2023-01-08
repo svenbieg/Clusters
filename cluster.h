@@ -172,7 +172,7 @@ public:
 		if(position>=m_item_count)
 			return false;
 		_item_t* items=get_items();
-		for(uint16_t u=position; u+1<m_item_count; u++)
+		for(uint16_t u=(uint16_t)position; u+1<m_item_count; u++)
 			items[u]=std::move(items[u+1]);
 		m_item_count--;
 		items[m_item_count].~_item_t();
