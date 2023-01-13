@@ -112,6 +112,11 @@ public:
 		std::unique_lock<std::shared_mutex> src_lock(cluster.m_mutex);
 		_cluster_t::copy_from(std::forward<_cluster_t>(cluster));
 		}
+	inline _item_t pop_at(_size_t position)
+		{
+		std::unique_lock<std::shared_mutex> lock(m_mutex);
+		return _cluster_t::pop_at(position);
+		}
 	inline bool remove_at(_size_t position)
 		{
 		std::unique_lock<std::shared_mutex> lock(m_mutex);

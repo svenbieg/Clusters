@@ -325,6 +325,12 @@ public:
 		update_bounds();
 		return true;
 		}
+	_item_t pop_at(_size_t position)override
+		{
+		_item_t item=_base_t::pop_at(position);
+		update_bounds();
+		return item;
+		}
 	bool remove_at(_size_t position)noexcept override
 		{
 		if(!_base_t::remove_at(position))

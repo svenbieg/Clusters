@@ -60,6 +60,7 @@ public:
 	virtual uint16_t get_level()const noexcept=0;
 
 	// Modification
+	virtual _item_t pop_at(_size_t position)=0;
 	virtual bool remove_at(_size_t position)noexcept=0;
 };
 
@@ -167,24 +168,33 @@ public:
 		m_item_count+=count;
 		return true;
 		}
+	_item_t pop_at(_size_t position)override
+		{
+		if(position>=m_item_count)
+			throw std::out_of_range(nullptr);
+		_item_t* items=get_items();
+		_item_t item=items[position];
+		remove_at(position);
+		return item;
+		}
 	bool remove_at(_size_t position)noexcept override
 		{
 		if(position>=m_item_count)
 			return false;
 		_item_t* items=get_items();
+		items[position].~_item_t();
 		for(uint16_t u=(uint16_t)position; u+1<m_item_count; u++)
-			items[u]=std::move(items[u+1]);
+			new (&items[u]) _item_t(std::move(items[u+1]));
 		m_item_count--;
-		items[m_item_count].~_item_t();
 		return true;
 		}
 	void remove_items(uint16_t position, uint16_t count)noexcept
 		{
 		_item_t* items=get_items();
+		for(uint16_t u=0; u<count; u++)
+			items[position+u].~_item_t();
 		for(; position+count<m_item_count; position++)
 			items[position]=std::move(items[position+count]);
-		for(; position<m_item_count; position++)
-			items[position].~_item_t();
 		m_item_count-=count;
 		}
 
@@ -341,6 +351,16 @@ public:
 			for(uint16_t u=source; u>destination; u--)
 				move_children((uint16_t)(u-1), u, 1);
 			}
+		}
+	virtual _item_t pop_at(_size_t position)override
+		{
+		if(position>=m_item_count)
+			throw std::out_of_range(nullptr);
+		uint16_t group=get_group(&position);
+		_item_t item=m_children[group]->pop_at(position);
+		m_item_count--;
+		combine_children(group);
+		return item;
 		}
 	virtual bool remove_at(_size_t position)noexcept override
 		{
@@ -561,6 +581,14 @@ public:
 			auto item_group=(_item_group_t*)root;
 			m_root=new _item_group_t(*item_group);
 			}
+		}
+	_item_t pop_at(_size_t position)
+		{
+		if(!m_root)
+			throw std::out_of_range(nullptr);
+		_item_t item=m_root->pop_at(position);
+		drop_root();
+		return item;
 		}
 	bool remove_at(_size_t position)noexcept
 		{
