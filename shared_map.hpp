@@ -1,6 +1,6 @@
-//==============
-// shared_map.h
-//==============
+//================
+// shared_map.hpp
+//================
 
 // Thread-safe implementation of a sorted map
 // Items can be inserted, removed and looked-up in constant low time
@@ -9,16 +9,16 @@
 // http://github.com/svenbieg/clusters
 
 
-#ifndef _CLUSTERS_SHARED_MAP_H
-#define _CLUSTERS_SHARED_MAP_H
+#ifndef _CLUSTERS_SHARED_MAP_HPP
+#define _CLUSTERS_SHARED_MAP_HPP
 
 
 //=======
 // Using
 //=======
 
-#include "map.h"
-#include "shared_cluster.h"
+#include "map.hpp"
+#include "shared_cluster.hpp"
 
 
 //===========

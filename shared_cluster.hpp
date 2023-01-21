@@ -1,6 +1,6 @@
-//==================
-// shared_cluster.h
-//==================
+//====================
+// shared_cluster.hpp
+//====================
 
 // Thread-safe implementation of a pyramidal directory
 // Shared classes for shared_list and shared_index
@@ -9,8 +9,8 @@
 // http://github.com/svenbieg/clusters
 
 
-#ifndef _CLUSTERS_SHARED_CLUSTER_H
-#define _CLUSTERS_SHARED_CLUSTER_H
+#ifndef _CLUSTERS_SHARED_CLUSTER_HPP
+#define _CLUSTERS_SHARED_CLUSTER_HPP
 
 
 //=======
@@ -18,7 +18,7 @@
 //=======
 
 #include <shared_mutex>
-#include "cluster.h"
+#include "cluster.hpp"
 
 
 //===========

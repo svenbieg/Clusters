@@ -1,6 +1,6 @@
-//=======
-// map.h
-//=======
+//=========
+// map.hpp
+//=========
 
 // Implementation of a sorted map
 // Items can be inserted, removed and looked-up in constant low time
@@ -9,15 +9,15 @@
 // http://github.com/svenbieg/clusters
 
 
-#ifndef _CLUSTERS_MAP_H
-#define _CLUSTERS_MAP_H
+#ifndef _CLUSTERS_MAP_HPP
+#define _CLUSTERS_MAP_HPP
 
 
 //=======
 // Using
 //=======
 
-#include "index.h"
+#include "index.hpp"
 
 
 //===========

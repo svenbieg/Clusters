@@ -1,6 +1,6 @@
-//===========
-// cluster.h
-//===========
+//=============
+// cluster.hpp
+//=============
 
 // Implementation of a pyramidal directory
 // Shared classes for list and index
@@ -9,8 +9,8 @@
 // http://github.com/svenbieg/clusters
 
 
-#ifndef _CLUSTERS_CLUSTER_H
-#define _CLUSTERS_CLUSTER_H
+#ifndef _CLUSTERS_CLUSTER_HPP
+#define _CLUSTERS_CLUSTER_HPP
 
 
 //=======

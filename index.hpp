@@ -1,6 +1,6 @@
-//=========
-// index.h
-//=========
+//===========
+// index.hpp
+//===========
 
 // Implementation of a sorted list
 // Items can be inserted, removed and looked-up in constant low time
@@ -9,15 +9,15 @@
 // http://github.com/svenbieg/clusters
 
 
-#ifndef _CLUSTERS_INDEX_H
-#define _CLUSTERS_INDEX_H
+#ifndef _CLUSTERS_INDEX_HPP
+#define _CLUSTERS_INDEX_HPP
 
 
 //=======
 // Using
 //=======
 
-#include "cluster.h"
+#include "cluster.hpp"
 
 
 //===========

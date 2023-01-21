@@ -1,6 +1,6 @@
-//========
-// list.h
-//========
+//==========
+// list.hpp
+//==========
 
 // Implementation of an ordered list
 // Items can be inserted and removed in constant low time
@@ -9,15 +9,15 @@
 // http://github.com/svenbieg/clusters
 
 
-#ifndef _CLUSTERS_LIST_H
-#define _CLUSTERS_LIST_H
+#ifndef _CLUSTERS_LIST_HPP
+#define _CLUSTERS_LIST_HPP
 
 
 //=======
 // Using
 //=======
 
-#include "cluster.h"
+#include "cluster.hpp"
 
 
 //===========

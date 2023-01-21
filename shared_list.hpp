@@ -1,6 +1,6 @@
-//===============
-// shared_list.h
-//===============
+//=================
+// shared_list.hpp
+//=================
 
 // Thread-safe implementation of an ordered list
 // Items can be inserted and removed in constant low time
@@ -9,16 +9,16 @@
 // http://github.com/svenbieg/clusters
 
 
-#ifndef _CLUSTERS_SHARED_LIST_H
-#define _CLUSTERS_SHARED_LIST_H
+#ifndef _CLUSTERS_SHARED_LIST_HPP
+#define _CLUSTERS_SHARED_LIST_HPP
 
 
 //=======
 // Using
 //=======
 
-#include "list.h"
-#include "shared_cluster.h"
+#include "list.hpp"
+#include "shared_cluster.hpp"
 
 
 //===========

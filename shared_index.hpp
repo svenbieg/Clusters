@@ -1,6 +1,6 @@
-//================
-// shared_index.h
-//================
+//==================
+// shared_index.hpp
+//==================
 
 // Thread-safe implementation of a sorted index
 // Items can be inserted, removed and looked-up in constant low time
@@ -9,16 +9,16 @@
 // http://github.com/svenbieg/clusters
 
 
-#ifndef _CLUSTERS_SHARED_INDEX_H
-#define _CLUSTERS_SHARED_INDEX_H
+#ifndef _CLUSTERS_SHARED_INDEX_HPP
+#define _CLUSTERS_SHARED_INDEX_HPP
 
 
 //=======
 // Using
 //=======
 
-#include "index.h"
-#include "shared_cluster.h"
+#include "index.hpp"
+#include "shared_cluster.hpp"
 
 
 //===========
