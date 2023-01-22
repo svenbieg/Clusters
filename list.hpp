@@ -492,7 +492,7 @@ public:
 		root=this->lift_root();
 		return root->insert_at(position, &fwd, true);
 		}
-	template <typename _item_param_t> bool remove(_item_param_t && item)noexcept
+	template <typename _item_param_t> bool remove(_item_param_t&& item)noexcept
 		{
 		_item_t fwd(std::forward<_item_param_t>(item));
 		for(auto it=this->begin(); it.has_current(); it.move_next())

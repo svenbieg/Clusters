@@ -112,15 +112,10 @@ public:
 		std::unique_lock<std::shared_mutex> src_lock(cluster.m_mutex);
 		_cluster_t::copy_from(std::forward<_cluster_t>(cluster));
 		}
-	inline _item_t pop_at(_size_t position)
+	inline bool remove_at(_size_t position, _item_t* item_ptr=nullptr)
 		{
 		std::unique_lock<std::shared_mutex> lock(m_mutex);
-		return _cluster_t::pop_at(position);
-		}
-	inline bool remove_at(_size_t position)
-		{
-		std::unique_lock<std::shared_mutex> lock(m_mutex);
-		return _cluster_t::remove_at(position);
+		return _cluster_t::remove_at(position, item_ptr);
 		}
 
 protected:
@@ -265,6 +260,7 @@ class shared_cluster_iterator: public shared_cluster_iterator_base<_traits_t, fa
 public:
 	// Using
 	using _base_t=shared_cluster_iterator_base<_traits_t, false>;
+	using _item_t=typename _traits_t::item_t;
 	using _iterator_t=typename _traits_t::iterator_t;
 	using _size_t=typename _traits_t::size_t;
 
@@ -279,7 +275,7 @@ public:
 	inline bool rend() { return _base_t::set_position(-1); }
 
 	// Modification
-	inline bool remove_current() { return _iterator_t::remove_current(); }
+	inline bool remove_current(_item_t* item_ptr=nullptr) { return _iterator_t::remove_current(item_ptr); }
 };
 
 template <class _traits_t>

@@ -191,12 +191,12 @@ public:
 		get_internal(&create, &created);
 		return created;
 		}
-	bool remove(_key_t const& key)noexcept
+	bool remove(_key_t const& key, _item_t* item_ptr=nullptr)noexcept
 		{
 		auto root=this->m_root;
 		if(!root)
 			return false;
-		return root->remove(key);
+		return root->remove(key, item_ptr);
 		}
 	template <typename _key_param_t, typename _value_param_t> bool set(_key_param_t&& key, _value_param_t&& value)noexcept
 		{

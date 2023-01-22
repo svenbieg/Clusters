@@ -85,7 +85,7 @@ public:
 	virtual _item_t* get_last()noexcept=0;
 
 	// Modification
-	virtual bool remove(_key_t const& key)noexcept=0;
+	virtual bool remove(_key_t const& key, _item_t* item_ptr)noexcept=0;
 };
 
 
@@ -175,13 +175,13 @@ public:
 	inline _item_t* get_last()noexcept override { return this->get_last_item(); }
 
 	// Modification
-	bool remove(_key_t const& key)noexcept override
+	bool remove(_key_t const& key, _item_t* item_ptr)noexcept override
 		{
 		bool exists=false;
 		uint16_t pos=get_item_pos(key, &exists);
 		if(!exists)
 			return false;
-		return this->remove_at(pos);
+		return this->remove_at(pos, item_ptr);
 		}
 
 private:
@@ -312,28 +312,22 @@ public:
 		update_bounds();
 		return item_count;
 		}
-	bool remove(_key_t const& key)noexcept override
+	bool remove(_key_t const& key, _item_t* item_ptr)noexcept override
 		{
 		uint16_t pos=0;
 		uint16_t count=get_item_pos(key, &pos, true);
-		if(count==0)
+		if(count!=1)
 			return false;
-		if(!this->m_children[pos]->remove(key))
+		if(!this->m_children[pos]->remove(key, item_ptr))
 			return false;
 		this->m_item_count--;
 		this->combine_children(pos);
 		update_bounds();
 		return true;
 		}
-	_item_t pop_at(_size_t position)override
+	bool remove_at(_size_t position, _item_t* item_ptr)noexcept override
 		{
-		_item_t item=_base_t::pop_at(position);
-		update_bounds();
-		return item;
-		}
-	bool remove_at(_size_t position)noexcept override
-		{
-		if(!_base_t::remove_at(position))
+		if(!_base_t::remove_at(position, item_ptr))
 			return false;
 		update_bounds();
 		return true;
@@ -503,12 +497,12 @@ public:
 		get_internal(&create, &created);
 		return created;
 		}
-	bool remove(_item_t const& item)
+	bool remove(_item_t const& item, _item_t* item_ptr=nullptr)
 		{
 		auto root=this->m_root;
 		if(!root)
 			return false;
-		return root->remove(item);
+		return root->remove(item, item_ptr);
 		}
 	template <typename _item_param_t> bool set(_item_param_t&& item)noexcept
 		{
