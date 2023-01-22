@@ -174,7 +174,8 @@ public:
 		_item_t* items=get_items();
 		if(item_ptr)
 			{
-			*item_ptr=std::move(items[position]);
+			(*item_ptr).~_item_t();
+			new (item_ptr) _item_t(std::move(items[position]));
 			}
 		else
 			{
