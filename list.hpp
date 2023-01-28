@@ -245,7 +245,7 @@ public:
 			}
 		while(pos<count)
 			{
-			uint16_t child_count=this->m_child_count;
+			child_count=this->m_child_count;
 			if(child_count==_group_size)
 				break;
 			uint16_t level=this->m_level;

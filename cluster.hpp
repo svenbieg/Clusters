@@ -136,7 +136,7 @@ public:
 				new (&items[u]) _item_t(std::move(items[u-count]));
 			for(; u>=position+count; u--)
 				items[u]=std::move(items[u-count]);
-			for(uint16_t u=0; u<count; u++)
+			for(u=0; u<count; u++)
 				items[position+u]=std::forward<_item_t>(insert[u]);
 			}
 		m_item_count+=count;
@@ -161,7 +161,7 @@ public:
 				new (&items[u]) _item_t(std::move(items[u-count]));
 			for(; u>=position+count; u--)
 				items[u]=std::move(items[u-count]);
-			for(uint16_t u=0; u<count; u++)
+			for(u=0; u<count; u++)
 				items[position+u]=insert[u];
 			}
 		m_item_count+=count;
