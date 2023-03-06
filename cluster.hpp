@@ -940,4 +940,4 @@ public:
 
 } // namespace
 
-#endif // _CLUSTERS_CLUSTER_H
+#endif // _CLUSTERS_CLUSTER_HPP
