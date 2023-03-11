@@ -8,12 +8,6 @@ Items can be added, removed and looked-up in constant low time.
 
 <img src="https://user-images.githubusercontent.com/12587394/47256750-2e75a180-d485-11e8-8fe4-ad181f695690.jpg" style="" /><br />
 <br />
-
-<p>
-This is the standard-implentation. Do also have a look at
-<a href="http://github.com/svenbieg/Clusters.NET">Clusters.NET</a>,<br />
-the Windows.NET-component of Clusters!
-</p>
 <br />
 
 <h2>Principle</h2>
