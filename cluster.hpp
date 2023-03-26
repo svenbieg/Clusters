@@ -124,21 +124,11 @@ public:
 		if(position>m_item_count)
 			return false;
 		_item_t* items=get_items();
-		if(position==m_item_count)
-			{
-			for(uint16_t u=0; u<count; u++)
-				new (&items[position+u]) _item_t(std::forward<_item_t>(insert[u]));
-			}
-		else
-			{
-			uint16_t u=(uint16_t)(m_item_count+count-1);
-			for(; u>=m_item_count; u--)
-				new (&items[u]) _item_t(std::move(items[u-count]));
-			for(; u>=position+count; u--)
-				items[u]=std::move(items[u-count]);
-			for(u=0; u<count; u++)
-				items[position+u]=std::forward<_item_t>(insert[u]);
-			}
+		uint16_t u=(uint16_t)(m_item_count+count-1);
+		for(; u>=position+count; u--)
+			new (&items[u]) _item_t(std::move(items[u-count]));
+		for(u=0; u<count; u++)
+			new (&items[position+u]) _item_t(std::forward<_item_t>(insert[u]));
 		m_item_count+=count;
 		return true;
 		}
@@ -149,21 +139,11 @@ public:
 		if(position>m_item_count)
 			return false;
 		_item_t* items=get_items();
-		if(position==m_item_count)
-			{
-			for(uint16_t u=0; u<count; u++)
-				new (&items[position+u]) _item_t(insert[u]);
-			}
-		else
-			{
-			uint16_t u=(uint16_t)(m_item_count+count-1);
-			for(; u>=m_item_count; u--)
-				new (&items[u]) _item_t(std::move(items[u-count]));
-			for(; u>=position+count; u--)
-				items[u]=std::move(items[u-count]);
-			for(u=0; u<count; u++)
-				items[position+u]=insert[u];
-			}
+		uint16_t u=(uint16_t)(m_item_count+count-1);
+		for(; u>=position+count; u--)
+			new (&items[u]) _item_t(std::move(items[u-count]));
+		for(u=0; u<count; u++)
+			new (&items[position+u]) _item_t(insert[u]);
 		m_item_count+=count;
 		return true;
 		}
@@ -940,4 +920,4 @@ public:
 
 } // namespace
 
-#endif // _CLUSTERS_CLUSTER_HPP
+#endif // _CLUSTERS_CLUSTER_H
