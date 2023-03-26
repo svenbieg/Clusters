@@ -78,8 +78,10 @@ public:
 		}
 	inline map_item& operator=(map_item&& item)noexcept
 		{
-		m_key=std::move(item.m_key);
-		m_value=std::move(item.m_value);
+		m_key.~_key_t();
+		m_value.~_value_t();
+		new (&m_key) _key_t(std::move(item.m_key));
+		new (&m_value) _value_t(std::move(item.m_value));
 		return *this;
 		}
 	inline map_item& operator=(_value_t const& value)noexcept { m_value=value; return *this; }
