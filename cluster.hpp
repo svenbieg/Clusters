@@ -526,7 +526,7 @@ public:
 			}
 		return false;
 		}
-	void copy_from(_cluster_t&& cluster)
+	void copy_from(_cluster_t&& cluster)noexcept
 		{
 		clear();
 		m_root=cluster.m_root;
@@ -563,7 +563,7 @@ public:
 protected:
 	// Con-/Destructors
 	cluster(): m_root(nullptr) {}
-	cluster(_cluster_t&& cluster): m_root(nullptr)
+	cluster(_cluster_t&& cluster)noexcept: m_root(nullptr)
 		{
 		copy_from(std::forward<_cluster_t>(cluster));
 		}
