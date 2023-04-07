@@ -147,9 +147,9 @@ public:
 				}
 			case find_func::any:
 				{
-				if(pos==this->m_item_count)
+				if(pos>0)
 					return pos-1;
-				return pos;
+				break;
 				}
 			case find_func::below:
 			case find_func::below_or_equal:
