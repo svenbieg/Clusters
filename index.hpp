@@ -35,6 +35,7 @@ enum class find_func
 {
 above,
 above_or_equal,
+any,
 below,
 below_or_equal,
 equal
@@ -142,6 +143,12 @@ public:
 				{
 				if(pos==this->m_item_count)
 					return _group_size;
+				return pos;
+				}
+			case find_func::any:
+				{
+				if(pos==this->m_item_count)
+					return pos-1;
 				return pos;
 				}
 			case find_func::below:
