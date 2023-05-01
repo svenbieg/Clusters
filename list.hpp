@@ -66,7 +66,7 @@ public:
 	virtual _size_t get_many(_size_t position, _item_t* items, _size_t count)const noexcept=0;
 
 	// Modification
-	virtual bool append(_item_t* item, bool again)noexcept=0;
+	virtual _item_t* append(_item_t* item, bool again)noexcept=0;
 	virtual _size_t append(_item_t const* append, _size_t count)noexcept=0;
 	virtual bool insert_at(_size_t position, _item_t* item, bool again)noexcept=0;
 	virtual _size_t set_many(_size_t position, _item_t const* many, _size_t count)noexcept=0;
@@ -106,10 +106,12 @@ public:
 		}
 
 	// Modification
-	bool append(_item_t* item, bool)noexcept override
+	_item_t* append(_item_t* item, bool)noexcept override
 		{
 		uint16_t item_count=this->get_child_count();
-		return this->insert_items(item_count, item, 1);
+		if(!this->insert_items(item_count, item, 1))
+			return nullptr;
+		return &this->get_items()[item_count];
 		}
 	_size_t append(_item_t const* append, _size_t count)noexcept override
 		{
@@ -182,31 +184,35 @@ public:
 		}
 
 	// Modification
-	bool append(_item_t* item, bool again)noexcept override
+	_item_t* append(_item_t* item, bool again)noexcept override
 		{
 		uint16_t group=(uint16_t)(this->m_child_count-1);
 		if(!again)
 			{
-			if(this->m_children[group]->append(item, false))
+			_item_t* appended=this->m_children[group]->append(item, false);
+			if(appended)
 				{
 				this->m_item_count++;
-				return true;
+				return appended;
 				}
 			uint16_t empty=this->get_nearest_space(group);
 			if(empty<this->m_child_count)
 				{
 				this->move_emtpy_slot(empty, group);
-				this->m_children[group]->append(item, false);
+				appended=this->m_children[group]->append(item, false);
 				this->m_item_count++;
-				return true;
+				return appended;
 				}
 			}
 		if(!this->split_child(group))
-			return false;
-		if(!this->m_children[group+1]->append(item, true))
-			return false;
-		this->m_item_count++;
-		return true;
+			return nullptr;
+		_item_t* appended=this->m_children[group+1]->append(item, true);
+		if(appended)
+			{
+			this->m_item_count++;
+			return appended;
+			}
+		return nullptr;
 		}
 	_size_t append(_item_t const* append, _size_t count)noexcept override
 		{
@@ -415,8 +421,8 @@ public:
 	using _base_t::_base_t;
 
 	// Access
-	_item_t& operator[](_size_t position) { return _base_t::get_at(position); }
-	_item_t const& operator[](_size_t position)const { return _base_t::get_at(position); }
+	_item_t& operator[](_size_t position) { return this->get_at(position); }
+	_item_t const& operator[](_size_t position)const { return this->get_at(position); }
 	inline bool contains(_item_t const& item)
 		{
 		return index_of(item, nullptr);
@@ -453,14 +459,20 @@ public:
 		append(std::forward<_item_t>(fwd));
 		return true;
 		}
-	template <typename _item_param_t> void append(_item_param_t&& item)noexcept
+	inline _item_t& append()
+		{
+		_item_t item;
+		return *append(item);
+		}
+	template <typename _item_param_t> _item_t* append(_item_param_t&& item)noexcept
 		{
 		_item_t fwd(std::forward<_item_param_t>(item));
 		auto root=this->create_root();
-		if(root->append(&fwd, false))
-			return;
+		_item_t* appended=root->append(&fwd, false);
+		if(appended)
+			return appended;
 		root=this->lift_root();
-		root->append(&fwd, true);
+		return root->append(&fwd, true);
 		}
 	void append(_item_t const* items, _size_t count)noexcept
 		{

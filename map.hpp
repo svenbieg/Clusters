@@ -163,6 +163,13 @@ public:
 		_item_t* got=get_internal(&create, &created);
 		return got->get_value();
 		}
+	template <class _key_param_t, class _value_param_t> _value_t& get(_key_param_t&& key, _value_param_t&& init)noexcept
+		{
+		_item_t create(std::forward<_key_param_t>(key), std::forward<_value_param_t>(init));
+		bool created=false;
+		_item_t* got=get_internal(&create, &created);
+		return got->get_value();
+		}
 	_value_t get(_key_t const& key)const noexcept
 		{
 		auto root=this->m_root;
