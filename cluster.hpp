@@ -574,7 +574,10 @@ protected:
 	~cluster()
 		{
 		if(m_root)
+			{
 			delete m_root;
+			m_root=nullptr;
+			}
 		}
 
 	// Common
