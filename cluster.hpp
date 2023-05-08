@@ -562,15 +562,7 @@ public:
 
 protected:
 	// Con-/Destructors
-	cluster(): m_root(nullptr) {}
-	cluster(_cluster_t&& cluster)noexcept: m_root(nullptr)
-		{
-		copy_from(std::forward<_cluster_t>(cluster));
-		}
-	cluster(_cluster_t const& cluster): m_root(nullptr)
-		{
-		copy_from(cluster);
-		}
+	cluster(_group_t* root): m_root(root) {}
 	~cluster()
 		{
 		if(m_root)

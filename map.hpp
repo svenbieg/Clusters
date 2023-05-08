@@ -133,7 +133,15 @@ public:
 	using const_iterator=typename _traits_t::const_iterator_t;
 
 	// Con-/Destructors
-	using _base_t::_base_t;
+	map(): _base_t(nullptr) {}
+	map(map&& map)noexcept: _base_t(map.m_root)
+		{
+		map.m_root=nullptr;
+		}
+	map(map const& map): _base_t(nullptr)
+		{
+		copy_from(map);
+		}
 
 	// Access
 	template <class _key_param_t> inline _value_t& operator[](_key_param_t&& key)noexcept { return get(std::forward<_key_param_t>(key)); }
@@ -193,6 +201,18 @@ public:
 		}
 
 	// Modification
+	map& operator=(map&& map)noexcept
+		{
+		this->clear();
+		this->m_root=map.m_root;
+		map.m_root=nullptr;
+		return *this;
+		}
+	inline map& operator=(map const& map)noexcept
+		{
+		this->copy_from(map);
+		return *this;
+		}
 	template <typename _key_param_t, typename _value_param_t> bool add(_key_param_t&& key, _value_param_t&& value)noexcept
 		{
 		_item_t create(std::forward<_key_param_t>(key), std::forward<_value_param_t>(value));
@@ -221,6 +241,10 @@ public:
 			}
 		return true;
 		}
+
+protected:
+	// Con-/Destructors
+	map(_group_t* root): _base_t(root) {}
 
 private:
 	// Common

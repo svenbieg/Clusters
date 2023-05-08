@@ -48,28 +48,12 @@ public:
 	friend class shared_cluster_iterator_base<_traits_t, false>;
 
 	// Using
+	using _base_t=typename _traits_t::cluster_t;
 	using _cluster_t=typename _traits_t::cluster_t;
 	using _item_t=typename _traits_t::item_t;
 	using _size_t=typename _traits_t::size_t;
 
 	// Con-/Destructors
-	shared_cluster()noexcept {}
-	shared_cluster(_cluster_t&& cluster)
-		{
-		copy_from(std::forward<_cluster_t>(cluster));
-		}
-	shared_cluster(_cluster_t const& cluster)
-		{
-		copy_from(cluster);
-		}
-	shared_cluster(shared_cluster& cluster)
-		{
-		copy_from(cluster);
-		}
-	shared_cluster(shared_cluster&& cluster)
-		{
-		copy_from(std::forward<shared_cluster>(cluster));
-		}
 	virtual ~shared_cluster()noexcept {}
 
 	// Access
@@ -119,6 +103,9 @@ public:
 		}
 
 protected:
+	// Con-/Destructors
+	shared_cluster(): _base_t(nullptr) {}
+
 	// Modification
 	inline bool remove_internal(_size_t position)
 		{
@@ -320,6 +307,10 @@ public:
 	inline const_iterator crend() { return const_iterator(this, -1); }
 	inline iterator end() { return iterator(this, -2); }
 	inline iterator rend() { return iterator(this, -1); }
+
+protected:
+	// Con-/Destructor
+	iterable_shared_cluster() {}
 };
 
 } // namespace

@@ -416,9 +416,18 @@ public:
 	// Using
 	using _traits_t=list_traits<_item_t, _size_t, _group_size>;
 	using _base_t=cluster<_traits_t>;
+	using _group_t=typename _traits_t::group_t;
 
 	// Con-/Destructors
-	using _base_t::_base_t;
+	list(): _base_t(nullptr) {}
+	list(list&& list)noexcept: _base_t(list.m_root)
+		{
+		list.m_root=nullptr;
+		}
+	list(list const& list): _base_t(nullptr)
+		{
+		copy_from(list);
+		}
 
 	// Access
 	_item_t& operator[](_size_t position) { return this->get_at(position); }
@@ -451,6 +460,18 @@ public:
 		}
 
 	// Modification
+	list& operator=(list&& list)noexcept
+		{
+		this->clear();
+		this->m_root=list.m_root;
+		list.m_root=nullptr;
+		return *this;
+		}
+	inline list& operator=(list const& list)noexcept
+		{
+		this->copy_from(list);
+		return *this;
+		}
 	template <typename _item_param_t> bool add(_item_param_t&& item)noexcept
 		{
 		_item_t fwd(std::forward<_item_param_t>(item));
@@ -543,6 +564,10 @@ public:
 		append(&items[pos], count-pos);
 		return count;
 		}
+
+protected:
+	// Con-/Destructors
+	list(_group_t* root): _base_t(root) {}
 };
 
 

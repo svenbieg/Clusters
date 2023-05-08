@@ -469,11 +469,20 @@ public:
 	// Using
 	using _traits_t=index_traits<_item_t, _item_t, _size_t, _group_size>;
 	using _base_t=cluster<_traits_t>;
+	using _group_t=typename _traits_t::group_t;
 	using iterator=typename _traits_t::iterator_t;
 	using const_iterator=typename _traits_t::const_iterator_t;
 
 	// Con-/Destructors
-	using _base_t::_base_t;
+	index(): _base_t(nullptr) {}
+	index(index&& index)noexcept: _base_t(index.m_root)
+		{
+		index.m_root=nullptr;
+		}
+	index(index const& index): _base_t(nullptr)
+		{
+		copy_from(index);
+		}
 
 	// Access
 	inline const_iterator cfind(_item_t const& item, find_func func=find_func::equal)const noexcept
@@ -497,6 +506,18 @@ public:
 		}
 
 	// Modification
+	index& operator=(index&& index)noexcept
+		{
+		this->clear();
+		this->m_root=index.m_root;
+		index.m_root=nullptr;
+		return *this;
+		}
+	inline index& operator=(index const& index)noexcept
+		{
+		this->copy_from(index);
+		return *this;
+		}
 	template <typename _item_param_t> bool add(_item_param_t&& item)noexcept
 		{
 		_item_t create(std::forward<_item_param_t>(item));
@@ -520,6 +541,10 @@ public:
 			return false;
 		return true;
 		}
+
+protected:
+	// Con-/Destructors
+	index(_group_t* root): _base_t(root) {}
 
 private:
 	// Common
