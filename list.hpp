@@ -101,7 +101,7 @@ public:
 		uint16_t max=(uint16_t)(item_count-pos);
 		uint16_t copy=count>max? max: (uint16_t)count;
 		for(uint16_t u=0; u<copy; u++)
-			many[u]=items[u];
+			many[u]=items[pos+u];
 		return copy;
 		}
 
