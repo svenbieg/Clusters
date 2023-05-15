@@ -154,7 +154,6 @@ public:
 		_item_t* items=get_items();
 		if(item_ptr)
 			{
-			(*item_ptr).~_item_t();
 			new (item_ptr) _item_t(std::move(items[position]));
 			}
 		else
@@ -552,6 +551,8 @@ public:
 		}
 	bool remove_at(_size_t position, _item_t* item_ptr=nullptr)noexcept
 		{
+		if(item_ptr)
+			(*item_ptr).~_item_t();
 		if(!m_root)
 			return false;
 		if(!m_root->remove_at(position, item_ptr))
