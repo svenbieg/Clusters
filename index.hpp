@@ -81,7 +81,8 @@ class index_group: public cluster_group<index_traits<_key_t, _item_t, _size_t, _
 public:
 	// Access
 	virtual uint16_t find(_key_t const& key, bool* exists, find_func func)const noexcept=0;
-	virtual _item_t* get(_key_t const& key, _item_t* create=nullptr, bool* created=nullptr, bool again=false)noexcept=0;
+	virtual _item_t* get(_key_t const& key)noexcept=0;
+	virtual _item_t* get(_key_t const& key, _item_t&& create, bool* created, bool again)noexcept=0;
 	virtual _item_t* get_first()noexcept=0;
 	virtual _item_t* get_last()noexcept=0;
 
@@ -165,18 +166,27 @@ public:
 			}
 		return pos;
 		}
-	_item_t* get(_key_t const& key, _item_t* create, bool* created, bool again)noexcept override
+	_item_t* get(_key_t const& key)noexcept override
+		{
+		bool exists=false;
+		uint16_t pos=get_item_pos(key, &exists);
+		if(!exists)
+			return nullptr;
+		return this->get_at(pos);
+		}
+	_item_t* get(_key_t const& key, _item_t&& create, bool* created, bool again)noexcept override
 		{
 		bool exists=false;
 		uint16_t pos=get_item_pos(key, &exists);
 		if(exists)
 			return this->get_at(pos);
-		if(!create)
-			return nullptr;
-		if(!this->insert_items(pos, create, 1))
-			return create;
-		*created=true;
-		return this->get_at(pos);
+		_item_t* inserted=this->insert_item(pos, std::forward<_item_t>(create));
+		if(inserted)
+			{
+			*created=true;
+			return inserted;
+			}
+		return nullptr;
 		}
 	inline _item_t* get_first()noexcept override { return this->get_first_item(); }
 	inline _item_t* get_last()noexcept override { return this->get_last_item(); }
@@ -296,10 +306,22 @@ public:
 			}
 		return pos;
 		}
-	_item_t* get(_key_t const& key, _item_t* create, bool* created, bool again)noexcept override
+	_item_t* get(_key_t const& key)noexcept override
+		{
+		uint16_t pos=0;
+		uint16_t count=get_item_pos(key, &pos, true);
+		for(uint16_t u=0; u<count; u++)
+			{
+			_item_t* item=this->m_children[pos+u]->get(key);
+			if(item)
+				return item;
+			}
+		return nullptr;
+		}
+	_item_t* get(_key_t const& key, _item_t&& create, bool* created, bool again)noexcept override
 		{
 		bool created_internal=false;
-		_item_t* item=get_internal(key, create, &created_internal, again);
+		_item_t* item=get_internal(key, std::forward<_item_t>(create), &created_internal, again);
 		if(created_internal)
 			{
 			this->m_item_count++;
@@ -403,19 +425,16 @@ private:
 		}
 
 	// Modification
-	_item_t* get_internal(_key_t const& key, _item_t* create, bool* created, bool again)noexcept
+	_item_t* get_internal(_key_t const& key, _item_t&& create, bool* created, bool again)noexcept
 		{
-		BOOL must_exist=(create==nullptr);
 		uint16_t pos=0;
-		uint16_t count=get_item_pos(key, &pos, must_exist);
-		if(count==0)
-			return nullptr;
+		uint16_t count=get_item_pos(key, &pos, false);
 		if(!again)
 			{
 			for(uint16_t u=0; u<count; u++)
 				{
-				_item_t* item=this->m_children[pos+u]->get(key, create, created, false);
-				if(item!=create)
+				_item_t* item=this->m_children[pos+u]->get(key, std::forward<_item_t>(create), created, false);
+				if(item)
 					return item;
 				}
 			if(this->shift_children(pos, count))
@@ -423,22 +442,22 @@ private:
 				count=get_item_pos(key, &pos, false);
 				for(uint16_t u=0; u<count; u++)
 					{
-					_item_t* item=this->m_children[pos+u]->get(key, create, created, false);
-					if(item!=create)
+					_item_t* item=this->m_children[pos+u]->get(key, std::forward<_item_t>(create), created, false);
+					if(item)
 						return item;
 					}
 				}
 			}
 		if(!this->split_child(pos))
-			return create;
+			return nullptr;
 		count=get_item_pos(key, &pos, false);
 		for(uint16_t u=0; u<count; u++)
 			{
-			_item_t* item=this->m_children[pos+u]->get(key, create, created, false);
-			if(item!=create)
+			_item_t* item=this->m_children[pos+u]->get(key, std::forward<_item_t>(create), created, false);
+			if(item)
 				return item;
 			}
-		return create;
+		return nullptr;
 		}
 	void update_bounds()noexcept
 		{
@@ -522,7 +541,7 @@ public:
 		{
 		_item_t create(std::forward<_item_param_t>(item));
 		bool created=false;
-		get_internal(&create, &created);
+		get_internal(create, &created);
 		return created;
 		}
 	bool remove(_item_t const& item, _item_t* item_ptr=nullptr)
@@ -536,7 +555,7 @@ public:
 		{
 		_item_t create(std::forward<_item_param_t>(item));
 		bool created=false;
-		get_internal(&create, &created);
+		get_internal(std::forward<_item_t>(create), &created);
 		if(!created)
 			return false;
 		return true;
@@ -548,14 +567,14 @@ protected:
 
 private:
 	// Common
-	_item_t* get_internal(_item_t* create, bool* created)
+	_item_t* get_internal(_item_t&& create, bool* created)
 		{
 		auto root=this->create_root();
-		_item_t* got=root->get(*create, create, created, false);
-		if(got!=create)
+		_item_t* got=root->get(create, std::forward<_item_t>(create), created, false);
+		if(got)
 			return got;
 		root=this->lift_root();
-		return root->get(*create, create, created, true);
+		return root->get(create, std::forward<_item_t>(create), created, true);
 		}
 };
 
@@ -623,4 +642,4 @@ public:
 
 } // namespace
 
-#endif // _CLUSTERS_INDEX_H
+#endif // _CLUSTERS_INDEX_HPP

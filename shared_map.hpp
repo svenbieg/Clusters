@@ -128,4 +128,4 @@ public:
 
 } // namespace
 
-#endif // _CLUSTERS_SHARED_MAP_H
+#endif // _CLUSTERS_SHARED_MAP_HPP

@@ -101,4 +101,4 @@ public:
 
 } // namespace
 
-#endif // _CLUSTERS_SHARED_LIST_H
+#endif // _CLUSTERS_SHARED_LIST_HPP

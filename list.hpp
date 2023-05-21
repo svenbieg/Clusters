@@ -66,9 +66,9 @@ public:
 	virtual _size_t get_many(_size_t position, _item_t* items, _size_t count)const noexcept=0;
 
 	// Modification
-	virtual _item_t* append(_item_t* item, bool again)noexcept=0;
+	virtual _item_t* append(_item_t&& item, bool again)noexcept=0;
 	virtual _size_t append(_item_t const* append, _size_t count)noexcept=0;
-	virtual bool insert_at(_size_t position, _item_t* item, bool again)noexcept=0;
+	virtual _item_t* insert_at(_size_t position, _item_t&& item, bool again)=0;
 	virtual _size_t set_many(_size_t position, _item_t const* many, _size_t count)noexcept=0;
 };
 
@@ -106,34 +106,34 @@ public:
 		}
 
 	// Modification
-	_item_t* append(_item_t* item, bool)noexcept override
+	_item_t* append(_item_t&& item, bool again)noexcept override
 		{
-		uint16_t item_count=this->get_child_count();
-		if(!this->insert_items(item_count, item, 1))
-			return nullptr;
-		return &this->get_items()[item_count];
+		return insert_item(this->m_item_count, std::forward<_item_t>(item));
 		}
 	_size_t append(_item_t const* append, _size_t count)noexcept override
 		{
-		uint16_t item_count=this->get_child_count();
-		uint16_t copy=(uint16_t)(_group_size-item_count);
-		if(copy==0)
+		uint16_t item_count=this->m_item_count;
+		if(item_count==_group_size)
 			return 0;
-		if(count<copy)
+		uint16_t copy=(uint16_t)(_group_size-item_count);
+		if(copy>count)
 			copy=(uint16_t)count;
-		this->insert_items(item_count, append, copy);
-		return copy;
+		return this->insert_items(item_count, append, copy);
 		}
-	bool insert_at(_size_t position, _item_t* item, bool)noexcept override
+	_item_t* insert_at(_size_t position, _item_t&& item, bool again)override
 		{
-		return this->insert_items((uint16_t)position, item, 1);
+		if(position>this->m_item_count)
+			throw std::out_of_range(nullptr);
+		uint16_t pos=(uint16_t)position;
+		return this->insert_item(pos, std::forward<_item_t>(item));
 		}
 	_size_t set_many(_size_t position, _item_t const* many, _size_t count)noexcept override
 		{
 		uint16_t item_count=this->get_child_count();
 		if(position>=item_count)
 			return 0;
-		uint16_t copy=(uint16_t)(item_count-(uint16_t)position);
+		uint16_t pos=(uint16_t)position;
+		uint16_t copy=item_count-pos;
 		if(copy>count)
 			copy=(uint16_t)count;
 		_item_t* items=this->get_items();
@@ -184,12 +184,12 @@ public:
 		}
 
 	// Modification
-	_item_t* append(_item_t* item, bool again)noexcept override
+	_item_t* append(_item_t&& item, bool again)noexcept override
 		{
-		uint16_t group=(uint16_t)(this->m_child_count-1);
 		if(!again)
 			{
-			_item_t* appended=this->m_children[group]->append(item, false);
+			uint16_t group=(uint16_t)(this->m_child_count-1);
+			_item_t* appended=this->m_children[group]->append(std::forward<_item_t>(item), false);
 			if(appended)
 				{
 				this->m_item_count++;
@@ -199,20 +199,27 @@ public:
 			if(empty<this->m_child_count)
 				{
 				this->move_emtpy_slot(empty, group);
-				appended=this->m_children[group]->append(item, false);
+				appended=this->m_children[group]->append(std::forward<_item_t>(item), false);
 				this->m_item_count++;
 				return appended;
 				}
 			}
-		if(!this->split_child(group))
+		uint16_t group=this->m_child_count;
+		if(group==_group_size)
 			return nullptr;
-		_item_t* appended=this->m_children[group+1]->append(item, true);
-		if(appended)
+		uint16_t level=this->m_level;
+		if(level>1)
 			{
-			this->m_item_count++;
-			return appended;
+			this->m_children[group]=new _parent_group_t(level-1);
 			}
-		return nullptr;
+		else
+			{
+			this->m_children[group]=new _item_group_t();
+			}
+		_item_t* appended=this->m_children[group]->append(std::forward<_item_t>(item), true);
+		this->m_child_count++;
+		this->m_item_count++;
+		return appended;
 		}
 	_size_t append(_item_t const* append, _size_t count)noexcept override
 		{
@@ -273,23 +280,24 @@ public:
 			}
 		return pos;
 		}
-	bool insert_at(_size_t position, _item_t* item, bool again)noexcept override
+	_item_t* insert_at(_size_t position, _item_t&& item, bool again)override
 		{
 		_size_t pos=position;
 		uint16_t group=0;
 		uint16_t ins_count=get_insert_pos(&pos, &group);
 		if(!ins_count)
-			return false;
+			throw std::out_of_range(nullptr);
 		if(!again)
 			{
 			_size_t at=pos;
 			for(uint16_t u=0; u<ins_count; u++)
 				{
 				auto child=this->get_child(group+u);
-				if(child->insert_at(at, item, false))
+				_item_t* inserted=child->insert_at(at, std::forward<_item_t>(item), false);
+				if(inserted)
 					{
 					this->m_item_count++;
-					return true;
+					return inserted;
 					}
 				at=0;
 				}
@@ -301,14 +309,18 @@ public:
 				for(uint16_t u=0; u<ins_count; u++)
 					{
 					auto child=this->get_child(group+u);
-					if(child->insert_at(at, item, false))
-						return true;
+					_item_t* inserted=child->insert_at(at, std::forward<_item_t>(item), false);
+					if(inserted)
+						{
+						this->m_item_count++;
+						return inserted;
+						}
 					at=0;
 					}
 				}
 			}
 		if(!this->split_child(group))
-			return false;
+			return nullptr;
 		_size_t count=this->m_children[group]->get_item_count();
 		if(pos>=count)
 			{
@@ -316,9 +328,9 @@ public:
 			pos-=count;
 			}
 		auto child=this->get_child(group);
-		child->insert_at(pos, item, true);
+		_item_t* inserted=child->insert_at(pos, std::forward<_item_t>(item), true);
 		this->m_item_count++;
-		return true;
+		return inserted;
 		}
 	_size_t set_many(_size_t position, _item_t const* many, _size_t count)noexcept override
 		{
@@ -480,20 +492,19 @@ public:
 		append(std::forward<_item_t>(fwd));
 		return true;
 		}
-	inline _item_t& append()
+	inline _item_t& append()noexcept
 		{
-		_item_t item;
-		return *append(item);
+		return append(_item_t());
 		}
-	template <typename _item_param_t> _item_t* append(_item_param_t&& item)noexcept
+	template <typename _item_param_t> _item_t& append(_item_param_t&& item)noexcept
 		{
 		_item_t fwd(std::forward<_item_param_t>(item));
 		auto root=this->create_root();
-		_item_t* appended=root->append(&fwd, false);
+		_item_t* appended=root->append(std::forward<_item_t>(fwd), false);
 		if(appended)
-			return appended;
+			return *appended;
 		root=this->lift_root();
-		return root->append(&fwd, true);
+		return *root->append(std::forward<_item_t>(fwd), true);
 		}
 	void append(_item_t const* items, _size_t count)noexcept
 		{
@@ -507,30 +518,34 @@ public:
 			root=this->lift_root();
 			}
 		}
-	template <typename _item_param_t> bool insert_at(_size_t position, _item_param_t&& item)noexcept
+	inline _item_t& insert_at(_size_t position)
+		{
+		return insert_at(position, _item_t());
+		}
+	template <typename _item_param_t> _item_t& insert_at(_size_t position, _item_param_t&& item)
 		{
 		_item_t fwd(std::forward<_item_param_t>(item));
 		auto root=this->m_root;
 		if(!root)
 			{
 			if(position>0)
-				return false;
+				throw std::out_of_range(nullptr);
 			root=this->create_root();
 			}
 		auto count=root->get_item_count();
 		if(position>count)
-			return false;
-		if(root->insert_at(position, &fwd, false))
-			return true;
+			throw std::out_of_range(nullptr);
+		_item_t* inserted=root->insert_at(position, std::forward<_item_t>(fwd), false);
+		if(inserted)
+			return *inserted;
 		root=this->lift_root();
-		return root->insert_at(position, &fwd, true);
+		return *root->insert_at(position, std::forward<_item_t>(fwd), true);
 		}
 	template <typename _item_param_t> bool remove(_item_param_t&& item)noexcept
 		{
-		_item_t fwd(std::forward<_item_param_t>(item));
 		for(auto it=this->begin(); it.has_current(); it.move_next())
 			{
-			if(*it==fwd)
+			if(*it==item)
 				{
 				it.remove_current();
 				return true;
@@ -538,10 +553,12 @@ public:
 			}
 		return false;
 		}
-	template <typename _item_param_t> bool set_at(_size_t position, _item_param_t&& item)noexcept
+	template <typename _item_param_t> bool set_at(_size_t position, _item_param_t&& item)
 		{
 		_item_t* got=get_at(position);
 		if(!got)
+			throw std::out_of_range(nullptr);
+		if(*got==item)
 			return false;
 		*got=std::forward<_item_param_t>(item);
 		return true;
@@ -555,7 +572,7 @@ public:
 		if(position>item_count)
 			return 0;
 		_size_t pos=0;
-		if(root&&position<item_count)
+		if(position<item_count)
 			{
 			pos+=root->set_many(position, items, count);
 			if(pos==count)
@@ -573,4 +590,4 @@ protected:
 
 } // namespace
 
-#endif // _CLUSTERS_LIST_H
+#endif // _CLUSTERS_LIST_HPP

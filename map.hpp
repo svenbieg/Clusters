@@ -168,24 +168,24 @@ public:
 		{
 		_item_t create(std::forward<_key_param_t>(key), _value_t());
 		bool created=false;
-		_item_t* got=get_internal(&create, &created);
+		_item_t* got=get_internal(std::forward<_item_t>(create), &created);
 		return got->get_value();
 		}
 	template <class _key_param_t, class _value_param_t> _value_t& get(_key_param_t&& key, _value_param_t&& init)noexcept
 		{
 		_item_t create(std::forward<_key_param_t>(key), std::forward<_value_param_t>(init));
 		bool created=false;
-		_item_t* got=get_internal(&create, &created);
+		_item_t* got=get_internal(std::forward<_item_t>(create), &created);
 		return got->get_value();
 		}
-	_value_t get(_key_t const& key)const noexcept
+	_value_t& get(_key_t const& key)const
 		{
 		auto root=this->m_root;
 		if(!root)
-			return _value_t();
+			throw std::out_of_range(nullptr);
 		_item_t* item=root->get(key);
 		if(!item)
-			return _value_t();
+			throw std::out_of_range(nullptr);
 		return item->get_value();
 		}
 	bool try_get(_key_t const& key, _value_t* value)const noexcept
@@ -217,7 +217,7 @@ public:
 		{
 		_item_t create(std::forward<_key_param_t>(key), std::forward<_value_param_t>(value));
 		bool created=false;
-		get_internal(&create, &created);
+		get_internal(std::forward<_item_t>(create), &created);
 		return created;
 		}
 	bool remove(_key_t const& key, _item_t* item_ptr=nullptr)noexcept
@@ -231,14 +231,12 @@ public:
 		{
 		_item_t create(std::forward<_key_param_t>(key), std::forward<_value_param_t>(value));
 		bool created=false;
-		auto item=get_internal(&create, &created);
-		if(!created)
-			{
-			if(item->get_value()==create.get_value())
-				return false;
-			*item=std::move(create);
+		auto got=get_internal(std::forward<_item_t>(create), &created);
+		if(created)
 			return true;
-			}
+		if(got->get_value()==create.get_value())
+			return false;
+		*got=std::move(create);
 		return true;
 		}
 
@@ -248,18 +246,18 @@ protected:
 
 private:
 	// Common
-	_item_t* get_internal(_item_t* create, bool* created)noexcept
+	_item_t* get_internal(_item_t&& create, bool* created)noexcept
 		{
 		auto root=this->create_root();
-		_item_t* got=root->get(create->get_key(), create, created, false);
-		if(got!=create)
+		_item_t* got=root->get(create.get_key(), std::forward<_item_t>(create), created, false);
+		if(got)
 			return got;
 		root=this->lift_root();
-		return root->get(create->get_key(), create, created, true);
+		return root->get(create.get_key(), std::forward<_item_t>(create), created, true);
 		}
 };
 
 
 } // namespace
 
-#endif // _CLUSTERS_MAP_H
+#endif // _CLUSTERS_MAP_HPP

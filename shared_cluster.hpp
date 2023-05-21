@@ -315,4 +315,4 @@ protected:
 
 } // namespace
 
-#endif // _CLUSTERS_SHARED_CLUSTER_H
+#endif // _CLUSTERS_SHARED_CLUSTER_HPP

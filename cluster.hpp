@@ -80,8 +80,8 @@ public:
 	static constexpr uint16_t _group_size=_traits_t::group_size;
 
 	// Con-/Destructors
-	cluster_item_group()noexcept: m_item_count(0), m_items() {}
-	cluster_item_group(cluster_item_group const& group)noexcept: m_item_count(group.m_item_count), m_items()
+	cluster_item_group()noexcept: m_item_count(0) {}
+	cluster_item_group(cluster_item_group const& group)noexcept: m_item_count(group.m_item_count)
 		{
 		_item_t* items=get_items();
 		_item_t const* copy=group.get_items();
@@ -117,35 +117,55 @@ public:
 	inline uint16_t get_level()const noexcept override { return 0; }
 
 	// Modification
-	bool insert_items(uint16_t position, _item_t* insert, uint16_t count)noexcept
+	_item_t* insert_item(_size_t position, _item_t&& insert)
 		{
-		if(m_item_count+count>_group_size)
-			return false;
 		if(position>m_item_count)
-			return false;
+			throw std::out_of_range(nullptr);
+		if(m_item_count+1>_group_size)
+			return nullptr;
 		_item_t* items=get_items();
-		uint16_t u=(uint16_t)(m_item_count+count-1);
-		for(; u>=position+count; u--)
-			new (&items[u]) _item_t(std::move(items[u-count]));
-		for(u=0; u<count; u++)
-			new (&items[position+u]) _item_t(std::forward<_item_t>(insert[u]));
-		m_item_count+=count;
-		return true;
+		uint16_t u=m_item_count;
+		for(; u>=position+1; u--)
+			new (&items[u]) _item_t(std::move(items[u-1]));
+		new (&items[position]) _item_t(std::move(insert));
+		m_item_count++;
+		return &items[position];
 		}
-	bool insert_items(uint16_t position, _item_t const* insert, uint16_t count)noexcept
+	uint16_t insert_items(uint16_t position, _item_t* insert, uint16_t count)
 		{
-		if(m_item_count+count>_group_size)
-			return false;
 		if(position>m_item_count)
-			return false;
+			throw std::out_of_range(nullptr);
+		if(m_item_count==_group_size)
+			return 0;
+		uint16_t copy=count;
+		if(copy>_group_size-m_item_count)
+			copy=_group_size-m_item_count;
 		_item_t* items=get_items();
-		uint16_t u=(uint16_t)(m_item_count+count-1);
-		for(; u>=position+count; u--)
-			new (&items[u]) _item_t(std::move(items[u-count]));
-		for(u=0; u<count; u++)
+		uint16_t u=(uint16_t)(m_item_count+copy-1);
+		for(; u>=position+copy; u--)
+			new (&items[u]) _item_t(std::move(items[u-copy]));
+		for(u=0; u<copy; u++)
+			new (&items[position+u]) _item_t(std::move(insert[u]));
+		m_item_count+=copy;
+		return copy;
+		}
+	uint16_t insert_items(uint16_t position, _item_t const* insert, uint16_t count)
+		{
+		if(position>m_item_count)
+			throw std::out_of_range(nullptr);
+		if(m_item_count==_group_size)
+			return 0;
+		uint16_t copy=count;
+		if(copy>_group_size-m_item_count)
+			copy=_group_size-m_item_count;
+		_item_t* items=get_items();
+		uint16_t u=(uint16_t)(m_item_count+copy-1);
+		for(; u>=position+copy; u--)
+			new (&items[u]) _item_t(std::move(items[u-copy]));
+		for(u=0; u<copy; u++)
 			new (&items[position+u]) _item_t(insert[u]);
-		m_item_count+=count;
-		return true;
+		m_item_count+=copy;
+		return copy;
 		}
 	bool remove_at(_size_t position, _item_t* item_ptr)noexcept override
 		{
@@ -154,7 +174,7 @@ public:
 		_item_t* items=get_items();
 		if(item_ptr)
 			{
-			(*item_ptr).~_item_t();
+			item_ptr->~_item_t();
 			new (item_ptr) _item_t(std::move(items[position]));
 			}
 		else
@@ -181,8 +201,8 @@ protected:
 	uint16_t m_item_count;
 
 private:
-	// Unititlized array of items
-	alignas(alignof(_item_t[_group_size])) unsigned char m_items[sizeof(_item_t[_group_size])];
+	// Uninitialized array of items
+	alignas(alignof(_item_t[_group_size])) unsigned char m_items[sizeof(_item_t[_group_size])*2];
 };
 
 
@@ -204,10 +224,10 @@ public:
 
 	// Con-/Destructors
 	cluster_parent_group(uint16_t level=0)noexcept:
-		m_child_count(0), m_children(), m_item_count(0), m_level(level)
+		m_child_count(0), m_item_count(0), m_level(level)
 		{}
 	cluster_parent_group(_parent_group_t const& group)noexcept:
-		m_child_count(group.m_child_count), m_children(), m_item_count(group.m_item_count), m_level(group.m_level)
+		m_child_count(group.m_child_count), m_item_count(group.m_item_count), m_level(group.m_level)
 		{
 		if(m_level>1)
 			{
@@ -915,4 +935,4 @@ public:
 
 } // namespace
 
-#endif // _CLUSTERS_CLUSTER_H
+#endif // _CLUSTERS_CLUSTER_HPP

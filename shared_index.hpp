@@ -116,4 +116,4 @@ public:
 
 } // namespace
 
-#endif // _CLUSTERS_SHARED_INDEX_H
+#endif // _CLUSTERS_SHARED_INDEX_HPP
