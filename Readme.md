@@ -42,7 +42,7 @@ Items can be added, removed and looked-up in constant low time.
 You can find detailed information in the
 <a href="https://github.com/svenbieg/Clusters/wiki/Home">Wiki</a>.
 </p><br />
-<br />
+
 Best regards,<br />
 <br />
 Sven Bieg<br />
