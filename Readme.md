@@ -10,6 +10,12 @@ Items can be added, removed and looked-up in constant low time.
 <br />
 <br />
 
+<p>
+I'm using it in my <a href="https://github.com/svenbieg/Heap">memory-manager</a>.
+</p>
+<br />
+<br />
+
 <h2>Principle</h2>
 <br />
 
