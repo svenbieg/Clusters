@@ -11,7 +11,7 @@ Items can be added, removed and looked-up in constant low time.
 <br />
 
 <p>
-I'm using it in my <a href="https://github.com/svenbieg/Heap">memory-manager</a>.
+There is an implementation in <a href="https://github.com/svenbieg/Clusters.NET">C#</a> which is easier to read. I'm using it in my <a href="https://github.com/svenbieg/Heap">memory-manager</a>.
 </p>
 <br />
 
