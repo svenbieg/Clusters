@@ -11,8 +11,9 @@ Items can be added, removed and looked-up in constant low time.
 <br />
 <p>
 This is the standard-implementation, <a href="https://github.com/svenbieg/Clusters.NET">Clusters.NET</a> is easier to read.
-</p><br />
+</p>
 <br />
+
 <h2>Principle</h2>
 <br />
 
