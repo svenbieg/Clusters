@@ -10,11 +10,6 @@ Items can be added, removed and looked-up in constant low time.
 <br />
 <br />
 
-<p>
-There is an implementation in <a href="https://github.com/svenbieg/Clusters.NET">C#</a> which is easier to read. I'm using it in my <a href="https://github.com/svenbieg/Heap">memory-manager</a>.
-</p>
-<br />
-
 <h2>Principle</h2>
 <br />
 
@@ -42,6 +37,11 @@ There is an implementation in <a href="https://github.com/svenbieg/Clusters.NET"
 		<td>If an entry needs to be inserted in a full group, a whole sub-tree can be moved.</td>
 	</tr>
 </table><br />
+
+<p>
+There is an <a href="https://github.com/svenbieg/Clusters.NET">implementation in C#</a> which is easier to read. I'm using it in my <a href="https://github.com/svenbieg/Heap">memory-manager</a>.
+</p>
+<br />
 
 <p>
 You can find detailed information in the
