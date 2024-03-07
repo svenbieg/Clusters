@@ -9,7 +9,10 @@ Items can be added, removed and looked-up in constant low time.
 <img src="https://user-images.githubusercontent.com/12587394/47256750-2e75a180-d485-11e8-8fe4-ad181f695690.jpg" style="" /><br />
 <br />
 <br />
-
+<p>
+This is the standard-implementation, <a href="https://github.com/svenbieg/Clusters.NET">Clusters.NET</a> is easier to read.
+</p><br />
+<br />
 <h2>Principle</h2>
 <br />
 
@@ -39,7 +42,7 @@ Items can be added, removed and looked-up in constant low time.
 </table><br />
 
 <p>
-There is an <a href="https://github.com/svenbieg/Clusters.NET">implementation in C#</a> which is easier to read. I'm using it in my <a href="https://github.com/svenbieg/Heap">memory-manager</a>.
+I'm using it in my <a href="https://github.com/svenbieg/Heap">memory-manager</a>.
 </p>
 <br />
 
