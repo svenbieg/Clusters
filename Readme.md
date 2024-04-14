@@ -47,11 +47,6 @@ You can find detailed information in the
 <a href="https://github.com/svenbieg/Clusters/wiki/Home">Wiki</a>.
 </p><br />
 
-<p>
-I'm using it in my <a href="https://github.com/svenbieg/Heap">memory-manager</a>.
-</p>
-<br />
-
 Best regards,<br />
 <br />
 Sven Bieg<br />
