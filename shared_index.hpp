@@ -28,6 +28,37 @@
 namespace Clusters {
 
 
+//==========
+// Iterator
+//==========
+
+template <typename _traits_t, bool _is_const>
+class shared_index_iterator: public shared_cluster_iterator<_traits_t, _is_const>
+{
+public:
+	// Using
+	using _base_t=shared_cluster_iterator<_traits_t, _is_const>;
+	using _item_t=typename _traits_t::item_t;
+	using _iterator_t=typename _traits_t::iterator_t;
+
+	// Con-/Destructors
+	using _base_t::_base_t;
+
+	// Navigation
+	bool find(_item_t const& item, find_func func=find_func::equal)
+		{
+		if(this->is_outside())
+			this->lock();
+		if(!_iterator_t::find(item, func))
+			{
+			this->unlock();
+			return false;
+			}
+		return true;
+		}
+};
+
+
 //==============
 // Shared Index
 //==============
@@ -39,8 +70,8 @@ public:
 	// Using
 	using _traits_t=index_traits<_item_t, _item_t, _size_t, _group_size>;
 	using _cluster_t=typename _traits_t::cluster_t;
-	using iterator=typename _traits_t::shared_iterator_t;
-	using const_iterator=typename _traits_t::shared_const_iterator_t;
+	using iterator=shared_index_iterator<_traits_t, false>;
+	using const_iterator=shared_index_iterator<_traits_t, true>;
 
 	// Con-/Destructors
 	shared_index() {}
@@ -79,37 +110,6 @@ public:
 		{
 		std::unique_lock<std::shared_mutex> lock(this->m_mutex);
 		return _cluster_t::set(std::forward<_item_param_t>(item));
-		}
-};
-
-
-//==========
-// Iterator
-//==========
-
-template <typename _traits_t, bool _is_const>
-class shared_index_iterator: public shared_cluster_iterator<_traits_t, _is_const>
-{
-public:
-	// Using
-	using _base_t=shared_cluster_iterator<_traits_t, _is_const>;
-	using _item_t=typename _traits_t::item_t;
-	using _iterator_t=typename _traits_t::iterator_t;
-
-	// Con-/Destructors
-	using _base_t::_base_t;
-
-	// Navigation
-	bool find(_item_t const& item, find_func func=find_func::equal)
-		{
-		if(this->is_outside())
-			this->lock();
-		if(!_iterator_t::find(item, func))
-			{
-			this->unlock();
-			return false;
-			}
-		return true;
 		}
 };
 

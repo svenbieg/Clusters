@@ -28,6 +28,37 @@
 namespace Clusters {
 
 
+//==========
+// Iterator
+//==========
+
+template <typename _traits_t, bool _is_const>
+class shared_map_iterator: public shared_cluster_iterator<_traits_t, _is_const>
+{
+public:
+	// Using
+	using _base_t=shared_cluster_iterator<_traits_t, _is_const>;
+	using _key_t=typename _traits_t::key_t;
+	using _iterator_t=typename _traits_t::iterator_t;
+
+	// Con-/Destructors
+	using _base_t::_base_t;
+
+	// Navigation
+	bool find(_key_t const& key, find_func func=find_func::equal)
+		{
+		if(this->is_outside())
+			this->lock();
+		if(!_iterator_t::find(key, func))
+			{
+			this->unlock();
+			return false;
+			}
+		return true;
+		}
+};
+
+
 //============
 // Shared Map
 //============
@@ -41,8 +72,8 @@ public:
 	using _item_t=typename _traits_t::item_t;
 	using _cluster_t=typename _traits_t::cluster_t;
 	using _iterator_base_t=typename shared_cluster_iterator_base<_traits_t, false>::_base_t;
-	using iterator=typename _traits_t::shared_iterator_t;
-	using const_iterator=typename _traits_t::shared_const_iterator_t;
+	using iterator=shared_map_iterator<_traits_t, false>;
+	using const_iterator=shared_map_iterator<_traits_t, true>;
 
 	// Con-/Destructors
 	shared_map() {}
@@ -95,36 +126,6 @@ public:
 		}
 };
 
-
-//==========
-// Iterator
-//==========
-
-template <typename _traits_t, bool _is_const>
-class shared_map_iterator: public shared_cluster_iterator<_traits_t, _is_const>
-{
-public:
-	// Using
-	using _base_t=shared_cluster_iterator<_traits_t, _is_const>;
-	using _key_t=typename _traits_t::key_t;
-	using _iterator_t=typename _traits_t::iterator_t;
-
-	// Con-/Destructors
-	using _base_t::_base_t;
-
-	// Navigation
-	bool find(_key_t const& key, find_func func=find_func::equal)
-		{
-		if(this->is_outside())
-			this->lock();
-		if(!_iterator_t::find(key, func))
-			{
-			this->unlock();
-			return false;
-			}
-		return true;
-		}
-};
 
 } // namespace
 
