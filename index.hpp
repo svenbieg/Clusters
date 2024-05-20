@@ -541,7 +541,7 @@ public:
 		{
 		_item_t create(std::forward<_item_param_t>(item));
 		bool created=false;
-		get_internal(create, &created);
+		get_internal(std::forward<_item_t>(create), &created);
 		return created;
 		}
 	bool remove(_item_t const& item, _item_t* item_ptr=nullptr)
