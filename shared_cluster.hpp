@@ -5,7 +5,7 @@
 // Thread-safe implementation of a pyramidal directory
 // Shared classes for shared_list and shared_index
 
-// Copyright 2022, Sven Bieg (svenbieg@web.de)
+// Copyright 2024, Sven Bieg (svenbieg@web.de)
 // http://github.com/svenbieg/clusters
 
 

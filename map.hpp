@@ -5,7 +5,7 @@
 // Implementation of a sorted map
 // Items can be inserted, removed and looked-up in constant low time
 
-// Copyright 2022, Sven Bieg (svenbieg@web.de)
+// Copyright 2024, Sven Bieg (svenbieg@web.de)
 // http://github.com/svenbieg/clusters
 
 

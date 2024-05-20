@@ -5,7 +5,7 @@
 // Implementation of an ordered list
 // Items can be inserted and removed in constant low time
 
-// Copyright 2022, Sven Bieg (svenbieg@web.de)
+// Copyright 2024, Sven Bieg (svenbieg@web.de)
 // http://github.com/svenbieg/clusters
 
 
@@ -108,7 +108,7 @@ public:
 	// Modification
 	_item_t* append(_item_t&& item, bool again)noexcept override
 		{
-		return insert_item(this->m_item_count, std::forward<_item_t>(item));
+		return this->insert_item(this->m_item_count, std::forward<_item_t>(item));
 		}
 	_size_t append(_item_t const* append, _size_t count)noexcept override
 		{
@@ -438,7 +438,7 @@ public:
 		}
 	list(list const& list): _base_t(nullptr)
 		{
-		copy_from(list);
+		this->copy_from(list);
 		}
 
 	// Access
