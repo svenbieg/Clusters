@@ -161,7 +161,7 @@ public:
 	inline shared_cluster_iterator_base& operator++() { move_next(); return *this; }
 	inline shared_cluster_iterator_base& operator--() { move_previous(); return *this; }
 	inline _size_t get_position()const { return _base_t::get_position(); }
-	bool move_next()
+	bool move_next()noexcept override
 		{
 		if(this->is_outside())
 			{
@@ -176,7 +176,7 @@ public:
 		this->unlock();
 		return false;
 		}
-	bool move_previous()
+	bool move_previous()noexcept override
 		{
 		if(this->is_outside())
 			{
@@ -191,7 +191,7 @@ public:
 		this->unlock();
 		return false;
 		}
-	bool set_position(_size_t position)
+	bool set_position(_size_t position)noexcept override
 		{
 		if(this->is_outside())
 			{

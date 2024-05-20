@@ -21,6 +21,7 @@
 #include <stdexcept>
 #include <stdint.h>
 #include <type_traits>
+#include <utility>
 
 
 //===========
@@ -699,7 +700,7 @@ public:
 	inline bool begin()noexcept { return set_position(0); }
 	inline void end()noexcept { reset(-2); }
 	inline _size_t get_position()const noexcept { return m_position; }
-	bool move_next()noexcept
+	virtual bool move_next()noexcept
 		{
 		if(m_position==-2)
 			return false;
@@ -740,7 +741,7 @@ public:
 		reset(-2);
 		return false;
 		}
-	bool move_previous()noexcept
+	virtual bool move_previous()noexcept
 		{
 		if(m_position==-1)
 			return false;
@@ -790,7 +791,7 @@ public:
 		return true;
 		}
 	inline void rend() { reset(-1); }
-	bool set_position(_size_t position)noexcept
+	virtual bool set_position(_size_t position)noexcept
 		{
 		if(is_outside(position))
 			{
