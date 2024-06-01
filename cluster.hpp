@@ -501,6 +501,7 @@ public:
 	friend cluster_iterator_base<_traits_t, true>;
 
 	// Access
+	inline operator bool()const noexcept { return m_root!=nullptr; }
 	inline iterator begin()noexcept { return iterator(this, 0); }
 	inline iterator begin(_size_t position)noexcept { return iterator(this, position); }
 	inline const_iterator begin()const noexcept { return const_iterator(this, 0); }
