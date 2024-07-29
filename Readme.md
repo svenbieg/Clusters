@@ -46,5 +46,3 @@ This is the standard-implementation, <a href="https://github.com/svenbieg/Cluste
 You can find detailed information in the
 <a href="https://github.com/svenbieg/Clusters/wiki/Home">Wiki</a>.
 </p><br />
-
-<br /><br /><br /><br /><br />
