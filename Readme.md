@@ -45,4 +45,4 @@ This is the standard-implementation, <a href="https://github.com/svenbieg/Cluste
 <p>
 You can find detailed information in the
 <a href="https://github.com/svenbieg/Clusters/wiki/Home">Wiki</a>.
-</p><br />
+</p>
