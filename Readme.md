@@ -6,9 +6,9 @@ It creates a pyramidal directory, moving entries and groups accordingly.<br />
 Items can be added, removed and looked-up in constant low time.
 </p><br />
 
-<img src="https://user-images.githubusercontent.com/12587394/47256750-2e75a180-d485-11e8-8fe4-ad181f695690.jpg" style="" /><br />
+<img src="https://user-images.githubusercontent.com/12587394/47256750-2e75a180-d485-11e8-8fe4-ad181f695690.jpg" style="" />
 <br />
-<br />
+
 <p>
 This is the standard-implementation, <a href="https://github.com/svenbieg/Clusters.NET">Clusters.NET</a> is easier to read.
 </p>
