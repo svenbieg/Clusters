@@ -10,7 +10,7 @@ Items can be added, removed and looked-up in constant low time.
 <br />
 
 <p>
-This is the standard-implementation, there are two more implentations in <a href="https://github.com/svenbieg/Heap">C</a> and <a href="https://github.com/svenbieg/Clusters.NET">C#</a>.
+This is the standard-implementation, there are two more implementations in <a href="https://github.com/svenbieg/Heap">C</a> and <a href="https://github.com/svenbieg/Clusters.NET">C#</a>.
 </p>
 <br />
 
