@@ -54,7 +54,7 @@ public:
 	using _size_t=typename _traits_t::size_t;
 
 	// Con-/Destructors
-	virtual ~shared_cluster() {}
+	virtual ~shared_cluster()noexcept {}
 
 	// Access
 	inline _item_t get_at(_size_t position)
@@ -148,10 +148,10 @@ public:
 		}
 
 	// Access
-	_item_ref operator*()const { return _base_t::operator*(); }
-	_item_ptr operator->()const { return _base_t::operator->(); }
-	_item_ref get_current()const { return _base_t::get_current(); }
-	inline bool has_current()const { return _base_t::has_current(); }
+	_item_ref operator*()const noexcept { return _base_t::operator*(); }
+	_item_ptr operator->()const noexcept { return _base_t::operator->(); }
+	_item_ref get_current()const noexcept { return _base_t::get_current(); }
+	inline bool has_current()const noexcept { return _base_t::has_current(); }
 
 	// Comparison
 	inline bool operator==(shared_cluster_iterator_base const& it) { return _base_t::operator==(it); }
@@ -161,7 +161,7 @@ public:
 	inline shared_cluster_iterator_base& operator++() { move_next(); return *this; }
 	inline shared_cluster_iterator_base& operator--() { move_previous(); return *this; }
 	inline _size_t get_position()const { return _base_t::get_position(); }
-	bool move_next()override
+	bool move_next()noexcept override
 		{
 		if(this->is_outside())
 			{
@@ -176,7 +176,7 @@ public:
 		this->unlock();
 		return false;
 		}
-	bool move_previous()override
+	bool move_previous()noexcept override
 		{
 		if(this->is_outside())
 			{
@@ -191,7 +191,7 @@ public:
 		this->unlock();
 		return false;
 		}
-	bool set_position(_size_t position)override
+	bool set_position(_size_t position)noexcept override
 		{
 		if(this->is_outside())
 			{
