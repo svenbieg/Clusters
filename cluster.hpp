@@ -511,6 +511,7 @@ public:
 	inline const_iterator cend()const noexcept { return const_iterator(this, -2); }
 	inline const_iterator crend()const noexcept { return const_iterator(this, -1); }
 	inline iterator end()noexcept { return iterator(this, -2); }
+	inline const_iterator end()const noexcept { return const_iterator(this, -2); }
 	_item_t get_at(_size_t position)const noexcept
 		{
 		if(!m_root)
