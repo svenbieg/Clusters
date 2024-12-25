@@ -6,11 +6,10 @@
 // Items can be inserted and removed in constant low time
 
 // Copyright 2024, Sven Bieg (svenbieg@web.de)
-// http://github.com/svenbieg/clusters
+// http://github.com/svenbieg/Clusters
 
 
-#ifndef _CLUSTERS_SHARED_LIST_HPP
-#define _CLUSTERS_SHARED_LIST_HPP
+#pragma once
 
 
 //=======
@@ -25,7 +24,7 @@
 // Namespace
 //===========
 
-namespace Clusters {
+namespace Collections {
 
 
 //=============
@@ -98,7 +97,4 @@ public:
 		}
 };
 
-
-} // namespace
-
-#endif // _CLUSTERS_SHARED_LIST_HPP
+}

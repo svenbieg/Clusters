@@ -6,11 +6,10 @@
 // Shared classes for list and index
 
 // Copyright 2024, Sven Bieg (svenbieg@web.de)
-// http://github.com/svenbieg/clusters
+// http://github.com/svenbieg/Clusters
 
 
-#ifndef _CLUSTERS_CLUSTER_HPP
-#define _CLUSTERS_CLUSTER_HPP
+#pragma once
 
 
 //=======
@@ -28,7 +27,7 @@
 // Namespace
 //===========
 
-namespace Clusters {
+namespace Collections {
 
 
 //======================
@@ -935,7 +934,4 @@ public:
 	using _base_t::_base_t;
 };
 
-
-} // namespace
-
-#endif // _CLUSTERS_CLUSTER_HPP
+}
