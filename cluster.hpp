@@ -117,7 +117,7 @@ public:
 	inline uint16_t get_level()const noexcept override { return 0; }
 
 	// Modification
-	_item_t* insert_item(_size_t position, _item_t&& insert)
+	_item_t* insert_item(_size_t position, _item_t const& insert)
 		{
 		if(position>m_item_count)
 			throw std::out_of_range(nullptr);
@@ -127,7 +127,7 @@ public:
 		uint16_t u=m_item_count;
 		for(; u>=position+1; u--)
 			new (&items[u]) _item_t(std::move(items[u-1]));
-		new (&items[position]) _item_t(std::move(insert));
+		new (&items[position]) _item_t(insert);
 		m_item_count++;
 		return &items[position];
 		}
@@ -192,7 +192,10 @@ public:
 		for(uint16_t u=0; u<count; u++)
 			items[position+u].~_item_t();
 		for(; position+count<m_item_count; position++)
-			items[position]=std::move(items[position+count]);
+			{
+			items[position].~_item_t();
+			new (&items[position]) _item_t(std::move(items[position+count]));
+			}
 		m_item_count-=count;
 		}
 

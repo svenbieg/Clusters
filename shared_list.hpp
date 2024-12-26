@@ -60,35 +60,35 @@ public:
 		}
 
 	// Modification
-	template <typename _item_param_t> inline bool add(_item_param_t&& item)
+	inline bool add(_item_t const& item)
 		{
 		std::unique_lock<std::shared_mutex> lock(this->m_mutex);
-		return _cluster_t::add(std::forward<_item_param_t>(item));
+		return _cluster_t::add(item);
 		}
-	template <typename _item_param_t> inline void append(_item_param_t&& item)
+	inline void append(_item_t const& item)
 		{
 		std::unique_lock<std::shared_mutex> lock(this->m_mutex);
-		_cluster_t::append(std::forward<_item_param_t>(item));
+		_cluster_t::append(item);
 		}
 	inline void append(_item_t const* items, _size_t count)
 		{
 		std::unique_lock<std::shared_mutex> lock(this->m_mutex);
 		_cluster_t::append(items, count);
 		}
-	template <typename _item_param_t> inline bool insert_at(_size_t position, _item_param_t&& item)
+	inline bool insert_at(_size_t position, _item_t const& item)
 		{
 		std::unique_lock<std::shared_mutex> lock(this->m_mutex);
-		return _cluster_t::insert_at(position, std::forward<_item_param_t>(item));
+		return _cluster_t::insert_at(position, item);
 		}
-	template <typename _item_param_t> inline bool remove(_item_param_t&& item)
+	inline bool remove(_item_t const& item)
 		{
 		std::unique_lock<std::shared_mutex> lock(this->m_mutex);
-		return _cluster_t::remove(std::forward<_item_param_t>(item));
+		return _cluster_t::remove(item);
 		}
-	template <typename _item_param_t> inline bool set_at(_size_t position, _item_param_t&& item)
+	inline bool set_at(_size_t position, _item_t const& item)
 		{
 		std::unique_lock<std::shared_mutex> lock(this->m_mutex);
-		return _cluster_t::set_at(position, std::forward<_item_param_t>(item));
+		return _cluster_t::set_at(position, item);
 		}
 	inline _size_t set_many(_size_t position, _item_t const* items, _size_t count)
 		{

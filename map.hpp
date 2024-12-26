@@ -64,9 +64,6 @@ public:
 	map_item(map_item const& item)noexcept: m_key(item.m_key), m_value(item.m_value) {}
 	map_item(map_item&& item)noexcept: m_key(std::move(item.m_key)), m_value(std::move(item.m_value)) {}
 	map_item(_key_t const& key, _value_t const& value)noexcept: m_key(key), m_value(value) {}
-	map_item(_key_t const& key, _value_t&& value)noexcept: m_key(key), m_value(std::move(value)) {}
-	map_item(_key_t&& key, _value_t const& value)noexcept: m_key(std::move(key)), m_value(value) {}
-	map_item(_key_t&& key, _value_t&& value)noexcept: m_key(std::move(key)), m_value(std::move(value)) {}
 
 	// Assignment
 	inline map_item& operator=(map_item const& item)noexcept
@@ -75,16 +72,6 @@ public:
 		m_value=item.m_value;
 		return *this;
 		}
-	inline map_item& operator=(map_item&& item)noexcept
-		{
-		m_key.~_key_t();
-		m_value.~_value_t();
-		new (&m_key) _key_t(std::move(item.m_key));
-		new (&m_value) _value_t(std::move(item.m_value));
-		return *this;
-		}
-	inline map_item& operator=(_value_t const& value)noexcept { m_value=value; return *this; }
-	inline map_item& operator=(_value_t&& value)noexcept { m_value=std::move(value); return *this; }
 
 	// Comparison
 	inline bool operator==(_key_t const& key)const noexcept { return m_key==key; }
@@ -100,11 +87,7 @@ public:
 	inline _value_t const& get_value()const noexcept { return m_value; }
 
 	// Modification
-	template <typename _value_param_t> inline void set_value(_value_param_t&& value)noexcept
-		{
-		_value_t set(std::forward<_value_param_t>(value));
-		m_value=std::move(set);
-		}
+	inline void set_value(_value_t const& value)noexcept { m_value=value; }
 
 private:
 	// Common
@@ -163,21 +146,21 @@ public:
 		it.find(key, func);
 		return it;
 		}
-	template <class _key_param_t> _value_t& get(_key_param_t&& key)noexcept
+	_value_t& get(_key_t const& key)
 		{
-		_item_t create(std::forward<_key_param_t>(key), _value_t());
+		_item_t create(key, _value_t());
 		bool created=false;
 		_item_t* got=get_internal(std::forward<_item_t>(create), &created);
 		return got->get_value();
 		}
-	template <class _key_param_t, class _value_param_t> _value_t& get(_key_param_t&& key, _value_param_t&& init)noexcept
+	_value_t& get(_key_t const& key, _value_t const& value)
 		{
-		_item_t create(std::forward<_key_param_t>(key), std::forward<_value_param_t>(init));
+		_item_t create(key, value);
 		bool created=false;
 		_item_t* got=get_internal(std::forward<_item_t>(create), &created);
 		return got->get_value();
 		}
-	_value_t& get(_key_t const& key)const
+	_value_t const& get(_key_t const& key)const
 		{
 		auto root=this->m_root;
 		if(!root)
@@ -212,11 +195,11 @@ public:
 		this->copy_from(map);
 		return *this;
 		}
-	template <typename _key_param_t, typename _value_param_t> bool add(_key_param_t&& key, _value_param_t&& value)noexcept
+	bool add(_key_t const& key, _value_t const& value)noexcept
 		{
-		_item_t create(std::forward<_key_param_t>(key), std::forward<_value_param_t>(value));
+		_item_t create(key, value);
 		bool created=false;
-		get_internal(std::forward<_item_t>(create), &created);
+		get_internal(create, &created);
 		return created;
 		}
 	bool remove(_key_t const& key, _item_t* item_ptr=nullptr)noexcept
@@ -226,16 +209,13 @@ public:
 			return false;
 		return root->remove(key, item_ptr);
 		}
-	template <typename _key_param_t, typename _value_param_t> bool set(_key_param_t&& key, _value_param_t&& value)noexcept
+	bool set(_key_t const& key, _value_t const& value)noexcept
 		{
-		_item_t create(std::forward<_key_param_t>(key), std::forward<_value_param_t>(value));
+		_item_t create(key, value);
 		bool created=false;
-		auto got=get_internal(std::forward<_item_t>(create), &created);
-		if(created)
-			return true;
-		if(got->get_value()==create.get_value())
-			return false;
-		*got=std::move(create);
+		auto got=get_internal(create, &created);
+		if(!created)
+			got->set_value(value);
 		return true;
 		}
 
@@ -245,14 +225,14 @@ protected:
 
 private:
 	// Common
-	_item_t* get_internal(_item_t&& create, bool* created)noexcept
+	_item_t* get_internal(_item_t const& create, bool* created)noexcept
 		{
 		auto root=this->create_root();
-		_item_t* got=root->get(create.get_key(), std::forward<_item_t>(create), created, false);
+		_item_t* got=root->get(create.get_key(), create, created, false);
 		if(got)
 			return got;
 		root=this->lift_root();
-		return root->get(create.get_key(), std::forward<_item_t>(create), created, true);
+		return root->get(create.get_key(), create, created, true);
 		}
 };
 

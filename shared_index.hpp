@@ -95,20 +95,20 @@ public:
 		}
 
 	// Modification
-	template <typename _item_param_t> inline bool add(_item_param_t&& item)
+	inline bool add(_item_t const& item)
 		{
 		std::unique_lock<std::shared_mutex> lock(this->m_mutex);
-		return _cluster_t::add(std::forward<_item_param_t>(item));
+		return _cluster_t::add(item);
 		}
 	inline bool remove(_item_t const& item)
 		{
 		std::unique_lock<std::shared_mutex> lock(this->m_mutex);
 		return _cluster_t::remove(item);
 		}
-	template <typename _item_param_t> inline bool set(_item_param_t&& item)
+	inline bool set(_item_t const& item)
 		{
 		std::unique_lock<std::shared_mutex> lock(this->m_mutex);
-		return _cluster_t::set(std::forward<_item_param_t>(item));
+		return _cluster_t::set(item);
 		}
 };
 

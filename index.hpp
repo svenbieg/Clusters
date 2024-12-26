@@ -81,7 +81,7 @@ public:
 	// Access
 	virtual uint16_t find(_key_t const& key, bool* exists, find_func func)const noexcept=0;
 	virtual _item_t* get(_key_t const& key)noexcept=0;
-	virtual _item_t* get(_key_t const& key, _item_t&& create, bool* created, bool again)noexcept=0;
+	virtual _item_t* get(_key_t const& key, _item_t const& create, bool* created, bool again)noexcept=0;
 	virtual _item_t* get_first()noexcept=0;
 	virtual _item_t* get_last()noexcept=0;
 
@@ -173,13 +173,13 @@ public:
 			return nullptr;
 		return this->get_at(pos);
 		}
-	_item_t* get(_key_t const& key, _item_t&& create, bool* created, bool again)noexcept override
+	_item_t* get(_key_t const& key, _item_t const& create, bool* created, bool again)noexcept override
 		{
 		bool exists=false;
 		uint16_t pos=get_item_pos(key, &exists);
 		if(exists)
 			return this->get_at(pos);
-		_item_t* inserted=this->insert_item(pos, std::forward<_item_t>(create));
+		_item_t* inserted=this->insert_item(pos, create);
 		if(inserted)
 			{
 			*created=true;
@@ -317,10 +317,10 @@ public:
 			}
 		return nullptr;
 		}
-	_item_t* get(_key_t const& key, _item_t&& create, bool* created, bool again)noexcept override
+	_item_t* get(_key_t const& key, _item_t const& create, bool* created, bool again)noexcept override
 		{
 		bool created_internal=false;
-		_item_t* item=get_internal(key, std::forward<_item_t>(create), &created_internal, again);
+		_item_t* item=get_internal(key, create, &created_internal, again);
 		if(created_internal)
 			{
 			this->m_item_count++;
@@ -424,7 +424,7 @@ private:
 		}
 
 	// Modification
-	_item_t* get_internal(_key_t const& key, _item_t&& create, bool* created, bool again)noexcept
+	_item_t* get_internal(_key_t const& key, _item_t const& create, bool* created, bool again)noexcept
 		{
 		uint16_t pos=0;
 		uint16_t count=get_item_pos(key, &pos, false);
@@ -432,7 +432,7 @@ private:
 			{
 			for(uint16_t u=0; u<count; u++)
 				{
-				_item_t* item=this->m_children[pos+u]->get(key, std::forward<_item_t>(create), created, false);
+				_item_t* item=this->m_children[pos+u]->get(key, create, created, false);
 				if(item)
 					return item;
 				}
@@ -441,7 +441,7 @@ private:
 				count=get_item_pos(key, &pos, false);
 				for(uint16_t u=0; u<count; u++)
 					{
-					_item_t* item=this->m_children[pos+u]->get(key, std::forward<_item_t>(create), created, false);
+					_item_t* item=this->m_children[pos+u]->get(key, create, created, false);
 					if(item)
 						return item;
 					}
@@ -452,7 +452,7 @@ private:
 		count=get_item_pos(key, &pos, false);
 		for(uint16_t u=0; u<count; u++)
 			{
-			_item_t* item=this->m_children[pos+u]->get(key, std::forward<_item_t>(create), created, false);
+			_item_t* item=this->m_children[pos+u]->get(key, create, created, false);
 			if(item)
 				return item;
 			}
@@ -536,11 +536,10 @@ public:
 		this->copy_from(index);
 		return *this;
 		}
-	template <typename _item_param_t> bool add(_item_param_t&& item)noexcept
+	bool add(_item_t const& item)noexcept
 		{
-		_item_t create(std::forward<_item_param_t>(item));
 		bool created=false;
-		get_internal(std::forward<_item_t>(create), &created);
+		get_internal(item, &created);
 		return created;
 		}
 	bool remove(_item_t const& item, _item_t* item_ptr=nullptr)
@@ -550,14 +549,11 @@ public:
 			return false;
 		return root->remove(item, item_ptr);
 		}
-	template <typename _item_param_t> bool set(_item_param_t&& item)noexcept
+	bool set(_item_t const& item)noexcept
 		{
-		_item_t create(std::forward<_item_param_t>(item));
 		bool created=false;
-		get_internal(std::forward<_item_t>(create), &created);
-		if(!created)
-			return false;
-		return true;
+		get_internal(item, &created);
+		return created;
 		}
 
 protected:
@@ -566,14 +562,14 @@ protected:
 
 private:
 	// Common
-	_item_t* get_internal(_item_t&& create, bool* created)
+	_item_t* get_internal(_item_t const& item, bool* created)
 		{
 		auto root=this->create_root();
-		_item_t* got=root->get(create, std::forward<_item_t>(create), created, false);
+		_item_t* got=root->get(item, item, created, false);
 		if(got)
 			return got;
 		root=this->lift_root();
-		return root->get(create, std::forward<_item_t>(create), created, true);
+		return root->get(item, item, created, true);
 		}
 };
 
