@@ -62,13 +62,13 @@ class list_group: public cluster_group<list_traits<_item_t, _size_t, _group_size
 {
 public:
 	// Access
-	virtual _size_t get_many(_size_t position, _item_t* items, _size_t count)const noexcept=0;
+	virtual _size_t get_many(_size_t position, _item_t* items, _size_t count)const=0;
 
 	// Modification
-	virtual _item_t* append(_item_t const& item, bool again)noexcept=0;
-	virtual _size_t append(_item_t const* append, _size_t count)noexcept=0;
+	virtual _item_t* append(_item_t const& item, bool again)=0;
+	virtual _size_t append(_item_t const* append, _size_t count)=0;
 	virtual _item_t* insert_at(_size_t position, _item_t const& item, bool again)=0;
-	virtual _size_t set_many(_size_t position, _item_t const* many, _size_t count)noexcept=0;
+	virtual _size_t set_many(_size_t position, _item_t const* many, _size_t count)=0;
 };
 
 
@@ -90,7 +90,7 @@ public:
 	using _base_t::_base_t;
 
 	// Access
-	_size_t get_many(_size_t position, _item_t* many, _size_t count)const noexcept override
+	_size_t get_many(_size_t position, _item_t* many, _size_t count)const override
 		{
 		uint16_t item_count=this->get_child_count();
 		if(position>=item_count)
@@ -105,11 +105,11 @@ public:
 		}
 
 	// Modification
-	_item_t* append(_item_t const& item, bool again)noexcept override
+	_item_t* append(_item_t const& item, bool again)override
 		{
 		return this->insert_item(this->m_item_count, item);
 		}
-	_size_t append(_item_t const* append, _size_t count)noexcept override
+	_size_t append(_item_t const* append, _size_t count)override
 		{
 		uint16_t item_count=this->m_item_count;
 		if(item_count==_group_size)
@@ -126,7 +126,7 @@ public:
 		uint16_t pos=(uint16_t)position;
 		return this->insert_item(pos, item);
 		}
-	_size_t set_many(_size_t position, _item_t const* many, _size_t count)noexcept override
+	_size_t set_many(_size_t position, _item_t const* many, _size_t count)override
 		{
 		uint16_t item_count=this->get_child_count();
 		if(position>=item_count)
@@ -162,7 +162,7 @@ public:
 	using _base_t::_base_t;
 
 	// Access
-	_size_t get_many(_size_t position, _item_t* items, _size_t count)const noexcept override
+	_size_t get_many(_size_t position, _item_t* items, _size_t count)const override
 		{
 		uint16_t group=this->get_group(&position);
 		if(group>=_group_size)
@@ -183,7 +183,7 @@ public:
 		}
 
 	// Modification
-	_item_t* append(_item_t const& item, bool again)noexcept override
+	_item_t* append(_item_t const& item, bool again)override
 		{
 		if(!again)
 			{
@@ -220,7 +220,7 @@ public:
 		this->m_item_count++;
 		return appended;
 		}
-	_size_t append(_item_t const* append, _size_t count)noexcept override
+	_size_t append(_item_t const* append, _size_t count)override
 		{
 		_size_t pos=0;
 		uint16_t child_count=this->m_child_count;
@@ -331,7 +331,7 @@ public:
 		this->m_item_count++;
 		return inserted;
 		}
-	_size_t set_many(_size_t position, _item_t const* many, _size_t count)noexcept override
+	_size_t set_many(_size_t position, _item_t const* many, _size_t count)override
 		{
 		uint16_t group=this->get_group(&position);
 		if(group==_group_size)
@@ -353,7 +353,7 @@ public:
 
 private:
 	// Access
-	uint16_t get_insert_pos(_size_t* position, uint16_t* group)const noexcept
+	uint16_t get_insert_pos(_size_t* position, uint16_t* group)const
 		{
 		uint16_t child_count=this->m_child_count;
 		_size_t pos=*position;
@@ -374,7 +374,7 @@ private:
 		}
 
 	// Modification
-	void free_children()noexcept
+	void free_children()
 		{
 		for(uint16_t u=this->m_child_count; u>0; u--)
 			{
@@ -384,7 +384,7 @@ private:
 			this->remove_group(pos);
 			}
 		}
-	uint16_t minimize_internal()noexcept
+	uint16_t minimize_internal()
 		{
 		uint16_t child_count=this->m_child_count;
 		uint16_t dst=0;
@@ -431,7 +431,7 @@ public:
 
 	// Con-/Destructors
 	list(): _base_t(nullptr) {}
-	list(list&& list)noexcept: _base_t(list.m_root)
+	list(list&& list): _base_t(list.m_root)
 		{
 		list.m_root=nullptr;
 		}
@@ -447,14 +447,14 @@ public:
 		{
 		return index_of(item, nullptr);
 		}
-	_size_t get_many(_size_t position, _item_t* items, _size_t count)const noexcept
+	_size_t get_many(_size_t position, _item_t* items, _size_t count)const
 		{
 		auto root=this->m_root;
 		if(!root)
 			return 0;
 		return root->get_many(position, items, count);
 		}
-	bool index_of(_item_t const& item, _size_t* position)noexcept
+	bool index_of(_item_t const& item, _size_t* position)
 		{
 		_size_t pos=0;
 		for(auto it=this->cbegin(); it.has_current(); it.move_next())
@@ -471,30 +471,30 @@ public:
 		}
 
 	// Modification
-	list& operator=(list&& list)noexcept
+	list& operator=(list&& list)
 		{
 		this->clear();
 		this->m_root=list.m_root;
 		list.m_root=nullptr;
 		return *this;
 		}
-	inline list& operator=(list const& list)noexcept
+	inline list& operator=(list const& list)
 		{
 		this->copy_from(list);
 		return *this;
 		}
-	bool add(_item_t const& item)noexcept
+	bool add(_item_t const& item)
 		{
 		if(this->contains(item))
 			return false;
 		append(item);
 		return true;
 		}
-	inline _item_t& append()noexcept
+	inline _item_t& append()
 		{
 		return append(_item_t());
 		}
-	_item_t& append(_item_t const& item)noexcept
+	_item_t& append(_item_t const& item)
 		{
 		auto root=this->create_root();
 		_item_t* appended=root->append(item, false);
@@ -503,7 +503,7 @@ public:
 		root=this->lift_root();
 		return *root->append(item, true);
 		}
-	void append(_item_t const* items, _size_t count)noexcept
+	void append(_item_t const* items, _size_t count)
 		{
 		auto root=this->create_root();
 		_size_t pos=0;
@@ -537,7 +537,7 @@ public:
 		root=this->lift_root();
 		return *root->insert_at(position, item, true);
 		}
-	bool remove(_item_t const& item)noexcept
+	bool remove(_item_t const& item)
 		{
 		for(auto it=this->begin(); it.has_current(); it.move_next())
 			{
@@ -559,7 +559,7 @@ public:
 		*got=item;
 		return true;
 		}
-	_size_t set_many(_size_t position, _item_t const* items, _size_t count)noexcept
+	_size_t set_many(_size_t position, _item_t const* items, _size_t count)
 		{
 		_size_t item_count=0;
 		auto root=this->get_root();

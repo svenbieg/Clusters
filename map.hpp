@@ -61,12 +61,12 @@ class map_item
 {
 public:
 	// Con-/Destructors
-	map_item(map_item const& item)noexcept: m_key(item.m_key), m_value(item.m_value) {}
-	map_item(map_item&& item)noexcept: m_key(std::move(item.m_key)), m_value(std::move(item.m_value)) {}
-	map_item(_key_t const& key, _value_t const& value)noexcept: m_key(key), m_value(value) {}
+	map_item(map_item const& item): m_key(item.m_key), m_value(item.m_value) {}
+	map_item(map_item&& item): m_key(std::move(item.m_key)), m_value(std::move(item.m_value)) {}
+	map_item(_key_t const& key, _value_t const& value): m_key(key), m_value(value) {}
 
 	// Assignment
-	inline map_item& operator=(map_item const& item)noexcept
+	inline map_item& operator=(map_item const& item)
 		{
 		m_key=item.m_key;
 		m_value=item.m_value;
@@ -74,20 +74,20 @@ public:
 		}
 
 	// Comparison
-	inline bool operator==(_key_t const& key)const noexcept { return m_key==key; }
-	inline bool operator!=(_key_t const& key)const noexcept { return m_key!=key; }
-	inline bool operator>(_key_t const& key)const noexcept { return m_key>key; }
-	inline bool operator>=(_key_t const& key)const noexcept { return m_key>=key; }
-	inline bool operator<(_key_t const& key)const noexcept { return m_key<key; }
-	inline bool operator<=(_key_t const& key)const noexcept { return m_key<=key; }
+	inline bool operator==(_key_t const& key)const { return m_key==key; }
+	inline bool operator!=(_key_t const& key)const { return m_key!=key; }
+	inline bool operator>(_key_t const& key)const { return m_key>key; }
+	inline bool operator>=(_key_t const& key)const { return m_key>=key; }
+	inline bool operator<(_key_t const& key)const { return m_key<key; }
+	inline bool operator<=(_key_t const& key)const { return m_key<=key; }
 
 	// Access
-	inline _key_t const& get_key()const noexcept { return m_key; }
-	inline _value_t& get_value()noexcept { return m_value; }
-	inline _value_t const& get_value()const noexcept { return m_value; }
+	inline _key_t const& get_key()const { return m_key; }
+	inline _value_t& get_value() { return m_value; }
+	inline _value_t const& get_value()const { return m_value; }
 
 	// Modification
-	inline void set_value(_value_t const& value)noexcept { m_value=value; }
+	inline void set_value(_value_t const& value) { m_value=value; }
 
 private:
 	// Common
@@ -116,7 +116,7 @@ public:
 
 	// Con-/Destructors
 	map(): _base_t(nullptr) {}
-	map(map&& map)noexcept: _base_t(map.m_root)
+	map(map&& map): _base_t(map.m_root)
 		{
 		map.m_root=nullptr;
 		}
@@ -126,21 +126,21 @@ public:
 		}
 
 	// Access
-	template <class _key_param_t> inline _value_t& operator[](_key_param_t&& key)noexcept { return get(std::forward<_key_param_t>(key)); }
-	inline const_iterator cfind(_key_t const& key, find_func func=find_func::equal)const noexcept
+	template <class _key_param_t> inline _value_t& operator[](_key_param_t&& key) { return get(std::forward<_key_param_t>(key)); }
+	inline const_iterator cfind(_key_t const& key, find_func func=find_func::equal)const
 		{
 		const_iterator it(this);
 		it.find(key, func);
 		return it;
 		}
-	bool contains(_key_t const& key)const noexcept
+	bool contains(_key_t const& key)const
 		{
 		auto root=this->m_root;
 		if(!root)
 			return false;
 		return root->get(key)!=nullptr;
 		}
-	inline iterator find(_key_t const& key, find_func func=find_func::equal)noexcept
+	inline iterator find(_key_t const& key, find_func func=find_func::equal)
 		{
 		iterator it(this);
 		it.find(key, func);
@@ -170,7 +170,7 @@ public:
 			throw std::out_of_range(nullptr);
 		return item->get_value();
 		}
-	bool try_get(_key_t const& key, _value_t* value)const noexcept
+	bool try_get(_key_t const& key, _value_t* value)const
 		{
 		auto root=this->m_root;
 		if(!root)
@@ -183,33 +183,33 @@ public:
 		}
 
 	// Modification
-	map& operator=(map&& map)noexcept
+	map& operator=(map&& map)
 		{
 		this->clear();
 		this->m_root=map.m_root;
 		map.m_root=nullptr;
 		return *this;
 		}
-	inline map& operator=(map const& map)noexcept
+	inline map& operator=(map const& map)
 		{
 		this->copy_from(map);
 		return *this;
 		}
-	bool add(_key_t const& key, _value_t const& value)noexcept
+	bool add(_key_t const& key, _value_t const& value)
 		{
 		_item_t create(key, value);
 		bool created=false;
 		get_internal(create, &created);
 		return created;
 		}
-	bool remove(_key_t const& key, _item_t* item_ptr=nullptr)noexcept
+	bool remove(_key_t const& key, _item_t* item_ptr=nullptr)
 		{
 		auto root=this->m_root;
 		if(!root)
 			return false;
 		return root->remove(key, item_ptr);
 		}
-	bool set(_key_t const& key, _value_t const& value)noexcept
+	bool set(_key_t const& key, _value_t const& value)
 		{
 		_item_t create(key, value);
 		bool created=false;
@@ -225,7 +225,7 @@ protected:
 
 private:
 	// Common
-	_item_t* get_internal(_item_t const& create, bool* created)noexcept
+	_item_t* get_internal(_item_t const& create, bool* created)
 		{
 		auto root=this->create_root();
 		_item_t* got=root->get(create.get_key(), create, created, false);

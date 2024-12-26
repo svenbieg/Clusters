@@ -79,14 +79,14 @@ class index_group: public cluster_group<index_traits<_key_t, _item_t, _size_t, _
 {
 public:
 	// Access
-	virtual uint16_t find(_key_t const& key, bool* exists, find_func func)const noexcept=0;
-	virtual _item_t* get(_key_t const& key)noexcept=0;
-	virtual _item_t* get(_key_t const& key, _item_t const& create, bool* created, bool again)noexcept=0;
-	virtual _item_t* get_first()noexcept=0;
-	virtual _item_t* get_last()noexcept=0;
+	virtual uint16_t find(_key_t const& key, bool* exists, find_func func)const=0;
+	virtual _item_t* get(_key_t const& key)=0;
+	virtual _item_t* get(_key_t const& key, _item_t const& create, bool* created, bool again)=0;
+	virtual _item_t* get_first()=0;
+	virtual _item_t* get_last()=0;
 
 	// Modification
-	virtual bool remove(_key_t const& key, _item_t* item_ptr)noexcept=0;
+	virtual bool remove(_key_t const& key, _item_t* item_ptr)=0;
 };
 
 
@@ -108,7 +108,7 @@ public:
 	using _base_t::_base_t;
 
 	// Access
-	inline uint16_t find(_key_t const& key, bool* exists_ptr, find_func func)const noexcept override
+	inline uint16_t find(_key_t const& key, bool* exists_ptr, find_func func)const override
 		{
 		bool exists=false;
 		uint16_t pos=get_item_pos(key, &exists);
@@ -165,7 +165,7 @@ public:
 			}
 		return pos;
 		}
-	_item_t* get(_key_t const& key)noexcept override
+	_item_t* get(_key_t const& key)override
 		{
 		bool exists=false;
 		uint16_t pos=get_item_pos(key, &exists);
@@ -173,7 +173,7 @@ public:
 			return nullptr;
 		return this->get_at(pos);
 		}
-	_item_t* get(_key_t const& key, _item_t const& create, bool* created, bool again)noexcept override
+	_item_t* get(_key_t const& key, _item_t const& create, bool* created, bool again)override
 		{
 		bool exists=false;
 		uint16_t pos=get_item_pos(key, &exists);
@@ -187,11 +187,11 @@ public:
 			}
 		return nullptr;
 		}
-	inline _item_t* get_first()noexcept override { return this->get_first_item(); }
-	inline _item_t* get_last()noexcept override { return this->get_last_item(); }
+	inline _item_t* get_first()override { return this->get_first_item(); }
+	inline _item_t* get_last()override { return this->get_last_item(); }
 
 	// Modification
-	bool remove(_key_t const& key, _item_t* item_ptr)noexcept override
+	bool remove(_key_t const& key, _item_t* item_ptr)override
 		{
 		bool exists=false;
 		uint16_t pos=get_item_pos(key, &exists);
@@ -202,7 +202,7 @@ public:
 
 private:
 	// Access
-	uint16_t get_item_pos(_key_t const& key, bool* exists)const noexcept
+	uint16_t get_item_pos(_key_t const& key, bool* exists)const
 		{
 		uint16_t item_count=this->m_item_count;
 		if(item_count==0)
@@ -247,8 +247,8 @@ public:
 	using _parent_group_t=typename _traits_t::parent_group_t;
 
 	// Con-Destructors
-	index_parent_group(uint16_t level=0)noexcept: _base_t(level), m_first(nullptr), m_last(nullptr) {}
-	index_parent_group(_parent_group_t const& group)noexcept: _base_t(group)
+	index_parent_group(uint16_t level=0): _base_t(level), m_first(nullptr), m_last(nullptr) {}
+	index_parent_group(_parent_group_t const& group): _base_t(group)
 		{
 		uint16_t last=(uint16_t)(this->m_child_count-1);
 		m_first=this->m_children[0]->get_first();
@@ -256,7 +256,7 @@ public:
 		}
 
 	// Access
-	uint16_t find(_key_t const& key, bool* exists_ptr, find_func func)const noexcept override
+	uint16_t find(_key_t const& key, bool* exists_ptr, find_func func)const override
 		{
 		uint16_t pos=0;
 		uint16_t count=get_item_pos(key, &pos, false);
@@ -305,7 +305,7 @@ public:
 			}
 		return pos;
 		}
-	_item_t* get(_key_t const& key)noexcept override
+	_item_t* get(_key_t const& key)override
 		{
 		uint16_t pos=0;
 		uint16_t count=get_item_pos(key, &pos, true);
@@ -317,7 +317,7 @@ public:
 			}
 		return nullptr;
 		}
-	_item_t* get(_key_t const& key, _item_t const& create, bool* created, bool again)noexcept override
+	_item_t* get(_key_t const& key, _item_t const& create, bool* created, bool again)override
 		{
 		bool created_internal=false;
 		_item_t* item=get_internal(key, create, &created_internal, again);
@@ -330,17 +330,17 @@ public:
 			*created=created_internal;
 		return item;
 		}
-	inline _item_t* get_first()noexcept override { return m_first; }
-	inline _item_t* get_last()noexcept override { return m_last; }
+	inline _item_t* get_first()override { return m_first; }
+	inline _item_t* get_last()override { return m_last; }
 
 	// Modification
-	_size_t insert_groups(uint16_t position, _group_t* const* groups, uint16_t count)noexcept override
+	_size_t insert_groups(uint16_t position, _group_t* const* groups, uint16_t count)override
 		{
 		_size_t item_count=_base_t::insert_groups(position, groups, count);
 		update_bounds();
 		return item_count;
 		}
-	bool remove(_key_t const& key, _item_t* item_ptr)noexcept override
+	bool remove(_key_t const& key, _item_t* item_ptr)override
 		{
 		uint16_t pos=0;
 		uint16_t count=get_item_pos(key, &pos, true);
@@ -353,14 +353,14 @@ public:
 		update_bounds();
 		return true;
 		}
-	bool remove_at(_size_t position, _item_t* item_ptr)noexcept override
+	bool remove_at(_size_t position, _item_t* item_ptr)override
 		{
 		if(!_base_t::remove_at(position, item_ptr))
 			return false;
 		update_bounds();
 		return true;
 		}
-	void remove_groups(uint16_t position, uint16_t count, _size_t item_count)noexcept override
+	void remove_groups(uint16_t position, uint16_t count, _size_t item_count)override
 		{
 		_base_t::remove_groups(position, count, item_count);
 		update_bounds();
@@ -374,7 +374,7 @@ public:
 
 private:
 	// Access
-	uint16_t get_item_pos(_key_t const& key, uint16_t* group, bool must_exist)const noexcept
+	uint16_t get_item_pos(_key_t const& key, uint16_t* group, bool must_exist)const
 		{
 		uint16_t child_count=this->m_child_count;
 		uint16_t start=0;
@@ -424,7 +424,7 @@ private:
 		}
 
 	// Modification
-	_item_t* get_internal(_key_t const& key, _item_t const& create, bool* created, bool again)noexcept
+	_item_t* get_internal(_key_t const& key, _item_t const& create, bool* created, bool again)
 		{
 		uint16_t pos=0;
 		uint16_t count=get_item_pos(key, &pos, false);
@@ -458,7 +458,7 @@ private:
 			}
 		return nullptr;
 		}
-	void update_bounds()noexcept
+	void update_bounds()
 		{
 		if(this->m_child_count==0)
 			{
@@ -493,7 +493,7 @@ public:
 
 	// Con-/Destructors
 	index(): _base_t(nullptr) {}
-	index(index&& index)noexcept: _base_t(index.m_root)
+	index(index&& index): _base_t(index.m_root)
 		{
 		index.m_root=nullptr;
 		}
@@ -503,20 +503,20 @@ public:
 		}
 
 	// Access
-	inline const_iterator cfind(_item_t const& item, find_func func=find_func::equal)const noexcept
+	inline const_iterator cfind(_item_t const& item, find_func func=find_func::equal)const
 		{
 		const_iterator it(this);
 		it.find(item, func);
 		return it;
 		}
-	bool contains(_item_t const& item)const noexcept
+	bool contains(_item_t const& item)const
 		{
 		auto root=this->m_root;
 		if(!root)
 			return false;
 		return root->get(item)!=nullptr;
 		}
-	inline iterator find(_item_t const& item, find_func func=find_func::equal)noexcept
+	inline iterator find(_item_t const& item, find_func func=find_func::equal)
 		{
 		iterator it(this);
 		it.find(item, func);
@@ -524,19 +524,19 @@ public:
 		}
 
 	// Modification
-	index& operator=(index&& index)noexcept
+	index& operator=(index&& index)
 		{
 		this->clear();
 		this->m_root=index.m_root;
 		index.m_root=nullptr;
 		return *this;
 		}
-	inline index& operator=(index const& index)noexcept
+	inline index& operator=(index const& index)
 		{
 		this->copy_from(index);
 		return *this;
 		}
-	bool add(_item_t const& item)noexcept
+	bool add(_item_t const& item)
 		{
 		bool created=false;
 		get_internal(item, &created);
@@ -549,7 +549,7 @@ public:
 			return false;
 		return root->remove(item, item_ptr);
 		}
-	bool set(_item_t const& item)noexcept
+	bool set(_item_t const& item)
 		{
 		bool created=false;
 		get_internal(item, &created);
@@ -595,7 +595,7 @@ public:
 
 public:
 	// Navigation
-	bool find(_key_t const& key, find_func func=find_func::equal)noexcept
+	bool find(_key_t const& key, find_func func=find_func::equal)
 		{
 		auto group=this->m_cluster->get_root();
 		if(!group)
