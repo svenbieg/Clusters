@@ -6,7 +6,7 @@ It creates a pyramidal directory, moving entries and groups accordingly.<br />
 Items can be added, removed and looked-up in constant low time.
 </p><br />
 
-<img src="https://user-images.githubusercontent.com/12587394/47256750-2e75a180-d485-11e8-8fe4-ad181f695690.jpg" style="" />
+<img src="https://github.com/user-attachments/assets/25a5f9b2-fbf7-4be2-85fd-642b8ce59aaf" width="400" /><br />
 <br />
 
 <p>
@@ -19,25 +19,25 @@ This is the standard-implementation, there are two more implementations in <a hr
 
 <table>
 	<tr>
-		<td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<img src="https://user-images.githubusercontent.com/12587394/47256722-d3dc4580-d484-11e8-8393-b0e7c026be5e.png" /></td>
+		<td><img src="https://github.com/user-attachments/assets/4901aa2d-e7a3-4367-aab3-cd1a7827de4f" width="50" align="right" /></td>
 		<td>The entries are stored in groups.</td>
 	</tr><tr><td></td></tr><tr>
-		<td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<img src="https://user-images.githubusercontent.com/12587394/47256729-e48cbb80-d484-11e8-833e-846bb4a70b0c.png" /></td>
+		<td><img src="https://github.com/user-attachments/assets/ad42262d-21e7-4749-a099-f22a6c61671d" width="50" align="right" /></td>
 		<td>The size of the groups is limited and 10 by default.</td>
 	</tr><tr><td></td></tr><tr>
-		<td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<img src="https://user-images.githubusercontent.com/12587394/47256737-f4a49b00-d484-11e8-9171-a40ef63c3ff1.png" /></td>
+		<td><img src="https://github.com/user-attachments/assets/ac228371-af19-45e8-a9f6-7758389612c5" width="100" align="right" /></td>
 		<td>If the group is full a parent-group is created.</td>
 	</tr><tr><td></td></tr><tr>
-		<td>&nbsp;&nbsp;&nbsp;&nbsp;<img src="https://user-images.githubusercontent.com/12587394/47256739-ff5f3000-d484-11e8-9445-4443f52e228a.png" /></td>
+		<td><img src="https://github.com/user-attachments/assets/4ec67147-7d1c-40fd-9226-54c66f51f365" width="100" align="right" /></td>
 		<td>The first and the last entry can be moved to the neighbour-group.</td>
 	</tr><tr><td></td></tr><tr>
-		<td><img src="https://user-images.githubusercontent.com/12587394/47256742-09812e80-d485-11e8-8ca6-06a011e88120.png" /></td>
+		<td><img src="https://github.com/user-attachments/assets/f4f968e2-2065-4979-bd5e-40edd734ef5b" width="100" align="right" /></td>
 		<td>The entries are moved between the groups, so all groups get as full as possible.</td>
 	</tr><tr><td></td></tr><tr>
-		<td><img src="https://user-images.githubusercontent.com/12587394/47256745-1736b400-d485-11e8-9785-e0479250b51d.png" /></td>
+		<td><img src="https://github.com/user-attachments/assets/523f36fd-bdfe-4978-9fff-b5975829c00e" width="150" /></td>
 		<td>The number of groups is limited too, another parent-group is created.</td>
 	</tr><tr><td></td></tr><tr>
-		<td><img src="https://user-images.githubusercontent.com/12587394/47256748-21f14900-d485-11e8-9506-db75fa50c9bd.png" /></td>
+		<td><img src="https://github.com/user-attachments/assets/624247eb-18b7-4247-8c56-eaccc59c2340" width="150" /></td>
 		<td>If an entry needs to be inserted in a full group, a whole sub-tree can be moved.</td>
 	</tr>
 </table><br />
