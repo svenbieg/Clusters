@@ -5,7 +5,7 @@
 // Thread-safe implementation of a sorted map
 // Items can be inserted, removed and looked-up in constant low time
 
-// Copyright 2024, Sven Bieg (svenbieg@web.de)
+// Copyright 2025, Sven Bieg (svenbieg@web.de)
 // http://github.com/svenbieg/Clusters
 
 
@@ -37,14 +37,16 @@ class shared_map_iterator: public shared_cluster_iterator<_traits_t, _is_const>
 public:
 	// Using
 	using _base_t=shared_cluster_iterator<_traits_t, _is_const>;
-	using _key_t=typename _traits_t::key_t;
+	using _item_t=typename _traits_t::item_t;
 	using _iterator_t=typename _traits_t::iterator_t;
+	using _key_t=typename _traits_t::key_t;
+	using _value_t=typename _traits_t::value_t;
 
 	// Con-/Destructors
 	using _base_t::_base_t;
 
 	// Navigation
-	bool find(_key_t const& key, find_func func=find_func::equal)
+	template <class _key_param_t> bool find(_key_param_t const& key, find_func func=find_func::equal)
 		{
 		if(this->is_outside())
 			this->lock();
@@ -78,7 +80,7 @@ public:
 	shared_map() {}
 
 	// Access
-	inline _value_t operator[](_key_t const& key) { return get(key); }
+	template <class _key_param_t> inline _value_t operator[](_key_param_t const& key) { return get(key); }
 	inline const_iterator cfind(_key_t const& key, find_func func=find_func::equal)
 		{
 		const_iterator it(this);
@@ -96,19 +98,19 @@ public:
 		it.find(key, func);
 		return it;
 		}
-	_value_t get(_key_t const& key)
+	template <class _key_param_t> _value_t get(_key_param_t const& key)
 		{
 		std::shared_lock<std::shared_mutex> lock(this->m_mutex);
 		return _cluster_t::get(key);
 		}
-	bool try_get(_key_t const& key, _value_t* value)
+	template <class _key_param_t> bool try_get(_key_param_t const& key, _value_t* value)
 		{
 		std::shared_lock<std::shared_mutex> lock(this->m_mutex);
 		return _cluster_t::try_get(key, value);
 		}
 
 	// Modification
-	inline bool add(_key_t const& key, _value_t const& value)
+	template <class _key_param_t, class _value_param_t> inline bool add(_key_param_t const& key, _value_param_t const& value)
 		{
 		std::unique_lock<std::shared_mutex> lock(this->m_mutex);
 		return _cluster_t::add(key, value);
@@ -118,7 +120,7 @@ public:
 		std::unique_lock<std::shared_mutex> lock(this->m_mutex);
 		return _cluster_t::remove(key);
 		}
-	inline bool set(_key_t const& key, _value_t const& value)
+	template <class _key_param_t, class _value_param_t> inline bool set(_key_param_t const& key, _value_param_t const& value)
 		{
 		std::unique_lock<std::shared_mutex> lock(this->m_mutex);
 		return _cluster_t::set(key, value);

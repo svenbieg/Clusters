@@ -5,7 +5,7 @@
 // Thread-safe implementation of a sorted index
 // Items can be inserted, removed and looked-up in constant low time
 
-// Copyright 2024, Sven Bieg (svenbieg@web.de)
+// Copyright 2025, Sven Bieg (svenbieg@web.de)
 // http://github.com/svenbieg/Clusters
 
 
@@ -63,7 +63,7 @@ public:
 //==============
 
 template <typename _item_t, typename _size_t=uint32_t, uint16_t _group_size=10>
-class shared_index: public iterable_shared_cluster<index_traits<_item_t, _item_t, _size_t, _group_size>>
+class shared_index: public iterable_shared_cluster<index_traits<_item_t, _size_t, _group_size>>
 {
 public:
 	// Using
@@ -95,7 +95,7 @@ public:
 		}
 
 	// Modification
-	inline bool add(_item_t const& item)
+	template <class _item_param_t> inline bool add(_item_param_t const& item)
 		{
 		std::unique_lock<std::shared_mutex> lock(this->m_mutex);
 		return _cluster_t::add(item);
@@ -105,7 +105,7 @@ public:
 		std::unique_lock<std::shared_mutex> lock(this->m_mutex);
 		return _cluster_t::remove(item);
 		}
-	inline bool set(_item_t const& item)
+	template <class _item_param_t> inline bool set(_item_param_t const& item)
 		{
 		std::unique_lock<std::shared_mutex> lock(this->m_mutex);
 		return _cluster_t::set(item);

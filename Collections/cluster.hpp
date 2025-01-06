@@ -5,7 +5,7 @@
 // Implementation of a pyramidal directory
 // Shared classes for list and index
 
-// Copyright 2024, Sven Bieg (svenbieg@web.de)
+// Copyright 2025, Sven Bieg (svenbieg@web.de)
 // http://github.com/svenbieg/Clusters
 
 
@@ -16,6 +16,7 @@
 // Using
 //=======
 
+#include <assert.h>
 #include <new>
 #include <stdexcept>
 #include <stdint.h>
@@ -41,7 +42,7 @@ template <class _traits_t, bool _is_const> class cluster_iterator_base;
 // Group
 //=======
 
-template <typename _traits_t>
+template <class _traits_t>
 class cluster_group
 {
 public:
@@ -53,14 +54,14 @@ public:
 	virtual ~cluster_group() {}
 
 	// Access
-	virtual _item_t* get_at(_size_t position)=0;
-	virtual _item_t const* get_at(_size_t position)const=0;
+	virtual _item_t& get_at(_size_t position)=0;
+	virtual _item_t const& get_at(_size_t position)const=0;
 	virtual uint16_t get_child_count()const=0;
 	virtual _size_t get_item_count()const=0;
 	virtual uint16_t get_level()const=0;
 
 	// Modification
-	virtual bool remove_at(_size_t position, _item_t* item_ptr)=0;
+	virtual void remove_at(_size_t position, _item_t* item_ptr)=0;
 };
 
 
@@ -68,7 +69,7 @@ public:
 // Item-Group
 //============
 
-template <typename _traits_t>
+template <class _traits_t>
 class cluster_item_group: public _traits_t::group_t
 {
 public:
@@ -80,7 +81,7 @@ public:
 	static constexpr uint16_t _group_size=_traits_t::group_size;
 
 	// Con-/Destructors
-	cluster_item_group(): m_item_count(0) {}
+	cluster_item_group(): m_item_count(0), m_items() {}
 	cluster_item_group(cluster_item_group const& group): m_item_count(group.m_item_count)
 		{
 		_item_t* items=get_items();
@@ -96,63 +97,75 @@ public:
 		}
 
 	// Access
-	inline _item_t* get_at(_size_t position)override
+	inline _item_t& get_at(_size_t position)override
 		{
 		if(position>=m_item_count)
-			return nullptr;
-		return &get_items()[position];
+			throw std::out_of_range(nullptr);
+		return get_items()[position];
 		}
-	inline _item_t const* get_at(_size_t position)const override
+	inline _item_t const& get_at(_size_t position)const override
 		{
 		if(position>=m_item_count)
-			return nullptr;
-		return &get_items()[position];
+			throw std::out_of_range(nullptr);
+		return get_items()[position];
 		}
 	inline uint16_t get_child_count()const override { return m_item_count; }
-	inline _item_t* get_first_item() { return &get_items()[0]; }
+	inline _item_t const& get_first_item()const
+		{
+		assert(m_item_count>0);
+		return get_items()[0];
+		}
 	inline _size_t get_item_count()const override { return m_item_count; }
 	inline _item_t* get_items() { return (_item_t*)m_items; }
 	inline _item_t const* get_items()const { return (_item_t const*)m_items; }
-	inline _item_t* get_last_item() { return &get_items()[m_item_count-1]; }
+	inline _item_t const& get_last_item()const
+		{
+		assert(m_item_count>0);
+		return get_items()[m_item_count-1];
+		}
 	inline uint16_t get_level()const override { return 0; }
 
 	// Modification
-	_item_t* insert_item(_size_t position, _item_t const& insert)
+	_item_t* insert_item(uint16_t position, _item_t const& insert)
 		{
-		if(position>m_item_count)
-			throw std::out_of_range(nullptr);
+		assert(position<=m_item_count);
 		if(m_item_count+1>_group_size)
 			return nullptr;
 		_item_t* items=get_items();
-		uint16_t u=m_item_count;
-		for(; u>=position+1; u--)
+		for(uint16_t u=m_item_count; u>=position+1; u--)
 			new (&items[u]) _item_t(std::move(items[u-1]));
 		new (&items[position]) _item_t(insert);
 		m_item_count++;
 		return &items[position];
 		}
+	_item_t* insert_item(uint16_t position, _item_t&& insert)
+		{
+		assert(position<=m_item_count);
+		if(m_item_count+1>_group_size)
+			return nullptr;
+		_item_t* items=get_items();
+		for(uint16_t u=m_item_count; u>=position+1; u--)
+			new (&items[u]) _item_t(std::move(items[u-1]));
+		new (&items[position]) _item_t(std::move(insert));
+		m_item_count++;
+		return &items[position];
+		}
 	uint16_t insert_items(uint16_t position, _item_t* insert, uint16_t count)
 		{
-		if(position>m_item_count)
-			throw std::out_of_range(nullptr);
-		if(m_item_count==_group_size)
-			return 0;
-		uint16_t copy=count;
-		if(copy>_group_size-m_item_count)
-			copy=_group_size-m_item_count;
+		assert(position<=m_item_count);
+		assert(m_item_count+count<=_group_size);
 		_item_t* items=get_items();
-		uint16_t u=(uint16_t)(m_item_count+copy-1);
-		for(; u>=position+copy; u--)
-			new (&items[u]) _item_t(std::move(items[u-copy]));
-		for(u=0; u<copy; u++)
+		uint16_t u=(uint16_t)(m_item_count+count-1);
+		for(; u>=position+count; u--)
+			new (&items[u]) _item_t(std::move(items[u-count]));
+		for(u=0; u<count; u++)
 			new (&items[position+u]) _item_t(std::move(insert[u]));
-		m_item_count+=copy;
-		return copy;
+		m_item_count+=count;
+		return count;
 		}
 	uint16_t insert_items(uint16_t position, _item_t const* insert, uint16_t count)
 		{
-		if(position>m_item_count)
-			throw std::out_of_range(nullptr);
+		assert(position<=m_item_count);
 		if(m_item_count==_group_size)
 			return 0;
 		uint16_t copy=count;
@@ -167,10 +180,10 @@ public:
 		m_item_count+=copy;
 		return copy;
 		}
-	bool remove_at(_size_t position, _item_t* item_ptr)override
+	void remove_at(_size_t position, _item_t* item_ptr)override
 		{
 		if(position>=m_item_count)
-			return false;
+			throw std::out_of_range(nullptr);
 		_item_t* items=get_items();
 		if(item_ptr)
 			{
@@ -184,7 +197,6 @@ public:
 		for(uint16_t u=(uint16_t)position; u+1<m_item_count; u++)
 			new (&items[u]) _item_t(std::move(items[u+1]));
 		m_item_count--;
-		return true;
 		}
 	void remove_items(uint16_t position, uint16_t count)
 		{
@@ -205,7 +217,7 @@ protected:
 
 private:
 	// Uninitialized array of items
-	alignas(alignof(_item_t[_group_size])) unsigned char m_items[sizeof(_item_t[_group_size])*2];
+	alignas(alignof(_item_t[_group_size])) char m_items[sizeof(_item_t[_group_size])];
 };
 
 
@@ -213,7 +225,7 @@ private:
 // Parent-Group
 //==============
 
-template <typename _traits_t>
+template <class _traits_t>
 class cluster_parent_group: public _traits_t::group_t
 {
 public:
@@ -226,11 +238,11 @@ public:
 	static constexpr uint16_t _group_size=_traits_t::group_size;
 
 	// Con-/Destructors
-	cluster_parent_group(uint16_t level=0):
-		m_child_count(0), m_item_count(0), m_level(level)
+	cluster_parent_group(uint16_t level=1):
+		m_child_count(0), m_children(), m_item_count(0), m_level(level)
 		{}
 	cluster_parent_group(_parent_group_t const& group):
-		m_child_count(group.m_child_count), m_item_count(group.m_item_count), m_level(group.m_level)
+		m_child_count(group.m_child_count), m_children(), m_item_count(group.m_item_count), m_level(group.m_level)
 		{
 		if(m_level>1)
 			{
@@ -250,22 +262,25 @@ public:
 		}
 
 	// Access
-	_item_t* get_at(_size_t position)override
+	_item_t& get_at(_size_t position)override
 		{
+		if(position>=m_item_count)
+			throw std::out_of_range(nullptr);
 		uint16_t group=get_group(&position);
-		if(group==_group_size)
-			return nullptr;
+		assert(group<m_child_count);
 		return m_children[group]->get_at(position);
 		}
-	_item_t const* get_at(_size_t position)const override
+	_item_t const& get_at(_size_t position)const override
 		{
+		if(position>=m_item_count)
+			throw std::out_of_range(nullptr);
 		uint16_t group=get_group(&position);
-		if(group==_group_size)
-			return nullptr;
+		assert(group<m_child_count);
 		return m_children[group]->get_at(position);
 		}
 	inline _group_t* get_child(uint16_t position)const
 		{
+		assert(position<m_child_count);
 		return m_children[position];
 		}
 	inline uint16_t get_child_count()const override { return m_child_count; }
@@ -287,6 +302,8 @@ public:
 	// Modification
 	virtual _size_t insert_groups(uint16_t position, _group_t* const* groups, uint16_t count)
 		{
+		assert(position<=m_child_count);
+		assert(m_child_count+count<=_group_size);
 		for(uint16_t u=(uint16_t)(m_child_count+count-1); u>=position+count; u--)
 			m_children[u]=m_children[u-count];
 		_size_t item_count=0;
@@ -301,6 +318,10 @@ public:
 		}
 	void move_children(uint16_t source, uint16_t destination, uint16_t count)
 		{
+		assert(source<=m_child_count);
+		assert(destination<=m_child_count);
+		assert(source!=destination);
+		assert(count>0);
 		if(m_level>1)
 			{
 			auto src=(_parent_group_t*)m_children[source];
@@ -340,7 +361,7 @@ public:
 				}
 			}
 		}
-	inline void move_emtpy_slot(uint16_t source, uint16_t destination)
+	void move_emtpy_slot(uint16_t source, uint16_t destination)
 		{
 		if(source<destination)
 			{
@@ -353,25 +374,28 @@ public:
 				move_children((uint16_t)(u-1), u, 1);
 			}
 		}
-	virtual bool remove_at(_size_t position, _item_t* item_ptr)override
+	virtual void remove_at(_size_t position, _item_t* item_ptr)override
 		{
 		if(position>=m_item_count)
-			return false;
+			throw std::out_of_range(nullptr);
 		uint16_t group=get_group(&position);
+		assert(group<m_child_count);
 		m_children[group]->remove_at(position, item_ptr);
 		m_item_count--;
 		combine_children(group);
-		return true;
 		}
 	virtual void remove_groups(uint16_t position, uint16_t count, _size_t item_count)
 		{
+		assert(position+count<=m_child_count);
+		assert(count>0);
 		for(uint16_t u=position; u+count<m_child_count; u++)
 			m_children[u]=m_children[u+count];
-		m_child_count=(uint16_t)(m_child_count-count);
+		m_child_count-=count;
 		m_item_count-=item_count;
 		}
 	virtual void set_child(_group_t* child)
 		{
+		assert(m_child_count==0);
 		m_children[0]=child;
 		m_child_count=1;
 		m_item_count=child->get_item_count();
@@ -434,19 +458,19 @@ protected:
 			}
 		return false;
 		}
-	inline void remove_group(uint16_t position)
+	void remove_group(uint16_t position)
 		{
 		delete m_children[position];
 		for(uint16_t u=position; u+1<m_child_count; u++)
 			m_children[u]=m_children[u+1];
 		m_child_count--;
 		}
-	bool shift_children(uint16_t group, uint16_t count)
+	bool shift_children(uint16_t group, uint16_t ins_count)
 		{
 		uint16_t empty=get_nearest_space(group);
 		if(empty>=m_child_count)
 			return false;
-		if(count>1&&empty>group)
+		if(ins_count>1&&empty>group)
 			group++;
 		move_emtpy_slot(empty, group);
 		return true;
@@ -457,7 +481,6 @@ protected:
 			return false;
 		for(uint16_t u=m_child_count; u>position+1; u--)
 			m_children[u]=m_children[u-1];
-		m_child_count++;
 		if(m_level>1)
 			{
 			m_children[position+1]=new _parent_group_t((uint16_t)(m_level-1));
@@ -466,6 +489,7 @@ protected:
 			{
 			m_children[position+1]=new _item_group_t();
 			}
+		m_child_count++;
 		move_children(position, (uint16_t)(position+1), 1);
 		return true;
 		}
@@ -482,7 +506,7 @@ protected:
 // Cluster
 //=========
 
-template <typename _traits_t>
+template <class _traits_t>
 class cluster
 {
 public:
@@ -514,23 +538,17 @@ public:
 	inline const_iterator crend()const { return const_iterator(this, -1); }
 	inline iterator end() { return iterator(this, -2); }
 	inline const_iterator end()const { return const_iterator(this, -2); }
-	_item_t get_at(_size_t position)const
-		{
-		if(!m_root)
-			return _item_t();
-		_item_t* item=m_root->get_at(position);
-		if(!item)
-			return _item_t();
-		return *item;
-		}
 	_item_t& get_at(_size_t position)
 		{
 		if(!m_root)
 			throw std::out_of_range(nullptr);
-		_item_t* item=m_root->get_at(position);
-		if(!item)
+		return m_root->get_at(position);
+		}
+	_item_t const& get_at(_size_t position)const
+		{
+		if(!m_root)
 			throw std::out_of_range(nullptr);
-		return *item;
+		return m_root->get_at(position);
 		}
 	_size_t get_count()const
 		{
@@ -538,6 +556,7 @@ public:
 			return 0;
 		return m_root->get_item_count();
 		}
+	inline _group_t* get_root()const { return m_root; }
 	inline iterator rend() { return iterator(this, -1); }
 
 	// Modification
@@ -551,12 +570,6 @@ public:
 			}
 		return false;
 		}
-	void copy_from(_cluster_t&& cluster)
-		{
-		clear();
-		m_root=cluster.m_root;
-		cluster.m_root=nullptr;
-		}
 	void copy_from(_cluster_t const& cluster)
 		{
 		clear();
@@ -566,23 +579,21 @@ public:
 		auto level=root->get_level();
 		if(level>0)
 			{
-			auto parent_group=(_parent_group_t*)root;
+			auto parent_group=(_parent_group_t const*)root;
 			m_root=new _parent_group_t(*parent_group);
 			}
 		else
 			{
-			auto item_group=(_item_group_t*)root;
+			auto item_group=(_item_group_t const*)root;
 			m_root=new _item_group_t(*item_group);
 			}
 		}
-	bool remove_at(_size_t position, _item_t* item_ptr=nullptr)
+	void remove_at(_size_t position, _item_t* item_ptr=nullptr)
 		{
 		if(!m_root)
-			return false;
-		if(!m_root->remove_at(position, item_ptr))
-			return false;
+			throw std::out_of_range(nullptr);
+		m_root->remove_at(position, item_ptr);
 		drop_root();
-		return true;
 		}
 
 protected:
@@ -620,7 +631,6 @@ protected:
 		root->set_child_count(0);
 		delete root;
 		}
-	inline _group_t* get_root()const { return m_root; }
 	_group_t* lift_root()
 		{
 		auto root=new _parent_group_t();
@@ -636,7 +646,7 @@ protected:
 // Iterator
 //==========
 
-template <typename _traits_t, bool _is_const>
+template <class _traits_t, bool _is_const>
 class cluster_iterator_base
 {
 public:
@@ -669,7 +679,10 @@ public:
 	~cluster_iterator_base()
 		{
 		if(m_its)
+			{
 			operator delete(m_its);
+			m_its=nullptr;
+			}
 		}
 
 	// Access
@@ -711,24 +724,24 @@ public:
 		if(m_position==-1)
 			return begin();
 		auto it_ptr=&m_its[m_level_count-1];
-		_item_group_t* item_group=(_item_group_t*)it_ptr->group;
+		auto item_group=(_item_group_t*)it_ptr->group;
 		uint16_t count=item_group->get_child_count();
 		if(it_ptr->position+1<count)
 			{
 			it_ptr->position++;
-			m_current=item_group->get_at(it_ptr->position);
+			m_current=&item_group->get_at(it_ptr->position);
 			m_position++;
 			return true;
 			}
 		for(uint16_t u=(uint16_t)(m_level_count-1); u>0; u--)
 			{
 			it_ptr--;
-			_parent_group_t* parent_group=(_parent_group_t*)it_ptr->group;
+			auto parent_group=(_parent_group_t*)it_ptr->group;
 			count=parent_group->get_child_count();
 			if(it_ptr->position+1>=count)
 				continue;
 			it_ptr->position++;
-			_group_t* group=it_ptr->group;
+			auto group=it_ptr->group;
 			for(; u<m_level_count; u++)
 				{
 				parent_group=(_parent_group_t*)group;
@@ -738,7 +751,7 @@ public:
 				it_ptr->position=0;
 				}
 			item_group=(_item_group_t*)group;
-			m_current=item_group->get_at(0);
+			m_current=&item_group->get_at(0);
 			m_position++;
 			return true;
 			}
@@ -752,22 +765,22 @@ public:
 		if(m_position==-2)
 			return rbegin();
 		auto it_ptr=&m_its[m_level_count-1];
-		_item_group_t* item_group=(_item_group_t*)it_ptr->group;
+		auto item_group=(_item_group_t*)it_ptr->group;
 		if(it_ptr->position>0)
 			{
 			it_ptr->position--;
-			m_current=item_group->get_at(it_ptr->position);
+			m_current=&item_group->get_at(it_ptr->position);
 			m_position--;
 			return true;
 			}
 		for(uint16_t u=(uint16_t)(m_level_count-1); u>0; u--)
 			{
 			it_ptr--;
-			_parent_group_t* parent_group=(_parent_group_t*)it_ptr->group;
+			auto parent_group=(_parent_group_t*)it_ptr->group;
 			if(it_ptr->position==0)
 				continue;
 			it_ptr->position--;
-			_group_t* group=it_ptr->group;
+			auto group=it_ptr->group;
 			for(; u<m_level_count; u++)
 				{
 				parent_group=(_parent_group_t*)group;
@@ -777,7 +790,7 @@ public:
 				it_ptr->position=(uint16_t)(group->get_child_count()-1);
 				}
 			item_group=(_item_group_t*)group;
-			m_current=item_group->get_at(it_ptr->position);
+			m_current=&item_group->get_at(it_ptr->position);
 			m_position--;
 			return true;
 			}
@@ -822,7 +835,7 @@ public:
 		it_ptr->position=group_pos;
 		for(uint16_t u=0; u<m_level_count-1; u++)
 			{
-			_parent_group_t* parent_group=(_parent_group_t*)it_ptr->group;
+			auto parent_group=(_parent_group_t*)it_ptr->group;
 			group=parent_group->get_child(group_pos);
 			group_pos=get_position_internal(group, &offset);
 			if(group_pos==_group_size)
@@ -834,8 +847,8 @@ public:
 			it_ptr->group=group;
 			it_ptr->position=group_pos;
 			}
-		_item_group_t* item_group=(_item_group_t*)group;
-		m_current=item_group->get_at(group_pos);
+		auto item_group=(_item_group_t*)group;
+		m_current=&item_group->get_at(group_pos);
 		m_position=position;
 		return true;
 		}
