@@ -502,10 +502,12 @@ public:
 	index(): _base_t(nullptr) {}
 	index(index const& index): _base_t(nullptr)
 		{
-		copy_from(index);
+		this->copy_from(index);
 		}
 
 	// Access
+	inline _item_t& operator[](_size_t Position) { return _base_t::get_at(Position); }
+	inline _item_t const& operator[](_size_t Position)const { return _base_t::get_at(Position); }
 	inline const_iterator cfind(_item_t const& item, find_func func=find_func::equal)const
 		{
 		const_iterator it(this);

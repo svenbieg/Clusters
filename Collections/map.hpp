@@ -63,6 +63,7 @@ class map_item
 {
 public:
 	// Con-/Destructors
+	map_item() {}
 	map_item(map_item const& item): m_key(item.m_key), m_value(item.m_value) {}
 	map_item(map_item&& item)noexcept: m_key(std::move(item.m_key)), m_value(std::move(item.m_value)) {}
 	map_item(_key_t const& key, _value_t const& value): m_key(key), m_value(value) {}
@@ -125,7 +126,7 @@ public:
 	map(): _base_t(nullptr) {}
 	map(map const& map): _base_t(nullptr)
 		{
-		copy_from(map);
+		this->copy_from(map);
 		}
 
 	// Access
@@ -250,9 +251,14 @@ public:
 	using _item_t=typename _traits_t::item_t;
 	using _key_t=typename _traits_t::key_t;
 	using _value_t=typename _traits_t::value_t;
+	using _value_ref=typename std::conditional<_is_const, _value_t const&, _value_t&>::type;
 
 	// Con-/Destructors
 	using _base_t::_base_t;
+
+	// Access
+	inline _key_t const& get_key() { return _base_t::get_current().get_key(); }
+	inline _value_ref get_value() { return _base_t::get_current().get_value(); }
 
 	// Navigation
 	template <class _key_param_t> inline bool find(_key_param_t const& key, find_func func=find_func::equal)

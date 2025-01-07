@@ -241,7 +241,7 @@ public:
 	cluster_parent_group(uint16_t level=1):
 		m_child_count(0), m_children(), m_item_count(0), m_level(level)
 		{}
-	cluster_parent_group(_parent_group_t const& group):
+	cluster_parent_group(cluster_parent_group const& group):
 		m_child_count(group.m_child_count), m_children(), m_item_count(group.m_item_count), m_level(group.m_level)
 		{
 		if(m_level>1)

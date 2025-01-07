@@ -437,10 +437,6 @@ public:
 
 	// Con-/Destructors
 	list(): _base_t(nullptr) {}
-	list(list&& list): _base_t(list.m_root)
-		{
-		list.m_root=nullptr;
-		}
 	list(list const& list): _base_t(nullptr)
 		{
 		this->copy_from(list);
