@@ -138,7 +138,7 @@ public:
 		it.find(key, func);
 		return it;
 		}
-	bool contains(_key_t const& key)const
+	inline bool contains(_key_t const& key)const
 		{
 		_item_t item(key, _value_t());
 		return get_internal(item)!=nullptr;
@@ -209,7 +209,11 @@ public:
 		bool created=false;
 		auto got=get_internal(std::forward<_item_t>(item), &created);
 		if(!created)
+			{
+			if(got->get_value()==item.get_value())
+				return false;
 			got->set_value(std::forward<_value_t>(item.get_value()));
+			}
 		return true;
 		}
 

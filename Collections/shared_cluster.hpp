@@ -148,9 +148,9 @@ public:
 		}
 
 	// Access
-	_item_ref operator*()const { return _base_t::operator*(); }
-	_item_ptr operator->()const { return _base_t::operator->(); }
-	_item_ref get_current()const { return _base_t::get_current(); }
+	inline _item_ref operator*()const { return _base_t::operator*(); }
+	inline _item_ptr operator->()const { return _base_t::operator->(); }
+	inline _item_ref get_current()const { return _base_t::get_current(); }
 	inline bool has_current()const { return _base_t::has_current(); }
 
 	// Comparison

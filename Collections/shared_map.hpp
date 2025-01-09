@@ -98,12 +98,12 @@ public:
 		it.find(key, func);
 		return it;
 		}
-	template <class _key_param_t> _value_t get(_key_param_t const& key)
+	template <class _key_param_t> inline _value_t get(_key_param_t const& key)
 		{
 		std::shared_lock<std::shared_mutex> lock(this->m_mutex);
 		return _cluster_t::get(key);
 		}
-	template <class _key_param_t> bool try_get(_key_param_t const& key, _value_t* value)
+	template <class _key_param_t> inline bool try_get(_key_param_t const& key, _value_t* value)
 		{
 		std::shared_lock<std::shared_mutex> lock(this->m_mutex);
 		return _cluster_t::try_get(key, value);

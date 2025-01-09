@@ -97,13 +97,13 @@ public:
 		}
 
 	// Access
-	inline _item_t& get_at(_size_t position)override
+	_item_t& get_at(_size_t position)override
 		{
 		if(position>=m_item_count)
 			throw std::out_of_range(nullptr);
 		return get_items()[position];
 		}
-	inline _item_t const& get_at(_size_t position)const override
+	_item_t const& get_at(_size_t position)const override
 		{
 		if(position>=m_item_count)
 			throw std::out_of_range(nullptr);
@@ -688,7 +688,7 @@ public:
 	// Access
 	inline _item_ref operator*()const { return get_current(); }
 	inline _item_ptr operator->()const { return m_current; }
-	inline _item_ref get_current()const
+	_item_ref get_current()const
 		{
 		if(!m_current)
 			throw std::out_of_range(nullptr);
@@ -886,11 +886,11 @@ protected:
 		return _group_size;
 		}
 	inline bool is_outside()const { return is_outside(m_position); }
-	inline bool is_outside(_size_t position)const
+	bool is_outside(_size_t position)const
 		{
 		return (position==-2||position==-1);
 		}
-	inline void reset(_size_t position)
+	void reset(_size_t position)
 		{
 		set_level_count(0);
 		m_current=nullptr;

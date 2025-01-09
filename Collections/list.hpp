@@ -106,7 +106,7 @@ public:
 		}
 
 	// Modification
-	_item_t* append(_item_t const& item, bool again)override
+	inline _item_t* append(_item_t const& item, bool again)override
 		{
 		return this->insert_item(this->m_item_count, item);
 		}
