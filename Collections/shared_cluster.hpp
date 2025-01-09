@@ -273,15 +273,15 @@ public:
 	using _base_t=shared_cluster_iterator_base<_traits_t, true>;
 	using _size_t=typename _traits_t::size_t;
 
+	// Con-/Destructors
+	using _base_t::_base_t;
+
 	// Navigation
 	inline bool cbegin() { return _base_t::set_position(0); }
 	inline bool cbegin(_size_t position) { return _base_t::set_position(position); }
 	inline bool cend() { return _base_t::set_position(-2); }
 	inline bool crbegin() { return _base_t::rbegin(); }
 	inline bool crend() { return _base_t::set_position(-1); }
-
-	// Con-/Destructors
-	using _base_t::_base_t;
 };
 
 

@@ -203,7 +203,6 @@ private:
 	Handle<_index_t> m_Index;
 };
 
-
 template <typename _id_t, typename _size_t, WORD _group_size>
 class ConstIndexIterator: public Object
 {
