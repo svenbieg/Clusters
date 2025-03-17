@@ -5,7 +5,7 @@
 // Thread-safe implementation of a sorted map
 // Items can be inserted, removed and looked-up in constant low time
 
-// Copyright Sven Bieg 2025, all rights granted
+// Copyright 2025, Sven Bieg (svenbieg@outlook.de)
 // http://github.com/svenbieg/Clusters
 
 
@@ -57,6 +57,8 @@ public:
 			}
 		return true;
 		}
+	_value_t const& get_value()const { return _base_t::get_current().get_value(); }
+	_key_t const& get_key()const { return _base_t::get_current().get_key(); }
 };
 
 

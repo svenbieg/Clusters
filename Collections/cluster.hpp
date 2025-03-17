@@ -5,7 +5,7 @@
 // Implementation of a pyramidal directory
 // Shared classes for list and index
 
-// Copyright Sven Bieg 2025, all rights granted
+// Copyright 2025, Sven Bieg (svenbieg@outlook.de)
 // http://github.com/svenbieg/Clusters
 
 
