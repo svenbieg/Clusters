@@ -255,14 +255,39 @@ public:
 	using _item_t=typename _traits_t::item_t;
 	using _key_t=typename _traits_t::key_t;
 	using _value_t=typename _traits_t::value_t;
-	using _value_ref=typename std::conditional<_is_const, _value_t const&, _value_t&>::type;
 
 	// Con-/Destructors
 	using _base_t::_base_t;
 
 	// Access
-	inline _key_t const& get_key() { return _base_t::get_current().get_key(); }
-	inline _value_ref get_value() { return _base_t::get_current().get_value(); }
+	inline _key_t const& get_key()const { return _base_t::get_current().get_key(); }
+	inline _value_t& get_value() { return _base_t::get_current().get_value(); }
+	inline _value_t const& get_value()const { return _base_t::get_current().get_value(); }
+
+	// Navigation
+	template <class _key_param_t> inline bool find(_key_param_t const& key, find_func func=find_func::equal)
+		{
+		_item_t item(key, _value_t());
+		return _base_t::find(item, func);
+		}
+};
+
+template <class _traits_t>
+class map_iterator<_traits_t, true>: public index_iterator<_traits_t, true>
+{
+public:
+	// Using
+	using _base_t=index_iterator<_traits_t, true>;
+	using _item_t=typename _traits_t::item_t;
+	using _key_t=typename _traits_t::key_t;
+	using _value_t=typename _traits_t::value_t;
+
+	// Con-/Destructors
+	using _base_t::_base_t;
+
+	// Access
+	inline _key_t const& get_key()const { return _base_t::get_current().get_key(); }
+	inline _value_t const& get_value()const { return _base_t::get_current().get_value(); }
 
 	// Navigation
 	template <class _key_param_t> inline bool find(_key_param_t const& key, find_func func=find_func::equal)
