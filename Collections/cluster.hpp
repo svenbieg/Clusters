@@ -573,7 +573,7 @@ public:
 	void copy_from(_cluster_t const& cluster)
 		{
 		clear();
-		auto root=cluster.m_root;
+		auto root=cluster.get_root();
 		if(!root)
 			return;
 		auto level=root->get_level();
