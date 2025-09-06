@@ -195,13 +195,18 @@ public:
 		get_internal(std::forward<_item_t>(item), &created);
 		return created;
 		}
-	bool remove(_key_t const& key, _item_t* item_ptr=nullptr)
+	bool remove(_key_t const& key, _value_t* value_ptr=nullptr)
 		{
 		auto root=this->m_root;
 		if(!root)
 			return false;
 		_item_t item(key, _value_t());
-		return root->remove(item, item_ptr);
+		_item_t removed;
+		if(!root->remove(item, &removed))
+			return false;
+		if(value_ptr)
+			*value_ptr=removed.get_value();
+		return true;
 		}
 	template <class _key_param_t, class _value_param_t> bool set(_key_param_t const& key, _value_param_t const& value)
 		{
