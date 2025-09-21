@@ -664,15 +664,15 @@ public:
 
 	// Con-/Destructors
 	cluster_iterator_base(cluster_iterator_base const& it):
-		m_cluster(it.m_cluster), m_current(nullptr), m_level_count(0), m_position(-2), m_its(nullptr)
+		m_cluster(it.m_cluster), m_current(nullptr), m_its(nullptr), m_level_count(0), m_position(-2)
 		{
 		set_position(it.m_position);
 		}
 	cluster_iterator_base(_cluster_ptr cluster):
-		m_cluster(cluster), m_current(nullptr), m_level_count(0), m_position(-2), m_its(nullptr)
+		m_cluster(cluster), m_current(nullptr), m_its(nullptr), m_level_count(0), m_position(-2)
 		{}
 	cluster_iterator_base(_cluster_ptr cluster, _size_t position):
-		m_cluster(cluster), m_current(nullptr), m_level_count(0), m_position(-2), m_its(nullptr)
+		m_cluster(cluster), m_current(nullptr), m_its(nullptr), m_level_count(0), m_position(-2)
 		{
 		set_position(position);
 		}
