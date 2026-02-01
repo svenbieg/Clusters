@@ -8,7 +8,6 @@
 // Copyright 2025, Sven Bieg (svenbieg@outlook.de)
 // http://github.com/svenbieg/Clusters
 
-
 #pragma once
 
 
@@ -78,7 +77,7 @@ public:
 	using _group_t=typename _traits_t::group_t;
 	using _item_group_t=typename _traits_t::item_group_t;
 	using _size_t=typename _traits_t::size_t;
-	static constexpr uint16_t _group_size=_traits_t::group_size;
+	static const uint16_t _group_size=_traits_t::group_size;
 
 	// Con-/Destructors
 	cluster_item_group(): m_item_count(0), m_items() {}
@@ -235,7 +234,7 @@ public:
 	using _item_group_t=typename _traits_t::item_group_t;
 	using _parent_group_t=typename _traits_t::parent_group_t;
 	using _size_t=typename _traits_t::size_t;
-	static constexpr uint16_t _group_size=_traits_t::group_size;
+	static const uint16_t _group_size=_traits_t::group_size;
 
 	// Con-/Destructors
 	cluster_parent_group(uint16_t level=1):
@@ -660,7 +659,7 @@ public:
 	using _item_group_t=typename _traits_t::item_group_t;
 	using _parent_group_t=typename _traits_t::parent_group_t;
 	using _size_t=typename _traits_t::size_t;
-	static constexpr uint16_t _group_size=_traits_t::group_size;
+	static const uint16_t _group_size=_traits_t::group_size;
 
 	// Con-/Destructors
 	cluster_iterator_base(cluster_iterator_base const& it):

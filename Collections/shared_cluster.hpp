@@ -8,7 +8,6 @@
 // Copyright 2025, Sven Bieg (svenbieg@outlook.de)
 // http://github.com/svenbieg/Clusters
 
-
 #pragma once
 
 
@@ -18,7 +17,7 @@
 
 #include <mutex>
 #include <shared_mutex>
-#include "cluster.hpp"
+#include "Collections/cluster.hpp"
 
 
 //===========

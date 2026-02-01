@@ -8,7 +8,6 @@
 // Copyright 2025, Sven Bieg (svenbieg@outlook.de)
 // http://github.com/svenbieg/Clusters
 
-
 #pragma once
 
 
@@ -16,7 +15,7 @@
 // Using
 //=======
 
-#include "cluster.hpp"
+#include "Collections/cluster.hpp"
 
 
 //===========
@@ -49,7 +48,7 @@ using const_iterator_t=cluster_iterator<list_traits, true>;
 using shared_iterator_t=shared_cluster_iterator<list_traits, false>;
 using shared_const_iterator_t=shared_cluster_iterator<list_traits, true>;
 using size_t=_size_t;
-static constexpr uint16_t group_size=_group_size;
+static const uint16_t group_size=_group_size;
 };
 
 

@@ -8,7 +8,6 @@
 // Copyright 2025, Sven Bieg (svenbieg@outlook.de)
 // http://github.com/svenbieg/Clusters
 
-
 #pragma once
 
 
@@ -16,7 +15,7 @@
 // Using
 //=======
 
-#include "index.hpp"
+#include "Collections/index.hpp"
 
 
 //===========
@@ -50,7 +49,7 @@ using shared_iterator_t=shared_map_iterator<map_traits, false>;
 using shared_const_iterator_t=shared_map_iterator<map_traits, true>;
 using size_t=_size_t;
 using value_t=_value_t;
-static constexpr uint16_t group_size=_group_size;
+static const uint16_t group_size=_group_size;
 };
 
 

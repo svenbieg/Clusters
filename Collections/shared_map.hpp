@@ -8,7 +8,6 @@
 // Copyright 2025, Sven Bieg (svenbieg@outlook.de)
 // http://github.com/svenbieg/Clusters
 
-
 #pragma once
 
 
@@ -16,8 +15,8 @@
 // Using
 //=======
 
-#include "map.hpp"
-#include "shared_cluster.hpp"
+#include "Collections/map.hpp"
+#include "Collections/shared_cluster.hpp"
 
 
 //===========
