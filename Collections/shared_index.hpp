@@ -72,7 +72,7 @@ public:
 	using const_iterator=shared_index_iterator<_traits_t, true>;
 
 	// Con-/Destructors
-	shared_index() {}
+	shared_index()noexcept {}
 
 	// Access
 	inline const_iterator cfind(_item_t const& item, find_func func=find_func::equal)

@@ -5,8 +5,8 @@
 // Implementation of a pyramidal directory
 // Shared classes for list and index
 
-// Copyright 2025, Sven Bieg (svenbieg@outlook.de)
-// http://github.com/svenbieg/Clusters
+// Copyright 2026, Sven Bieg (svenbieg@outlook.de)
+// https://github.com/svenbieg/Clusters
 
 #pragma once
 
@@ -50,14 +50,14 @@ public:
 	using _size_t=typename _traits_t::size_t;
 
 	// Con-Destructors
-	virtual ~cluster_group() {}
+	virtual ~cluster_group()noexcept {}
 
 	// Access
 	virtual _item_t& get_at(_size_t position)=0;
 	virtual _item_t const& get_at(_size_t position)const=0;
-	virtual uint16_t get_child_count()const=0;
-	virtual _size_t get_item_count()const=0;
-	virtual uint16_t get_level()const=0;
+	virtual uint16_t get_child_count()const noexcept=0;
+	virtual _size_t get_item_count()const noexcept=0;
+	virtual uint16_t get_level()const noexcept=0;
 
 	// Modification
 	virtual void remove_at(_size_t position, _item_t* item_ptr)=0;
@@ -80,7 +80,7 @@ public:
 	static const uint16_t _group_size=_traits_t::group_size;
 
 	// Con-/Destructors
-	cluster_item_group(): m_item_count(0), m_items() {}
+	cluster_item_group()noexcept: m_item_count(0), m_items() {}
 	cluster_item_group(cluster_item_group const& group): m_item_count(group.m_item_count)
 		{
 		_item_t* items=get_items();
@@ -88,7 +88,7 @@ public:
 		for(uint16_t u=0; u<m_item_count; u++)
 			new (&items[u]) _item_t(copy[u]);
 		}
-	~cluster_item_group()
+	~cluster_item_group()noexcept
 		{
 		auto items=get_items();
 		for(uint16_t u=0; u<m_item_count; u++)
@@ -108,21 +108,21 @@ public:
 			throw std::out_of_range(nullptr);
 		return get_items()[position];
 		}
-	inline uint16_t get_child_count()const override { return m_item_count; }
-	inline _item_t const& get_first_item()const
+	inline uint16_t get_child_count()const noexcept override { return m_item_count; }
+	inline _item_t const& get_first_item()const noexcept
 		{
 		assert(m_item_count>0);
 		return get_items()[0];
 		}
-	inline _size_t get_item_count()const override { return m_item_count; }
-	inline _item_t* get_items() { return (_item_t*)m_items; }
-	inline _item_t const* get_items()const { return (_item_t const*)m_items; }
-	inline _item_t const& get_last_item()const
+	inline _size_t get_item_count()const noexcept override { return m_item_count; }
+	inline _item_t* get_items()noexcept { return (_item_t*)m_items; }
+	inline _item_t const* get_items()const noexcept { return (_item_t const*)m_items; }
+	inline _item_t const& get_last_item()const noexcept
 		{
 		assert(m_item_count>0);
 		return get_items()[m_item_count-1];
 		}
-	inline uint16_t get_level()const override { return 0; }
+	inline uint16_t get_level()const noexcept override { return 0; }
 
 	// Modification
 	_item_t* insert_item(uint16_t position, _item_t const& insert)
@@ -137,7 +137,7 @@ public:
 		m_item_count++;
 		return &items[position];
 		}
-	_item_t* insert_item(uint16_t position, _item_t&& insert)
+	_item_t* insert_item(uint16_t position, _item_t&& insert)noexcept
 		{
 		assert(position<=m_item_count);
 		if(m_item_count+1>_group_size)
@@ -149,7 +149,7 @@ public:
 		m_item_count++;
 		return &items[position];
 		}
-	uint16_t insert_items(uint16_t position, _item_t* insert, uint16_t count)
+	uint16_t insert_items(uint16_t position, _item_t* insert, uint16_t count)noexcept
 		{
 		assert(position<=m_item_count);
 		assert(m_item_count+count<=_group_size);
@@ -197,7 +197,7 @@ public:
 			new (&items[u]) _item_t(std::move(items[u+1]));
 		m_item_count--;
 		}
-	void remove_items(uint16_t position, uint16_t count)
+	void remove_items(uint16_t position, uint16_t count)noexcept
 		{
 		_item_t* items=get_items();
 		for(uint16_t u=0; u<count; u++)
@@ -237,7 +237,7 @@ public:
 	static const uint16_t _group_size=_traits_t::group_size;
 
 	// Con-/Destructors
-	cluster_parent_group(uint16_t level=1):
+	cluster_parent_group(uint16_t level=1)noexcept:
 		m_child_count(0), m_children(), m_item_count(0), m_level(level)
 		{}
 	cluster_parent_group(cluster_parent_group const& group):
@@ -254,7 +254,7 @@ public:
 				m_children[u]=new _item_group_t((_item_group_t const&)*group.m_children[u]);
 			}
 		}
-	~cluster_parent_group()override
+	~cluster_parent_group()noexcept override
 		{
 		for(uint16_t u=0; u<m_child_count; u++)
 			delete m_children[u];
@@ -277,14 +277,14 @@ public:
 		assert(group<m_child_count);
 		return m_children[group]->get_at(position);
 		}
-	inline _group_t* get_child(uint16_t position)const
+	inline _group_t* get_child(uint16_t position)const noexcept
 		{
 		assert(position<m_child_count);
 		return m_children[position];
 		}
-	inline uint16_t get_child_count()const override { return m_child_count; }
-	inline _group_t* const* get_children()const { return m_children; }
-	uint16_t get_group(_size_t* position)const
+	inline uint16_t get_child_count()const noexcept override { return m_child_count; }
+	inline _group_t* const* get_children()const noexcept { return m_children; }
+	uint16_t get_group(_size_t* position)const noexcept
 		{
 		for(uint16_t u=0; u<m_child_count; u++)
 			{
@@ -295,11 +295,11 @@ public:
 			}
 		return _group_size;
 		}
-	inline _size_t get_item_count()const override { return m_item_count; }
-	inline uint16_t get_level()const override { return m_level; }
+	inline _size_t get_item_count()const noexcept override { return m_item_count; }
+	inline uint16_t get_level()const noexcept override { return m_level; }
 
 	// Modification
-	virtual _size_t insert_groups(uint16_t position, _group_t* const* groups, uint16_t count)
+	virtual _size_t insert_groups(uint16_t position, _group_t* const* groups, uint16_t count)noexcept
 		{
 		assert(position<=m_child_count);
 		assert(m_child_count+count<=_group_size);
@@ -315,7 +315,7 @@ public:
 		m_item_count+=item_count;
 		return item_count;
 		}
-	void move_children(uint16_t source, uint16_t destination, uint16_t count)
+	void move_children(uint16_t source, uint16_t destination, uint16_t count)noexcept
 		{
 		assert(source<=m_child_count);
 		assert(destination<=m_child_count);
@@ -360,7 +360,7 @@ public:
 				}
 			}
 		}
-	void move_emtpy_slot(uint16_t source, uint16_t destination)
+	void move_emtpy_slot(uint16_t source, uint16_t destination)noexcept
 		{
 		if(source<destination)
 			{
@@ -383,7 +383,7 @@ public:
 		m_item_count--;
 		combine_children(group);
 		}
-	virtual void remove_groups(uint16_t position, uint16_t count, _size_t item_count)
+	virtual void remove_groups(uint16_t position, uint16_t count, _size_t item_count)noexcept
 		{
 		assert(position+count<=m_child_count);
 		assert(count>0);
@@ -392,7 +392,7 @@ public:
 		m_child_count-=count;
 		m_item_count-=item_count;
 		}
-	virtual void set_child(_group_t* child)
+	virtual void set_child(_group_t* child)noexcept
 		{
 		assert(m_child_count==0);
 		m_children[0]=child;
@@ -400,11 +400,11 @@ public:
 		m_item_count=child->get_item_count();
 		m_level=child->get_level()+1;
 		}
-	inline void set_child_count(uint16_t count) { m_child_count=count; }
+	inline void set_child_count(uint16_t count)noexcept { m_child_count=count; }
 
 protected:
 	// Access
-	uint16_t get_nearest_space(uint16_t position)const
+	uint16_t get_nearest_space(uint16_t position)const noexcept
 		{
 		int16_t before=(int16_t)(position-1);
 		uint16_t after=(uint16_t)(position+1);
@@ -427,7 +427,7 @@ protected:
 		}
 
 	// Modification
-	bool combine_children(uint16_t position)
+	bool combine_children(uint16_t position)noexcept
 		{
 		uint16_t count=m_children[position]->get_child_count();
 		if(count==0)
@@ -457,14 +457,14 @@ protected:
 			}
 		return false;
 		}
-	void remove_group(uint16_t position)
+	void remove_group(uint16_t position)noexcept
 		{
 		delete m_children[position];
 		for(uint16_t u=position; u+1<m_child_count; u++)
 			m_children[u]=m_children[u+1];
 		m_child_count--;
 		}
-	bool shift_children(uint16_t group, uint16_t ins_count)
+	bool shift_children(uint16_t group, uint16_t ins_count)noexcept
 		{
 		uint16_t empty=get_nearest_space(group);
 		if(empty>=m_child_count)
@@ -526,7 +526,7 @@ public:
 	friend cluster_iterator_base<_traits_t, true>;
 
 	// Access
-	inline operator bool()const { return m_root!=nullptr; }
+	inline operator bool()const noexcept { return m_root!=nullptr; }
 	inline iterator begin() { return iterator(this, 0); }
 	inline iterator begin(_size_t position) { return iterator(this, position); }
 	inline const_iterator begin()const { return const_iterator(this, 0); }
@@ -549,17 +549,17 @@ public:
 			throw std::out_of_range(nullptr);
 		return m_root->get_at(position);
 		}
-	_size_t get_count()const
+	_size_t get_count()const noexcept
 		{
 		if(!m_root)
 			return 0;
 		return m_root->get_item_count();
 		}
-	inline _group_t* get_root()const { return m_root; }
+	inline _group_t* get_root()const noexcept { return m_root; }
 	inline iterator rend() { return iterator(this, -1); }
 
 	// Modification
-	bool clear()
+	bool clear()noexcept
 		{
 		if(m_root)
 			{
@@ -597,8 +597,8 @@ public:
 
 protected:
 	// Con-/Destructors
-	cluster(_group_t* root): m_root(root) {}
-	~cluster()
+	cluster(_group_t* root)noexcept: m_root(root) {}
+	~cluster()noexcept
 		{
 		if(m_root)
 			{
@@ -615,7 +615,7 @@ protected:
 		m_root=new _item_group_t();
 		return m_root;
 		}
-	void drop_root()
+	void drop_root()noexcept
 		{
 		if(m_root->get_level()==0)
 			{
@@ -667,7 +667,7 @@ public:
 		{
 		set_position(it.m_position);
 		}
-	cluster_iterator_base(_cluster_ptr cluster):
+	cluster_iterator_base(_cluster_ptr cluster)noexcept:
 		m_cluster(cluster), m_current(nullptr), m_its(nullptr), m_level_count(0), m_position(-2)
 		{}
 	cluster_iterator_base(_cluster_ptr cluster, _size_t position):
@@ -675,7 +675,7 @@ public:
 		{
 		set_position(position);
 		}
-	~cluster_iterator_base()
+	~cluster_iterator_base()noexcept
 		{
 		if(m_its)
 			{
@@ -686,21 +686,21 @@ public:
 
 	// Access
 	inline _item_ref operator*()const { return get_current(); }
-	inline _item_ptr operator->()const { return m_current; }
+	inline _item_ptr operator->()const { return &get_current(); }
 	_item_ref get_current()const
 		{
 		if(!m_current)
 			throw std::out_of_range(nullptr);
 		return *m_current;
 		}
-	inline bool has_current()const { return m_current!=nullptr; }
+	inline bool has_current()const noexcept { return m_current!=nullptr; }
 
 	// Comparison
-	inline bool operator==(cluster_iterator_base const& it)const
+	inline bool operator==(cluster_iterator_base const& it)const noexcept
 		{
 		return (m_cluster==it.m_cluster)&&(m_position==it.m_position);
 		}
-	inline bool operator!=(cluster_iterator_base const& it)const { return !operator==(it); }
+	inline bool operator!=(cluster_iterator_base const& it)const noexcept { return !operator==(it); }
 
 	// Navigation
 	inline cluster_iterator_base& operator++()
@@ -715,7 +715,7 @@ public:
 		}
 	inline bool begin() { return set_position(0); }
 	inline void end() { reset(-2); }
-	inline _size_t get_position()const { return m_position; }
+	inline _size_t get_position()const noexcept { return m_position; }
 	virtual bool move_next()
 		{
 		if(m_position==-2)
@@ -861,7 +861,7 @@ protected:
 		};
 
 	// Common
-	uint16_t get_position_internal(_group_t* group, _size_t* position)const
+	uint16_t get_position_internal(_group_t* group, _size_t* position)const noexcept
 		{
 		uint16_t child_count=group->get_child_count();
 		uint16_t level=group->get_level();
@@ -884,8 +884,8 @@ protected:
 			}
 		return _group_size;
 		}
-	inline bool is_outside()const { return is_outside(m_position); }
-	bool is_outside(_size_t position)const
+	inline bool is_outside()const noexcept { return is_outside(m_position); }
+	bool is_outside(_size_t position)const noexcept
 		{
 		return (position==-2||position==-1);
 		}

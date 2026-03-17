@@ -5,7 +5,7 @@
 // Thread-safe implementation of a pyramidal directory
 // Shared classes for shared_list and shared_index
 
-// Copyright 2025, Sven Bieg (svenbieg@outlook.de)
+// Copyright 2026, Sven Bieg (svenbieg@outlook.de)
 // http://github.com/svenbieg/Clusters
 
 #pragma once
@@ -53,7 +53,7 @@ public:
 	using _size_t=typename _traits_t::size_t;
 
 	// Con-/Destructors
-	virtual ~shared_cluster() {}
+	virtual ~shared_cluster()noexcept {}
 
 	// Access
 	inline _item_t get_at(_size_t position)
@@ -135,12 +135,12 @@ public:
 	using _size_t=typename _traits_t::size_t;
 
 	// Con-/Destructors
-	shared_cluster_iterator_base(_shared_cluster_t* cluster): _base_t((_cluster_ptr)cluster) {}
+	shared_cluster_iterator_base(_shared_cluster_t* cluster)noexcept: _base_t((_cluster_ptr)cluster) {}
 	shared_cluster_iterator_base(_shared_cluster_t* cluster, _size_t position): _base_t((_cluster_ptr)cluster)
 		{
 		set_position(position);
 		}
-	~shared_cluster_iterator_base()
+	~shared_cluster_iterator_base()noexcept
 		{
 		if(!this->is_outside())
 			unlock();
@@ -150,16 +150,16 @@ public:
 	inline _item_ref operator*()const { return _base_t::operator*(); }
 	inline _item_ptr operator->()const { return _base_t::operator->(); }
 	inline _item_ref get_current()const { return _base_t::get_current(); }
-	inline bool has_current()const { return _base_t::has_current(); }
+	inline bool has_current()const noexcept { return _base_t::has_current(); }
 
 	// Comparison
-	inline bool operator==(shared_cluster_iterator_base const& it) { return _base_t::operator==(it); }
-	inline bool operator!=(shared_cluster_iterator_base const& it) { return !operator==(it); }
+	inline bool operator==(shared_cluster_iterator_base const& it)noexcept { return _base_t::operator==(it); }
+	inline bool operator!=(shared_cluster_iterator_base const& it)noexcept { return !operator==(it); }
 
 	// Navigation
 	inline shared_cluster_iterator_base& operator++() { move_next(); return *this; }
 	inline shared_cluster_iterator_base& operator--() { move_previous(); return *this; }
-	inline _size_t get_position()const { return _base_t::get_position(); }
+	inline _size_t get_position()const noexcept { return _base_t::get_position(); }
 	bool move_next()override
 		{
 		if(this->is_outside())
@@ -233,7 +233,7 @@ protected:
 		this->unlock();
 		return false;
 		}
-	void unlock()
+	void unlock()noexcept
 		{
 		auto cluster=(_shared_cluster_t*)this->m_cluster;
 		_is_const? cluster->m_mutex.unlock_shared(): cluster->m_mutex.unlock();

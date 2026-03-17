@@ -5,8 +5,8 @@
 // Implementation of a sorted list
 // Items can be inserted, removed and looked-up in constant low time
 
-// Copyright 2025, Sven Bieg (svenbieg@outlook.de)
-// http://github.com/svenbieg/Clusters
+// Copyright 2026, Sven Bieg (svenbieg@outlook.de)
+// https://github.com/svenbieg/Clusters/wiki/Index
 
 #pragma once
 
@@ -77,14 +77,14 @@ class index_group: public cluster_group<index_traits<_item_t, _size_t, _group_si
 {
 public:
 	// Access
-	virtual uint16_t find(_item_t const& item, bool* exists, find_func func)const=0;
-	virtual _item_t const* get(_item_t const& item)const=0;
+	virtual uint16_t find(_item_t const& item, bool* exists, find_func func)const noexcept=0;
+	virtual _item_t const* get(_item_t const& item)const noexcept=0;
 	virtual _item_t* get(_item_t&& item, bool* created, bool again)=0;
-	virtual _item_t const& get_first()const=0;
-	virtual _item_t const& get_last()const=0;
+	virtual _item_t const& get_first()const noexcept=0;
+	virtual _item_t const& get_last()const noexcept=0;
 
 	// Modification
-	virtual bool remove(_item_t const& item, _item_t* item_ptr)=0;
+	virtual bool remove(_item_t const& item, _item_t* item_ptr)noexcept=0;
 };
 
 
@@ -106,7 +106,7 @@ public:
 	using _base_t::_base_t;
 
 	// Access
-	uint16_t find(_item_t const& item, bool* exists_ptr, find_func func)const override
+	uint16_t find(_item_t const& item, bool* exists_ptr, find_func func)const noexcept override
 		{
 		bool exists=false;
 		uint16_t pos=get_item_pos(item, &exists);
@@ -163,7 +163,7 @@ public:
 			}
 		return pos;
 		}
-	_item_t const* get(_item_t const& item)const override
+	_item_t const* get(_item_t const& item)const noexcept override
 		{
 		bool exists=false;
 		uint16_t pos=get_item_pos(item, &exists);
@@ -185,11 +185,11 @@ public:
 			}
 		return nullptr;
 		}
-	inline _item_t const& get_first()const override { return this->get_first_item(); }
-	inline _item_t const& get_last()const override { return this->get_last_item(); }
+	inline _item_t const& get_first()const noexcept override { return this->get_first_item(); }
+	inline _item_t const& get_last()const noexcept override { return this->get_last_item(); }
 
 	// Modification
-	bool remove(_item_t const& item, _item_t* item_ptr)override
+	bool remove(_item_t const& item, _item_t* item_ptr)noexcept override
 		{
 		bool exists=false;
 		uint16_t pos=get_item_pos(item, &exists);
@@ -201,7 +201,7 @@ public:
 
 private:
 	// Access
-	uint16_t get_item_pos(_item_t const& item, bool* exists)const
+	uint16_t get_item_pos(_item_t const& item, bool* exists)const noexcept
 		{
 		uint16_t item_count=this->m_item_count;
 		if(item_count==0)
@@ -246,8 +246,8 @@ public:
 	using _parent_group_t=typename _traits_t::parent_group_t;
 
 	// Con-Destructors
-	index_parent_group(uint16_t level=1): _base_t(level), m_first(nullptr), m_last(nullptr) {}
-	index_parent_group(_parent_group_t const& group): _base_t(group)
+	index_parent_group(uint16_t level=1)noexcept: _base_t(level), m_first(nullptr), m_last(nullptr) {}
+	index_parent_group(_parent_group_t const& group)noexcept: _base_t(group)
 		{
 		assert(this->m_child_count>0);
 		uint16_t last=(uint16_t)(this->m_child_count-1);
@@ -256,7 +256,7 @@ public:
 		}
 
 	// Access
-	uint16_t find(_item_t const& item, bool* exists_ptr, find_func func)const override
+	uint16_t find(_item_t const& item, bool* exists_ptr, find_func func)const noexcept override
 		{
 		uint16_t pos=0;
 		uint16_t count=get_item_pos(item, &pos, false);
@@ -305,7 +305,7 @@ public:
 			}
 		return pos;
 		}
-	_item_t const* get(_item_t const& item)const override
+	_item_t const* get(_item_t const& item)const noexcept override
 		{
 		uint16_t pos=0;
 		uint16_t count=get_item_pos(item, &pos, true);
@@ -330,25 +330,25 @@ public:
 			*created_ptr=created;
 		return got;
 		}
-	inline _item_t const& get_first()const override
+	inline _item_t const& get_first()const noexcept override
 		{
 		assert(m_first);
 		return *m_first;
 		}
-	inline _item_t const& get_last()const override
+	inline _item_t const& get_last()const noexcept override
 		{
 		assert(m_last);
 		return *m_last;
 		}
 
 	// Modification
-	_size_t insert_groups(uint16_t position, _group_t* const* groups, uint16_t count)override
+	_size_t insert_groups(uint16_t position, _group_t* const* groups, uint16_t count)noexcept override
 		{
 		_size_t item_count=_base_t::insert_groups(position, groups, count);
 		update_bounds();
 		return item_count;
 		}
-	bool remove(_item_t const& item, _item_t* item_ptr)override
+	bool remove(_item_t const& item, _item_t* item_ptr)noexcept override
 		{
 		uint16_t pos=0;
 		uint16_t count=get_item_pos(item, &pos, true);
@@ -366,12 +366,12 @@ public:
 		_base_t::remove_at(position, item_ptr);
 		update_bounds();
 		}
-	void remove_groups(uint16_t position, uint16_t count, _size_t item_count)override
+	void remove_groups(uint16_t position, uint16_t count, _size_t item_count)noexcept override
 		{
 		_base_t::remove_groups(position, count, item_count);
 		update_bounds();
 		}
-	void set_child(_group_t* child)override
+	void set_child(_group_t* child)noexcept override
 		{
 		_base_t::set_child(child);
 		m_first=&this->m_children[0]->get_first();
@@ -380,7 +380,7 @@ public:
 
 private:
 	// Access
-	uint16_t get_item_pos(_item_t const& item, uint16_t* group, bool must_exist)const
+	uint16_t get_item_pos(_item_t const& item, uint16_t* group, bool must_exist)const noexcept
 		{
 		uint16_t child_count=this->m_child_count;
 		uint16_t start=0;
@@ -464,7 +464,7 @@ private:
 			}
 		return nullptr;
 		}
-	void update_bounds()
+	void update_bounds()noexcept
 		{
 		if(this->m_child_count==0)
 			{
@@ -498,7 +498,7 @@ public:
 	using const_iterator=typename _traits_t::const_iterator_t;
 
 	// Con-/Destructors
-	index(): _base_t(nullptr) {}
+	index()noexcept: _base_t(nullptr) {}
 	index(index const& index): _base_t(nullptr)
 		{
 		this->copy_from(index);
@@ -513,7 +513,7 @@ public:
 		it.find(item, func);
 		return it;
 		}
-	bool contains(_item_t const& item)const
+	bool contains(_item_t const& item)const noexcept
 		{
 		auto root=this->m_root;
 		if(!root)
@@ -540,7 +540,7 @@ public:
 		get_internal(std::forward<_item_t>(create), &created);
 		return created;
 		}
-	bool remove(_item_t const& item, _item_t* item_ptr=nullptr)
+	bool remove(_item_t const& item, _item_t* item_ptr=nullptr)noexcept
 		{
 		auto root=this->m_root;
 		if(!root)

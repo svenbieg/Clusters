@@ -5,8 +5,8 @@
 // Implementation of a sorted map
 // Items can be inserted, removed and looked-up in constant low time
 
-// Copyright 2025, Sven Bieg (svenbieg@outlook.de)
-// http://github.com/svenbieg/Clusters
+// Copyright 2026, Sven Bieg (svenbieg@outlook.de)
+// https://github.com/svenbieg/Clusters/wiki/Map
 
 #pragma once
 
@@ -76,21 +76,21 @@ public:
 		}
 
 	// Comparison
-	inline bool operator==(map_item const& item)const { return m_key==item.m_key; }
-	inline bool operator!=(map_item const& item)const { return m_key!=item.m_key; }
-	inline bool operator>(map_item const& item)const { return m_key>item.m_key; }
-	inline bool operator>=(map_item const& item)const { return m_key>=item.m_key; }
-	inline bool operator<(map_item const& item)const { return m_key<item.m_key; }
-	inline bool operator<=(map_item const& item)const { return m_key<=item.m_key; }
+	inline bool operator==(map_item const& item)const noexcept { return m_key==item.m_key; }
+	inline bool operator!=(map_item const& item)const noexcept { return m_key!=item.m_key; }
+	inline bool operator>(map_item const& item)const noexcept { return m_key>item.m_key; }
+	inline bool operator>=(map_item const& item)const noexcept { return m_key>=item.m_key; }
+	inline bool operator<(map_item const& item)const noexcept { return m_key<item.m_key; }
+	inline bool operator<=(map_item const& item)const noexcept { return m_key<=item.m_key; }
 
 	// Access
-	inline _key_t const& get_key()const { return m_key; }
-	inline _value_t& get_value() { return m_value; }
-	inline _value_t const& get_value()const { return m_value; }
+	inline _key_t const& get_key()const noexcept { return m_key; }
+	inline _value_t& get_value()noexcept { return m_value; }
+	inline _value_t const& get_value()const noexcept { return m_value; }
 
 	// Modification
 	inline void set_value(_value_t const& value) { m_value=value; }
-	inline void set_value(_value_t&& value)
+	inline void set_value(_value_t&& value)noexcept
 		{
 		m_value.~_value_t();
 		new (&m_value) _value_t(std::move(value));
@@ -122,7 +122,7 @@ public:
 	using const_iterator=typename _traits_t::const_iterator_t;
 
 	// Con-/Destructors
-	map(): _base_t(nullptr) {}
+	map()noexcept: _base_t(nullptr) {}
 	map(map const& map): _base_t(nullptr)
 		{
 		this->copy_from(map);
@@ -223,11 +223,11 @@ public:
 
 protected:
 	// Con-/Destructors
-	map(_group_t* root): _base_t(root) {}
+	map(_group_t* root)noexcept: _base_t(root) {}
 
 private:
 	// Common
-	_item_t const* get_internal(_item_t const& item)const
+	_item_t const* get_internal(_item_t const& item)const noexcept
 		{
 		auto root=this->m_root;
 		if(!root)

@@ -5,8 +5,8 @@
 // Thread-safe implementation of an ordered list
 // Items can be inserted and removed in constant low time
 
-// Copyright 2025, Sven Bieg (svenbieg@outlook.de)
-// http://github.com/svenbieg/Clusters
+// Copyright 2026, Sven Bieg (svenbieg@outlook.de)
+// https://github.com/svenbieg/Clusters/wiki/List
 
 #pragma once
 
@@ -39,7 +39,7 @@ public:
 	using _cluster_t=typename _traits_t::cluster_t;
 
 	// Con-/Destructors
-	shared_list() {}
+	shared_list()noexcept {}
 
 	// Access
 	inline bool contains(_item_t const& item)

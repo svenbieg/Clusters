@@ -5,8 +5,8 @@
 // Implementation of an ordered list
 // Items can be inserted and removed in constant low time
 
-// Copyright 2025, Sven Bieg (svenbieg@outlook.de)
-// http://github.com/svenbieg/Clusters
+// Copyright 2026, Sven Bieg (svenbieg@outlook.de)
+// https://github.com/svenbieg/Clusters/wiki/List
 
 #pragma once
 
@@ -65,7 +65,7 @@ public:
 
 	// Modification
 	virtual _item_t* append(_item_t const& item, bool again)=0;
-	virtual _size_t append(_item_t const* append, _size_t count)=0;
+	virtual _size_t append(_item_t const* append, _size_t count)noexcept=0;
 	virtual _item_t* insert_at(_size_t position, _item_t const& item, bool again)=0;
 	virtual _size_t set_many(_size_t position, _item_t const* many, _size_t count)=0;
 };
@@ -109,7 +109,7 @@ public:
 		{
 		return this->insert_item(this->m_item_count, item);
 		}
-	_size_t append(_item_t const* append, _size_t count)override
+	_size_t append(_item_t const* append, _size_t count)noexcept override
 		{
 		uint16_t item_count=this->m_item_count;
 		if(item_count==_group_size)
@@ -222,7 +222,7 @@ public:
 		this->m_item_count++;
 		return appended;
 		}
-	_size_t append(_item_t const* append, _size_t count)override
+	_size_t append(_item_t const* append, _size_t count)noexcept override
 		{
 		assert(append);
 		assert(count>0);
@@ -360,7 +360,7 @@ public:
 
 private:
 	// Access
-	uint16_t get_insert_pos(_size_t* position, uint16_t* group)const
+	uint16_t get_insert_pos(_size_t* position, uint16_t* group)const noexcept
 		{
 		uint16_t child_count=this->m_child_count;
 		_size_t pos=*position;
@@ -381,7 +381,7 @@ private:
 		}
 
 	// Modification
-	void free_children()
+	void free_children()noexcept
 		{
 		for(uint16_t u=this->m_child_count; u>0; u--)
 			{
@@ -391,7 +391,7 @@ private:
 			this->remove_group(pos);
 			}
 		}
-	uint16_t minimize()
+	uint16_t minimize()noexcept
 		{
 		uint16_t child_count=this->m_child_count;
 		uint16_t dst=0;
@@ -435,7 +435,7 @@ public:
 	using _group_t=typename _traits_t::group_t;
 
 	// Con-/Destructors
-	list(): _base_t(nullptr) {}
+	list()noexcept: _base_t(nullptr) {}
 	list(list const& list): _base_t(nullptr)
 		{
 		this->copy_from(list);
@@ -444,7 +444,7 @@ public:
 	// Access
 	inline _item_t& operator[](_size_t position) { return this->get_at(position); }
 	inline _item_t const& operator[](_size_t position)const { return this->get_at(position); }
-	inline bool contains(_item_t const& item) { return index_of(item, nullptr); }
+	inline bool contains(_item_t const& item)const { return index_of(item, nullptr); }
 	_size_t get_many(_size_t position, _item_t* items, _size_t count)const
 		{
 		auto root=this->m_root;
