@@ -123,10 +123,7 @@ public:
 
 	// Con-/Destructors
 	map()noexcept: _base_t(nullptr) {}
-	map(map const& map): _base_t(nullptr)
-		{
-		this->copy_from(map);
-		}
+	map(map const& map): _base_t(nullptr) { this->copy_from(map); }
 
 	// Access
 	template <class _key_param_t> inline _value_t& operator[](_key_param_t const& key) { return get(key); }

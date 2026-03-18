@@ -15,7 +15,6 @@
 // Using
 //=======
 
-#include <assert.h>
 #include <new>
 #include <stdexcept>
 #include <stdint.h>
@@ -109,25 +108,16 @@ public:
 		return get_items()[position];
 		}
 	inline uint16_t get_child_count()const noexcept override { return m_item_count; }
-	inline _item_t const& get_first_item()const noexcept
-		{
-		assert(m_item_count>0);
-		return get_items()[0];
-		}
+	inline _item_t const& get_first_item()const noexcept { return get_items()[0]; }
 	inline _size_t get_item_count()const noexcept override { return m_item_count; }
 	inline _item_t* get_items()noexcept { return (_item_t*)m_items; }
 	inline _item_t const* get_items()const noexcept { return (_item_t const*)m_items; }
-	inline _item_t const& get_last_item()const noexcept
-		{
-		assert(m_item_count>0);
-		return get_items()[m_item_count-1];
-		}
+	inline _item_t const& get_last_item()const noexcept { return get_items()[m_item_count-1]; }
 	inline uint16_t get_level()const noexcept override { return 0; }
 
 	// Modification
 	_item_t* insert_item(uint16_t position, _item_t const& insert)
 		{
-		assert(position<=m_item_count);
 		if(m_item_count+1>_group_size)
 			return nullptr;
 		_item_t* items=get_items();
@@ -139,7 +129,6 @@ public:
 		}
 	_item_t* insert_item(uint16_t position, _item_t&& insert)noexcept
 		{
-		assert(position<=m_item_count);
 		if(m_item_count+1>_group_size)
 			return nullptr;
 		_item_t* items=get_items();
@@ -151,8 +140,6 @@ public:
 		}
 	uint16_t insert_items(uint16_t position, _item_t* insert, uint16_t count)noexcept
 		{
-		assert(position<=m_item_count);
-		assert(m_item_count+count<=_group_size);
 		_item_t* items=get_items();
 		uint16_t u=(uint16_t)(m_item_count+count-1);
 		for(; u>=position+count; u--)
@@ -164,7 +151,6 @@ public:
 		}
 	uint16_t insert_items(uint16_t position, _item_t const* insert, uint16_t count)
 		{
-		assert(position<=m_item_count);
 		if(m_item_count==_group_size)
 			return 0;
 		uint16_t copy=count;
@@ -266,7 +252,6 @@ public:
 		if(position>=m_item_count)
 			throw std::out_of_range(nullptr);
 		uint16_t group=get_group(&position);
-		assert(group<m_child_count);
 		return m_children[group]->get_at(position);
 		}
 	_item_t const& get_at(_size_t position)const override
@@ -274,14 +259,9 @@ public:
 		if(position>=m_item_count)
 			throw std::out_of_range(nullptr);
 		uint16_t group=get_group(&position);
-		assert(group<m_child_count);
 		return m_children[group]->get_at(position);
 		}
-	inline _group_t* get_child(uint16_t position)const noexcept
-		{
-		assert(position<m_child_count);
-		return m_children[position];
-		}
+	inline _group_t* get_child(uint16_t position)const noexcept { return m_children[position]; }
 	inline uint16_t get_child_count()const noexcept override { return m_child_count; }
 	inline _group_t* const* get_children()const noexcept { return m_children; }
 	uint16_t get_group(_size_t* position)const noexcept
@@ -301,8 +281,6 @@ public:
 	// Modification
 	virtual _size_t insert_groups(uint16_t position, _group_t* const* groups, uint16_t count)noexcept
 		{
-		assert(position<=m_child_count);
-		assert(m_child_count+count<=_group_size);
 		for(uint16_t u=(uint16_t)(m_child_count+count-1); u>=position+count; u--)
 			m_children[u]=m_children[u-count];
 		_size_t item_count=0;
@@ -317,10 +295,6 @@ public:
 		}
 	void move_children(uint16_t source, uint16_t destination, uint16_t count)noexcept
 		{
-		assert(source<=m_child_count);
-		assert(destination<=m_child_count);
-		assert(source!=destination);
-		assert(count>0);
 		if(m_level>1)
 			{
 			auto src=(_parent_group_t*)m_children[source];
@@ -378,15 +352,12 @@ public:
 		if(position>=m_item_count)
 			throw std::out_of_range(nullptr);
 		uint16_t group=get_group(&position);
-		assert(group<m_child_count);
 		m_children[group]->remove_at(position, item_ptr);
 		m_item_count--;
 		combine_children(group);
 		}
 	virtual void remove_groups(uint16_t position, uint16_t count, _size_t item_count)noexcept
 		{
-		assert(position+count<=m_child_count);
-		assert(count>0);
 		for(uint16_t u=position; u+count<m_child_count; u++)
 			m_children[u]=m_children[u+count];
 		m_child_count-=count;
@@ -394,7 +365,6 @@ public:
 		}
 	virtual void set_child(_group_t* child)noexcept
 		{
-		assert(m_child_count==0);
 		m_children[0]=child;
 		m_child_count=1;
 		m_item_count=child->get_item_count();

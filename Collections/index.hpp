@@ -249,7 +249,6 @@ public:
 	index_parent_group(uint16_t level=1)noexcept: _base_t(level), m_first(nullptr), m_last(nullptr) {}
 	index_parent_group(_parent_group_t const& group)noexcept: _base_t(group)
 		{
-		assert(this->m_child_count>0);
 		uint16_t last=(uint16_t)(this->m_child_count-1);
 		m_first=&this->m_children[0]->get_first();
 		m_last=&this->m_children[last]->get_last();
@@ -330,16 +329,8 @@ public:
 			*created_ptr=created;
 		return got;
 		}
-	inline _item_t const& get_first()const noexcept override
-		{
-		assert(m_first);
-		return *m_first;
-		}
-	inline _item_t const& get_last()const noexcept override
-		{
-		assert(m_last);
-		return *m_last;
-		}
+	inline _item_t const& get_first()const noexcept override { return *m_first; }
+	inline _item_t const& get_last()const noexcept override { return *m_last; }
 
 	// Modification
 	_size_t insert_groups(uint16_t position, _group_t* const* groups, uint16_t count)noexcept override
@@ -499,10 +490,7 @@ public:
 
 	// Con-/Destructors
 	index()noexcept: _base_t(nullptr) {}
-	index(index const& index): _base_t(nullptr)
-		{
-		this->copy_from(index);
-		}
+	index(index const& index): _base_t(nullptr) { this->copy_from(index); }
 
 	// Access
 	inline _item_t& operator[](_size_t Position) { return _base_t::get_at(Position); }

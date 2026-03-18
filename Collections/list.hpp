@@ -167,7 +167,6 @@ public:
 		if(position>=this->m_item_count)
 			throw std::out_of_range(nullptr);
 		uint16_t group=this->get_group(&position);
-		assert(group<this->m_child_count);
 		_size_t pos=0;
 		while(pos<count)
 			{
@@ -188,7 +187,6 @@ public:
 		{
 		if(!again)
 			{
-			assert(this->m_child_count>0);
 			uint16_t group=(uint16_t)(this->m_child_count-1);
 			_item_t* appended=this->m_children[group]->append(item, false);
 			if(appended)
@@ -224,8 +222,6 @@ public:
 		}
 	_size_t append(_item_t const* append, _size_t count)noexcept override
 		{
-		assert(append);
-		assert(count>0);
 		_size_t pos=0;
 		uint16_t child_count=this->m_child_count;
 		if(child_count>0)
@@ -287,7 +283,6 @@ public:
 		_size_t pos=position;
 		uint16_t group=0;
 		uint16_t ins_count=get_insert_pos(&pos, &group);
-		assert(ins_count>0);
 		if(!again)
 			{
 			_size_t at=pos;
@@ -340,7 +335,6 @@ public:
 		if(position==this->m_item_count)
 			return append(many, count);
 		uint16_t group=this->get_group(&position);
-		assert(group<this->m_child_count);
 		_size_t pos=0;
 		while(pos<count)
 			{
@@ -436,10 +430,7 @@ public:
 
 	// Con-/Destructors
 	list()noexcept: _base_t(nullptr) {}
-	list(list const& list): _base_t(nullptr)
-		{
-		this->copy_from(list);
-		}
+	list(list const& list): _base_t(nullptr) { this->copy_from(list); }
 
 	// Access
 	inline _item_t& operator[](_size_t position) { return this->get_at(position); }
