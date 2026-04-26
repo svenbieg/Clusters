@@ -19,25 +19,25 @@ This is the standard-implementation, there are two more implementations in <a hr
 
 <table>
 	<tr>
-		<td><img src="https://github.com/user-attachments/assets/4901aa2d-e7a3-4367-aab3-cd1a7827de4f" width="25" align="right" /></td>
+		<td><img src="https://github.com/user-attachments/assets/f072ba0a-f0b8-4bc0-97f3-9ced4df4e8fe" width="30" align="right" /></td>
 		<td>The entries are stored in groups.</td>
 	</tr><tr><td></td></tr><tr>
-		<td><img src="https://github.com/user-attachments/assets/ad42262d-21e7-4749-a099-f22a6c61671d" width="25" align="right" /></td>
+		<td><img src="https://github.com/user-attachments/assets/bdd061b8-9c1b-4835-b80e-a97f24010145" width="30" align="right" /></td>
 		<td>The size of the groups is limited and 10 by default.</td>
 	</tr><tr><td></td></tr><tr>
-		<td><img src="https://github.com/user-attachments/assets/ac228371-af19-45e8-a9f6-7758389612c5" width="50" align="right" /></td>
+		<td><img src="https://github.com/user-attachments/assets/fec0cfa7-5a44-47c8-b3d8-f4cd2fdcdebd" width="60" align="right" /></td>
 		<td>If the group is full a parent-group is created.</td>
 	</tr><tr><td></td></tr><tr>
-		<td><img src="https://github.com/user-attachments/assets/4ec67147-7d1c-40fd-9226-54c66f51f365" width="50" align="right" /></td>
+		<td><img src="https://github.com/user-attachments/assets/e3d65374-7b7b-48f9-adff-c35a7cac015d" width="60" align="right" /></td>
 		<td>The first and the last entry can be moved to the neighbour-group.</td>
 	</tr><tr><td></td></tr><tr>
-		<td><img src="https://github.com/user-attachments/assets/f4f968e2-2065-4979-bd5e-40edd734ef5b" width="50" align="right" /></td>
+		<td><img src="https://github.com/user-attachments/assets/ef7ca560-ee37-4bad-9a5e-30cec6bb3beb" width="60" align="right" /></td>
 		<td>The entries are moved between the groups, so all groups get as full as possible.</td>
 	</tr><tr><td></td></tr><tr>
-		<td><img src="https://github.com/user-attachments/assets/523f36fd-bdfe-4978-9fff-b5975829c00e" width="75" /></td>
+		<td><img src="https://github.com/user-attachments/assets/69a62898-36b2-498f-9020-0a825e1f3c8f" width="90" /></td>
 		<td>The number of groups is limited too, another parent-group is created.</td>
 	</tr><tr><td></td></tr><tr>
-		<td><img src="https://github.com/user-attachments/assets/624247eb-18b7-4247-8c56-eaccc59c2340" width="75" /></td>
+		<td><img src="https://github.com/user-attachments/assets/d3c32ae0-ad2e-4629-b5c8-bf4f54471bf6" width="90" /></td>
 		<td>If an entry needs to be inserted in a full group, a whole sub-tree can be moved.</td>
 	</tr>
 </table><br />
