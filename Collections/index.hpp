@@ -514,6 +514,14 @@ public:
 		it.find(item, func);
 		return it;
 		}
+	inline bool index_of(_item_t const& item, _size_t* pos)
+		{
+		const_iterator it(this);
+		if(!it.find(item, find_func::equal))
+			return false;
+		*pos=it.get_position();
+		return true;
+		}
 
 	// Modification
 	inline index& operator=(index const& index)

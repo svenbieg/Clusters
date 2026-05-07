@@ -524,10 +524,10 @@ public:
 		}
 	bool set_at(_size_t position, _item_t const& item)
 		{
-		_item_t& got=get_at(position);
-		if(*got==item)
+		_item_t& got=this->get_at(position);
+		if(got==item)
 			return false;
-		*got=item;
+		got=item;
 		return true;
 		}
 	_size_t set_many(_size_t position, _item_t const* items, _size_t count)
