@@ -92,6 +92,11 @@ public:
 		it.find(item, func);
 		return it;
 		}
+	inline bool index_of(_item_t const& item, _size_t* pos_ptr)
+		{
+		std::shared_lock<std::shared_mutex> lock(this->m_mutex);
+		return _cluster_t::index_of(item, pos_ptr);
+		}
 
 	// Modification
 	template <class _item_param_t> inline bool add(_item_param_t const& item)

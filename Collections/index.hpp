@@ -82,6 +82,7 @@ public:
 	virtual _item_t* get(_item_t&& item, bool* created, bool again)=0;
 	virtual _item_t const& get_first()const noexcept=0;
 	virtual _item_t const& get_last()const noexcept=0;
+	virtual bool index_of(_item_t const& item, _size_t* pos_ptr)const noexcept=0;
 
 	// Modification
 	virtual bool remove(_item_t const& item, _item_t* item_ptr)noexcept=0;
@@ -187,6 +188,16 @@ public:
 		}
 	inline _item_t const& get_first()const noexcept override { return this->get_first_item(); }
 	inline _item_t const& get_last()const noexcept override { return this->get_last_item(); }
+	bool index_of(_item_t const& item, _size_t* pos_ptr)const noexcept override
+		{
+		bool exists=false;
+		uint16_t pos=get_item_pos(item, &exists);
+		if(!exists)
+			return false;
+		if(pos_ptr)
+			*pos_ptr=pos;
+		return true;
+		}
 
 	// Modification
 	bool remove(_item_t const& item, _item_t* item_ptr)noexcept override
@@ -331,6 +342,21 @@ public:
 		}
 	inline _item_t const& get_first()const noexcept override { return *m_first; }
 	inline _item_t const& get_last()const noexcept override { return *m_last; }
+	bool index_of(_item_t const& item, _size_t* pos_ptr)const noexcept override
+		{
+		uint16_t group_pos=0;
+		uint16_t count=get_item_pos(item, &group_pos, true);
+		if(count!=1)
+			return false;
+		_size_t pos=0;
+		if(!this->m_children[group_pos]->index_of(item, &pos))
+			return false;
+		for(uint16_t u=0; u<group_pos; u++)
+			pos+=this->m_children[u]->get_item_count();
+		if(pos_ptr)
+			*pos_ptr=pos;
+		return true;
+		}
 
 	// Modification
 	_size_t insert_groups(uint16_t position, _group_t* const* groups, uint16_t count)noexcept override
@@ -485,6 +511,7 @@ public:
 	using _traits_t=index_traits<_item_t, _size_t, _group_size>;
 	using _base_t=cluster<_traits_t>;
 	using _group_t=typename _traits_t::group_t;
+	using _parent_group_t=typename _traits_t::parent_group_t;
 	using iterator=typename _traits_t::iterator_t;
 	using const_iterator=typename _traits_t::const_iterator_t;
 
@@ -514,13 +541,12 @@ public:
 		it.find(item, func);
 		return it;
 		}
-	inline bool index_of(_item_t const& item, _size_t* pos)
+	bool index_of(_item_t const& item, _size_t* pos_ptr)const noexcept
 		{
-		const_iterator it(this);
-		if(!it.find(item, find_func::equal))
+		auto root=this->m_root;
+		if(!root)
 			return false;
-		*pos=it.get_position();
-		return true;
+		return root->index_of(item, pos_ptr);
 		}
 
 	// Modification

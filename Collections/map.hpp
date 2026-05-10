@@ -167,13 +167,13 @@ public:
 			throw std::out_of_range(nullptr);
 		return got->get_value();
 		}
-	inline bool index_of(_key_t const& key, _size_t* pos)
+	template <class _key_param_t> inline bool index_of(_key_param_t const& key, _size_t* pos_ptr)
 		{
-		const_iterator it(this);
-		if(!it.find(key, find_func::equal))
+		_item_t item(key, _value_t());
+		auto root=this->m_root;
+		if(!root)
 			return false;
-		*pos=it.get_position();
-		return true;
+		return root->index_of(item, pos_ptr);
 		}
 	template <class _key_param_t> bool try_get(_key_param_t const& key, _value_t* value_ptr)const
 		{
