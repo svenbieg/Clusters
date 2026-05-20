@@ -431,6 +431,7 @@ public:
 	// Con-/Destructors
 	list()noexcept: _base_t(nullptr) {}
 	list(list const& list): _base_t(nullptr) { this->copy_from(list); }
+	list(list&& list)noexcept: _base_t(list.m_root) { list.m_root=nullptr; }
 
 	// Access
 	inline _item_t& operator[](_size_t position) { return this->get_at(position); }

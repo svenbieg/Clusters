@@ -518,6 +518,7 @@ public:
 	// Con-/Destructors
 	index()noexcept: _base_t(nullptr) {}
 	index(index const& index): _base_t(nullptr) { this->copy_from(index); }
+	index(index&& index)noexcept: _base_t(index.m_root) { index.m_root=nullptr; }
 
 	// Access
 	inline _item_t& operator[](_size_t Position) { return _base_t::get_at(Position); }
