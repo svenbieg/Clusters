@@ -2,8 +2,8 @@
 // shared_list.hpp
 //=================
 
-// Thread-safe implementation of an ordered list
-// Items can be inserted and removed in constant low time
+// Thread-safe implementation of an ordered list.
+// Items can be inserted and removed in constant low time.
 
 // Copyright 2026, Sven Bieg (svenbieg@outlook.de)
 // https://github.com/svenbieg/Clusters/wiki/List

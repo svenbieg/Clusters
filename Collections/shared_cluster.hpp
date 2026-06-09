@@ -2,8 +2,8 @@
 // shared_cluster.hpp
 //====================
 
-// Thread-safe implementation of a pyramidal directory
-// Shared classes for shared_list and shared_index
+// Thread-safe implementation of a pyramidal directory.
+// Shared classes for index and list.
 
 // Copyright 2026, Sven Bieg (svenbieg@outlook.de)
 // http://github.com/svenbieg/Clusters

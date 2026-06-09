@@ -2,8 +2,8 @@
 // cluster.hpp
 //=============
 
-// Implementation of a pyramidal directory
-// Shared classes for list and index
+// Implementation of a pyramidal directory.
+// Shared classes for index and list.
 
 // Copyright 2026, Sven Bieg (svenbieg@outlook.de)
 // https://github.com/svenbieg/Clusters
