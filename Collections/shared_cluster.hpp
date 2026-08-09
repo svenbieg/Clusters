@@ -15,9 +15,9 @@
 // Using
 //=======
 
-#include <mutex>
-#include <shared_mutex>
 #include "Collections/cluster.hpp"
+#include "Concurrency/ReadLock.h"
+#include "Concurrency/WriteLock.h"
 
 
 //===========
@@ -51,6 +51,9 @@ public:
 	using _cluster_t=typename _traits_t::cluster_t;
 	using _item_t=typename _traits_t::item_t;
 	using _size_t=typename _traits_t::size_t;
+	using Mutex=Concurrency::Mutex;
+	using ReadLock=Concurrency::ReadLock;
+	using WriteLock=Concurrency::WriteLock;
 
 	// Con-/Destructors
 	virtual ~shared_cluster()noexcept {}
@@ -58,46 +61,35 @@ public:
 	// Access
 	inline _item_t get_at(_size_t position)
 		{
-		std::shared_lock<std::shared_mutex> lock(m_mutex);
+		ReadLock lock(m_mutex);
 		return _cluster_t::get_at(position);
 		}
 	inline _size_t get_count()
 		{
-		std::shared_lock<std::shared_mutex> lock(m_mutex);
+		ReadLock lock(m_mutex);
 		return _cluster_t::get_count();
 		}
 
 	// Modification
 	inline bool clear()
 		{
-		std::unique_lock<std::shared_mutex> lock(m_mutex);
+		WriteLock lock(m_mutex);
 		return _cluster_t::clear();
-		}
-	inline void copy_from(_cluster_t&& cluster)
-		{
-		std::unique_lock<std::shared_mutex> lock(m_mutex);
-		_cluster_t::copy_from(std::forward<_cluster_t>(cluster));
 		}
 	inline void copy_from(_cluster_t const& cluster)
 		{
-		std::unique_lock<std::shared_mutex> lock(m_mutex);
+		WriteLock lock(m_mutex);
 		_cluster_t::copy_from(cluster);
 		}
 	inline void copy_from(shared_cluster& cluster)
 		{
-		std::unique_lock<std::shared_mutex> lock(m_mutex);
-		std::shared_lock<std::shared_mutex> shared_lock(cluster.m_mutex);
+		WriteLock lock(m_mutex);
+		ReadLock read_lock(cluster.m_mutex);
 		_cluster_t::copy_from(cluster);
-		}
-	inline void copy_from(shared_cluster&& cluster)
-		{
-		std::unique_lock<std::shared_mutex> lock(m_mutex);
-		std::unique_lock<std::shared_mutex> src_lock(cluster.m_mutex);
-		_cluster_t::copy_from(std::forward<_cluster_t>(cluster));
 		}
 	inline bool remove_at(_size_t position, _item_t* item_ptr=nullptr)
 		{
-		std::unique_lock<std::shared_mutex> lock(m_mutex);
+		WriteLock lock(m_mutex);
 		return _cluster_t::remove_at(position, item_ptr);
 		}
 
@@ -112,7 +104,7 @@ protected:
 		}
 
 	// Common
-	std::shared_mutex m_mutex;
+	Mutex m_mutex;
 };
 
 
@@ -133,6 +125,7 @@ public:
 	using _item_ptr=typename std::conditional<_is_const, _item_t const*, _item_t*>::type;
 	using _item_ref=typename std::conditional<_is_const, _item_t const&, _item_t&>::type;
 	using _size_t=typename _traits_t::size_t;
+	using AccessMode=Concurrency::AccessMode;
 
 	// Con-/Destructors
 	shared_cluster_iterator_base(_shared_cluster_t* cluster)noexcept: _base_t((_cluster_ptr)cluster) {}
@@ -216,7 +209,7 @@ protected:
 	void lock()
 		{
 		auto cluster=(_shared_cluster_t*)this->m_cluster;
-		_is_const? cluster->m_mutex.lock_shared(): cluster->m_mutex.lock();
+		_is_const? cluster->m_mutex.Lock(AccessMode::ReadOnly): cluster->m_mutex.Lock();
 		}
 	bool rbegin()
 		{
@@ -236,7 +229,7 @@ protected:
 	void unlock()noexcept
 		{
 		auto cluster=(_shared_cluster_t*)this->m_cluster;
-		_is_const? cluster->m_mutex.unlock_shared(): cluster->m_mutex.unlock();
+		_is_const? cluster->m_mutex.Unlock(AccessMode::ReadOnly): cluster->m_mutex.Unlock();
 		}
 };
 
