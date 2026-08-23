@@ -26,6 +26,46 @@
 namespace Collections {
 
 
+//======================
+// Forward-Declarations
+//======================
+
+template <typename _key_t, typename _value_t, typename _size_t, uint16_t _group_size> class shared_map;
+
+
+//=============
+// Shared Item
+//=============
+
+template <typename _key_t, typename _value_t, typename _size_t, uint16_t _group_size>
+class shared_map_item
+{
+public:
+	// Using
+	using _shared_map_t=shared_map<_key_t, _value_t, _size_t, _group_size>;
+
+	// Friends
+	friend _shared_map_t;
+
+	// Con-/Destructors
+	~shared_map_item()=default;
+
+	// Access
+	operator _value_t();
+
+	// Modification
+	shared_map_item& operator=(_value_t const& value);
+
+private:
+	// Con-/Destructors
+	shared_map_item(_shared_map_t* map, _key_t const& key);
+
+	// Common
+	_key_t m_key;
+	_shared_map_t* m_map;
+};
+
+
 //==========
 // Iterator
 //==========
@@ -47,11 +87,11 @@ public:
 	// Navigation
 	template <class _key_param_t> bool find(_key_param_t const& key, find_func func=find_func::equal)
 		{
-		if(this->is_outside())
-			this->lock();
+		if(_base_t::is_outside())
+			_base_t::lock();
 		if(!_iterator_t::find(key, func))
 			{
-			this->unlock();
+			_base_t::unlock();
 			return false;
 			}
 		return true;
@@ -71,19 +111,27 @@ class shared_map: public iterable_shared_cluster<map_traits<_key_t, _value_t, _s
 public:
 	// Using
 	using _traits_t=map_traits<_key_t, _value_t, _size_t, _group_size>;
+	using _base_t=iterable_shared_cluster<_traits_t>;
 	using _item_t=typename _traits_t::item_t;
 	using _cluster_t=typename _traits_t::cluster_t;
 	using _iterator_base_t=typename shared_cluster_iterator_base<_traits_t, false>::_base_t;
+	using _shared_item_t=shared_map_item<_key_t, _value_t, _size_t, _group_size>;
 	using iterator=shared_map_iterator<_traits_t, false>;
 	using const_iterator=shared_map_iterator<_traits_t, true>;
 	using ReadLock=Concurrency::ReadLock;
 	using WriteLock=Concurrency::WriteLock;
 
 	// Con-/Destructors
-	shared_map() {}
+	shared_map()noexcept {}
+	shared_map(_cluster_t const& copy): _base_t(copy) {}
+	shared_map(shared_map& copy): _base_t(copy) {}
+	shared_map(shared_map const& copy)=delete;
 
 	// Access
-	template <class _key_param_t> inline _value_t operator[](_key_param_t const& key) { return get(key); }
+	inline _shared_item_t operator[](_key_t const& key)
+		{
+		return _shared_item_t(this, key);
+		}
 	inline const_iterator cfind(_key_t const& key, find_func func=find_func::equal)
 		{
 		const_iterator it(this);
@@ -92,7 +140,7 @@ public:
 		}
 	inline bool contains(_key_t const& key)
 		{
-		ReadLock lock(this->m_mutex);
+		ReadLock lock(_base_t::m_mutex);
 		return _cluster_t::contains(key);
 		}
 	inline iterator find(_key_t const& key, find_func func=find_func::equal)
@@ -103,36 +151,60 @@ public:
 		}
 	template <class _key_param_t> inline _value_t get(_key_param_t const& key)
 		{
-		ReadLock lock(this->m_mutex);
+		ReadLock lock(_base_t::m_mutex);
 		return _cluster_t::get(key);
 		}
 	template <class _key_param_t> inline bool index_of(_key_param_t const& key, _size_t* pos_ptr)
 		{
-		ReadLock lock(this->m_mutex);
+		ReadLock lock(_base_t::m_mutex);
 		return _cluster_t::index_of(key, pos_ptr);
 		}
 	template <class _key_param_t> inline bool try_get(_key_param_t const& key, _value_t* value)
 		{
-		ReadLock lock(this->m_mutex);
+		ReadLock lock(_base_t::m_mutex);
 		return _cluster_t::try_get(key, value);
 		}
 
 	// Modification
 	template <class _key_param_t, class _value_param_t> inline bool add(_key_param_t const& key, _value_param_t const& value)
 		{
-		WriteLock lock(this->m_mutex);
+		WriteLock lock(_base_t::m_mutex);
 		return _cluster_t::add(key, value);
 		}
 	inline bool remove(_key_t const& key)
 		{
-		WriteLock lock(this->m_mutex);
+		WriteLock lock(_base_t::m_mutex);
 		return _cluster_t::remove(key);
 		}
 	template <class _key_param_t, class _value_param_t> inline bool set(_key_param_t const& key, _value_param_t const& value)
 		{
-		WriteLock lock(this->m_mutex);
+		WriteLock lock(_base_t::m_mutex);
 		return _cluster_t::set(key, value);
 		}
 };
+
+
+//=====================
+// Item Implementation
+//=====================
+
+template <typename _key_t, typename _value_t, typename _size_t, uint16_t _group_size>
+shared_map_item<_key_t, _value_t, _size_t, _group_size>::shared_map_item(shared_map<_key_t, _value_t, _size_t, _group_size>* map, _key_t const& key):
+m_key(key),
+m_map(map)
+{}
+
+template <typename _key_t, typename _value_t, typename _size_t, uint16_t _group_size>
+shared_map_item<_key_t, _value_t, _size_t, _group_size>::operator _value_t()
+{
+return m_map->get(m_key);
+}
+
+template <typename _key_t, typename _value_t, typename _size_t, uint16_t _group_size>
+shared_map_item<_key_t, _value_t, _size_t, _group_size>& shared_map_item<_key_t, _value_t, _size_t, _group_size>::operator=(_value_t const& value)
+{
+m_map->set(m_key, value);
+return *this;
+}
 
 }

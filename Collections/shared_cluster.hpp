@@ -59,6 +59,11 @@ public:
 	virtual ~shared_cluster()noexcept {}
 
 	// Access
+	inline operator bool()
+		{
+		ReadLock lock(m_mutex);
+		return _base_t::m_root!=nullptr;
+		}
 	inline _item_t get_at(_size_t position)
 		{
 		ReadLock lock(m_mutex);
@@ -71,6 +76,16 @@ public:
 		}
 
 	// Modification
+	inline shared_cluster& operator=(_cluster_t const& cluster)
+		{
+		copy_from(cluster);
+		return *this;
+		}
+	inline shared_cluster& operator=(shared_cluster& cluster)
+		{
+		copy_from(cluster);
+		return *this;
+		}
 	inline bool clear()
 		{
 		WriteLock lock(m_mutex);
@@ -87,15 +102,29 @@ public:
 		ReadLock read_lock(cluster.m_mutex);
 		_cluster_t::copy_from(cluster);
 		}
-	inline bool remove_at(_size_t position, _item_t* item_ptr=nullptr)
+	inline void remove_at(_size_t position, _item_t* item_ptr=nullptr)
 		{
 		WriteLock lock(m_mutex);
-		return _cluster_t::remove_at(position, item_ptr);
+		_cluster_t::remove_at(position, item_ptr);
 		}
 
 protected:
 	// Con-/Destructors
-	shared_cluster(): _base_t(nullptr) {}
+	shared_cluster()noexcept: _base_t(nullptr) {}
+	shared_cluster(_cluster_t const& copy): _base_t(nullptr)
+		{
+		copy_from(copy);
+		}
+	shared_cluster(shared_cluster& copy): _base_t(nullptr)
+		{
+		copy_from(copy);
+		}
+
+	// Access
+	inline _item_t get_internal(_size_t position)
+		{
+		return _cluster_t::get_at(position);
+		}
 
 	// Modification
 	inline bool remove_internal(_size_t position)
@@ -135,7 +164,7 @@ public:
 		}
 	~shared_cluster_iterator_base()noexcept
 		{
-		if(!this->is_outside())
+		if(!_base_t::is_outside())
 			unlock();
 		}
 
@@ -155,52 +184,52 @@ public:
 	inline _size_t get_position()const noexcept { return _base_t::get_position(); }
 	bool move_next()override
 		{
-		if(this->is_outside())
+		if(_base_t::is_outside())
 			{
-			this->lock();
+			lock();
 			if(_base_t::move_next())
 				return true;
-			this->unlock();
+			unlock();
 			return false;
 			}
 		if(_base_t::move_next())
 			return true;
-		this->unlock();
+		unlock();
 		return false;
 		}
 	bool move_previous()override
 		{
-		if(this->is_outside())
+		if(_base_t::is_outside())
 			{
-			this->lock();
+			lock();
 			if(_base_t::move_previous())
 				return true;
-			this->unlock();
+			unlock();
 			return false;
 			}
 		if(_base_t::move_previous())
 			return true;
-		this->unlock();
+		unlock();
 		return false;
 		}
 	bool set_position(_size_t position)override
 		{
-		if(this->is_outside())
+		if(_base_t::is_outside())
 			{
-			if(this->is_outside(position))
+			if(_base_t::is_outside(position))
 				{
-				this->m_position=position;
+				_base_t::m_position=position;
 				return false;
 				}
-			this->lock();
+			lock();
 			if(_base_t::set_position(position))
 				return true;
-			this->unlock();
+			unlock();
 			return false;
 			}
 		if(_base_t::set_position(position))
 			return true;
-		this->unlock();
+		unlock();
 		return false;
 		}
 
@@ -208,27 +237,27 @@ protected:
 	// Common
 	void lock()
 		{
-		auto cluster=(_shared_cluster_t*)this->m_cluster;
+		auto cluster=(_shared_cluster_t*)_base_t::m_cluster;
 		_is_const? cluster->m_mutex.Lock(AccessMode::ReadOnly): cluster->m_mutex.Lock();
 		}
 	bool rbegin()
 		{
-		if(this->is_outside())
-			this->lock();
-		_size_t count=this->m_cluster->get_count();
+		if(_base_t::is_outside())
+			lock();
+		_size_t count=_base_t::m_cluster->get_count();
 		if(count==0)
 			{
-			this->unlock();
+			unlock();
 			return false;
 			}
 		if(_base_t::set_position(count-1))
 			return true;
-		this->unlock();
+		unlock();
 		return false;
 		}
 	void unlock()noexcept
 		{
-		auto cluster=(_shared_cluster_t*)this->m_cluster;
+		auto cluster=(_shared_cluster_t*)_base_t::m_cluster;
 		_is_const? cluster->m_mutex.Unlock(AccessMode::ReadOnly): cluster->m_mutex.Unlock();
 		}
 };
@@ -254,7 +283,14 @@ public:
 	inline bool rend() { return _base_t::set_position(-1); }
 
 	// Modification
-	inline bool remove_current(_item_t* item_ptr=nullptr) { return _iterator_t::remove_current(item_ptr); }
+	bool remove_current(_item_t* item_ptr=nullptr)
+		{
+		if(!_iterator_t::remove_current(item_ptr))
+			return false;
+		if(_base_t::is_outside())
+			_base_t::unlock();
+		return true;
+		}
 };
 
 template <class _traits_t>

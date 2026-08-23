@@ -123,7 +123,7 @@ public:
 
 	// Con-/Destructors
 	map()noexcept: _base_t(nullptr) {}
-	map(map const& map): _base_t(nullptr) { this->copy_from(map); }
+	map(map const& map): _base_t(nullptr) { _base_t::copy_from(map); }
 	map(map&& map)noexcept: _base_t(map->m_root) { map->m_root=nullptr; }
 
 	// Access
@@ -171,7 +171,7 @@ public:
 	template <class _key_param_t> inline bool index_of(_key_param_t const& key, _size_t* pos_ptr)
 		{
 		_item_t item(key, _value_t());
-		auto root=this->m_root;
+		auto root=_base_t::m_root;
 		if(!root)
 			return false;
 		return root->index_of(item, pos_ptr);
@@ -190,7 +190,7 @@ public:
 	// Modification
 	inline map& operator=(map const& map)
 		{
-		this->copy_from(map);
+		_base_t::copy_from(map);
 		return *this;
 		}
 	template <class _key_param_t, class _value_param_t> bool add(_key_param_t const& key, _value_param_t const& value)
@@ -202,7 +202,7 @@ public:
 		}
 	bool remove(_key_t const& key, _value_t* value_ptr=nullptr)
 		{
-		auto root=this->m_root;
+		auto root=_base_t::m_root;
 		if(!root)
 			return false;
 		_item_t item(key, _value_t());
@@ -235,18 +235,18 @@ private:
 	// Common
 	_item_t const* get_internal(_item_t const& item)const noexcept
 		{
-		auto root=this->m_root;
+		auto root=_base_t::m_root;
 		if(!root)
 			return nullptr;
 		return root->get(item);
 		}
 	_item_t* get_internal(_item_t&& item, bool* created)
 		{
-		auto root=this->create_root();
+		auto root=_base_t::create_root();
 		auto got=root->get(std::forward<_item_t>(item), created, false);
 		if(got)
 			return got;
-		root=this->lift_root();
+		root=_base_t::lift_root();
 		return root->get(std::forward<_item_t>(item), created, true);
 		}
 };

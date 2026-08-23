@@ -91,10 +91,10 @@ public:
 	// Access
 	_size_t get_many(_size_t position, _item_t* many, _size_t count)const override
 		{
-		uint16_t item_count=this->m_item_count;
+		uint16_t item_count=_base_t::m_item_count;
 		if(position>=item_count)
 			throw std::out_of_range(nullptr);
-		auto items=this->get_items();
+		auto items=_base_t::get_items();
 		uint16_t pos=(uint16_t)position;
 		uint16_t copy=(uint16_t)(item_count-pos);
 		if(copy>count)
@@ -107,35 +107,35 @@ public:
 	// Modification
 	inline _item_t* append(_item_t const& item, bool again)override
 		{
-		return this->insert_item(this->m_item_count, item);
+		return _base_t::insert_item(_base_t::m_item_count, item);
 		}
 	_size_t append(_item_t const* append, _size_t count)noexcept override
 		{
-		uint16_t item_count=this->m_item_count;
+		uint16_t item_count=_base_t::m_item_count;
 		if(item_count==_group_size)
 			return 0;
 		uint16_t copy=(uint16_t)(_group_size-item_count);
 		if(copy>count)
 			copy=(uint16_t)count;
-		return this->insert_items(item_count, append, copy);
+		return _base_t::insert_items(item_count, append, copy);
 		}
 	_item_t* insert_at(_size_t position, _item_t const& item, bool again)override
 		{
-		if(position>this->m_item_count)
+		if(position>_base_t::m_item_count)
 			throw std::out_of_range(nullptr);
 		uint16_t pos=(uint16_t)position;
-		return this->insert_item(pos, item);
+		return _base_t::insert_item(pos, item);
 		}
 	_size_t set_many(_size_t position, _item_t const* many, _size_t count)override
 		{
-		uint16_t item_count=this->m_item_count;
+		uint16_t item_count=_base_t::m_item_count;
 		if(position>item_count)
 			throw std::out_of_range(nullptr);
 		uint16_t pos=(uint16_t)position;
 		uint16_t copy=(uint16_t)(item_count-pos);
 		if(copy>count)
 			copy=(uint16_t)count;
-		_item_t* items=this->get_items();
+		_item_t* items=_base_t::get_items();
 		for(uint16_t u=0; u<copy; u++)
 			items[position+u]=many[u];
 		return copy;
@@ -164,18 +164,18 @@ public:
 	// Access
 	_size_t get_many(_size_t position, _item_t* items, _size_t count)const override
 		{
-		if(position>=this->m_item_count)
+		if(position>=_base_t::m_item_count)
 			throw std::out_of_range(nullptr);
-		uint16_t group=this->get_group(&position);
+		uint16_t group=_base_t::get_group(&position);
 		_size_t pos=0;
 		while(pos<count)
 			{
-			auto child=this->get_child(group);
+			auto child=_base_t::get_child(group);
 			pos+=child->get_many(position, &items[pos], count-pos);
 			if(pos==count)
 				break;
 			group++;
-			if(group==this->m_child_count)
+			if(group==_base_t::m_child_count)
 				break;
 			position=0;
 			}
@@ -187,48 +187,48 @@ public:
 		{
 		if(!again)
 			{
-			uint16_t group=(uint16_t)(this->m_child_count-1);
-			_item_t* appended=this->m_children[group]->append(item, false);
+			uint16_t group=(uint16_t)(_base_t::m_child_count-1);
+			_item_t* appended=_base_t::m_children[group]->append(item, false);
 			if(appended)
 				{
-				this->m_item_count++;
+				_base_t::m_item_count++;
 				return appended;
 				}
-			uint16_t empty=this->get_nearest_space(group);
-			if(empty<this->m_child_count)
+			uint16_t empty=_base_t::get_nearest_space(group);
+			if(empty<_base_t::m_child_count)
 				{
-				this->move_emtpy_slot(empty, group);
-				appended=this->m_children[group]->append(item, false);
-				this->m_item_count++;
+				_base_t::move_emtpy_slot(empty, group);
+				appended=_base_t::m_children[group]->append(item, false);
+				_base_t::m_item_count++;
 				return appended;
 				}
 			}
-		uint16_t group=this->m_child_count;
+		uint16_t group=_base_t::m_child_count;
 		if(group==_group_size)
 			return nullptr;
-		uint16_t level=this->m_level;
+		uint16_t level=_base_t::m_level;
 		if(level>1)
 			{
-			this->m_children[group]=new _parent_group_t(level-1);
+			_base_t::m_children[group]=new _parent_group_t(level-1);
 			}
 		else
 			{
-			this->m_children[group]=new _item_group_t();
+			_base_t::m_children[group]=new _item_group_t();
 			}
-		this->m_child_count++;
-		_item_t* appended=this->m_children[group]->append(item, true);
-		this->m_item_count++;
+		_base_t::m_child_count++;
+		_item_t* appended=_base_t::m_children[group]->append(item, true);
+		_base_t::m_item_count++;
 		return appended;
 		}
 	_size_t append(_item_t const* append, _size_t count)noexcept override
 		{
 		_size_t pos=0;
-		uint16_t child_count=this->m_child_count;
+		uint16_t child_count=_base_t::m_child_count;
 		if(child_count>0)
 			{
-			auto child=this->get_child(child_count-1);
+			auto child=_base_t::get_child(child_count-1);
 			pos+=child->append(append, count);
-			this->m_item_count+=pos;
+			_base_t::m_item_count+=pos;
 			if(pos==count)
 				return count;
 			}
@@ -237,11 +237,11 @@ public:
 			uint16_t last=minimize();
 			for(; last<child_count; last++)
 				{
-				auto child=this->get_child(last);
+				auto child=_base_t::get_child(last);
 				auto written=child->append(&append[pos], count-pos);
 				if(!written)
 					continue;
-				this->m_item_count+=written;
+				_base_t::m_item_count+=written;
 				pos+=written;
 				if(pos==count)
 					break;
@@ -254,31 +254,31 @@ public:
 			}
 		while(pos<count)
 			{
-			child_count=this->m_child_count;
+			child_count=_base_t::m_child_count;
 			if(child_count==_group_size)
 				break;
-			uint16_t level=this->m_level;
+			uint16_t level=_base_t::m_level;
 			_group_t* group=nullptr;
 			if(level==1)
 				{
 				group=new _item_group_t();
-				this->m_children[child_count]=group;
+				_base_t::m_children[child_count]=group;
 				}
 			else
 				{
 				group=new _parent_group_t((uint16_t)(level-1));
-				this->m_children[child_count]=group;
+				_base_t::m_children[child_count]=group;
 				}
-			this->m_child_count++;
+			_base_t::m_child_count++;
 			auto written=group->append(&append[pos], count-pos);
-			this->m_item_count+=written;
+			_base_t::m_item_count+=written;
 			pos+=written;
 			}
 		return pos;
 		}
 	_item_t* insert_at(_size_t position, _item_t const& item, bool again)override
 		{
-		if(position>this->m_item_count)
+		if(position>_base_t::m_item_count)
 			throw std::out_of_range(nullptr);
 		_size_t pos=position;
 		uint16_t group=0;
@@ -288,62 +288,62 @@ public:
 			_size_t at=pos;
 			for(uint16_t u=0; u<ins_count; u++)
 				{
-				auto child=this->get_child(group+u);
+				auto child=_base_t::get_child(group+u);
 				_item_t* inserted=child->insert_at(at, item, false);
 				if(inserted)
 					{
-					this->m_item_count++;
+					_base_t::m_item_count++;
 					return inserted;
 					}
 				at=0;
 				}
-			if(this->shift_children(group, ins_count))
+			if(_base_t::shift_children(group, ins_count))
 				{
 				pos=position;
 				ins_count=get_insert_pos(&pos, &group);
 				at=pos;
 				for(uint16_t u=0; u<ins_count; u++)
 					{
-					auto child=this->get_child(group+u);
+					auto child=_base_t::get_child(group+u);
 					_item_t* inserted=child->insert_at(at, item, false);
 					if(inserted)
 						{
-						this->m_item_count++;
+						_base_t::m_item_count++;
 						return inserted;
 						}
 					at=0;
 					}
 				}
 			}
-		if(!this->split_child(group))
+		if(!_base_t::split_child(group))
 			return nullptr;
-		_size_t count=this->m_children[group]->get_item_count();
+		_size_t count=_base_t::m_children[group]->get_item_count();
 		if(pos>=count)
 			{
 			group++;
 			pos-=count;
 			}
-		auto child=this->get_child(group);
+		auto child=_base_t::get_child(group);
 		_item_t* inserted=child->insert_at(pos, item, true);
-		this->m_item_count++;
+		_base_t::m_item_count++;
 		return inserted;
 		}
 	_size_t set_many(_size_t position, _item_t const* many, _size_t count)override
 		{
-		if(position>this->m_item_count)
+		if(position>_base_t::m_item_count)
 			throw std::out_of_range(nullptr);
-		if(position==this->m_item_count)
+		if(position==_base_t::m_item_count)
 			return append(many, count);
-		uint16_t group=this->get_group(&position);
+		uint16_t group=_base_t::get_group(&position);
 		_size_t pos=0;
 		while(pos<count)
 			{
-			auto child=this->get_child(group);
+			auto child=_base_t::get_child(group);
 			pos+=child->set_many(position, &many[pos], count-pos);
 			if(pos==count)
 				break;
 			group++;
-			if(group==this->m_child_count)
+			if(group==_base_t::m_child_count)
 				break;
 			position=0;
 			}
@@ -356,11 +356,11 @@ private:
 	// Access
 	uint16_t get_insert_pos(_size_t* position, uint16_t* group)const noexcept
 		{
-		uint16_t child_count=this->m_child_count;
+		uint16_t child_count=_base_t::m_child_count;
 		_size_t pos=*position;
 		for(uint16_t u=0; u<child_count; u++)
 			{
-			_size_t count=this->m_children[u]->get_item_count();
+			_size_t count=_base_t::m_children[u]->get_item_count();
 			if(pos<=count)
 				{
 				*group=u;
@@ -377,34 +377,34 @@ private:
 	// Modification
 	void free_children()noexcept
 		{
-		for(uint16_t u=this->m_child_count; u>0; u--)
+		for(uint16_t u=_base_t::m_child_count; u>0; u--)
 			{
 			uint16_t pos=u-1;
-			if(this->m_children[pos]->get_child_count()>0)
+			if(_base_t::m_children[pos]->get_child_count()>0)
 				break;
-			this->remove_group(pos);
+			_base_t::remove_group(pos);
 			}
 		}
 	uint16_t minimize()noexcept
 		{
-		uint16_t child_count=this->m_child_count;
+		uint16_t child_count=_base_t::m_child_count;
 		uint16_t dst=0;
 		for(; dst+1<child_count; dst++)
 			{
-			uint16_t dst_count=this->m_children[dst]->get_child_count();
+			uint16_t dst_count=_base_t::m_children[dst]->get_child_count();
 			if(dst_count==_group_size)
 				continue;
 			uint16_t free=(uint16_t)(_group_size-dst_count);
 			uint16_t src=(uint16_t)(dst+1);
 			for(; src<child_count; src++)
 				{
-				uint16_t src_count=this->m_children[src]->get_child_count();
+				uint16_t src_count=_base_t::m_children[src]->get_child_count();
 				if(src_count==0)
 					continue;
 				uint16_t move=src_count;
 				if(move>free)
 					move=free;
-				this->move_children(src, dst, move);
+				_base_t::move_children(src, dst, move);
 				free=(uint16_t)(free-move);
 				if(free==0)
 					break;
@@ -430,16 +430,16 @@ public:
 
 	// Con-/Destructors
 	list()noexcept: _base_t(nullptr) {}
-	list(list const& list): _base_t(nullptr) { this->copy_from(list); }
+	list(list const& list): _base_t(nullptr) { _base_t::copy_from(list); }
 	list(list&& list)noexcept: _base_t(list.m_root) { list.m_root=nullptr; }
 
 	// Access
-	inline _item_t& operator[](_size_t position) { return this->get_at(position); }
-	inline _item_t const& operator[](_size_t position)const { return this->get_at(position); }
+	inline _item_t& operator[](_size_t position) { return _base_t::get_at(position); }
+	inline _item_t const& operator[](_size_t position)const { return _base_t::get_at(position); }
 	inline bool contains(_item_t const& item)const { return index_of(item, nullptr); }
 	_size_t get_many(_size_t position, _item_t* items, _size_t count)const
 		{
-		auto root=this->m_root;
+		auto root=_base_t::m_root;
 		if(!root)
 			throw std::out_of_range(nullptr);
 		return root->get_many(position, items, count);
@@ -447,7 +447,7 @@ public:
 	bool index_of(_item_t const& item, _size_t* position)const
 		{
 		_size_t pos=0;
-		for(auto it=this->cbegin(); it.has_current(); it.move_next())
+		for(auto it=_base_t::cbegin(); it.has_current(); it.move_next())
 			{
 			if(*it==item)
 				{
@@ -463,12 +463,12 @@ public:
 	// Modification
 	inline list& operator=(list const& list)
 		{
-		this->copy_from(list);
+		_base_t::copy_from(list);
 		return *this;
 		}
 	bool add(_item_t const& item)
 		{
-		if(this->contains(item))
+		if(contains(item))
 			return false;
 		append(item);
 		return true;
@@ -476,44 +476,44 @@ public:
 	inline _item_t& append() { return append(_item_t()); }
 	_item_t& append(_item_t const& item)
 		{
-		auto root=this->create_root();
+		auto root=_base_t::create_root();
 		_item_t* appended=root->append(item, false);
 		if(appended)
 			return *appended;
-		root=this->lift_root();
+		root=_base_t::lift_root();
 		return *root->append(item, true);
 		}
 	void append(_item_t const* items, _size_t count)
 		{
-		auto root=this->create_root();
+		auto root=_base_t::create_root();
 		_size_t pos=0;
 		while(1)
 			{
 			pos+=root->append(&items[pos], count-pos);
 			if(pos==count)
 				break;
-			root=this->lift_root();
+			root=_base_t::lift_root();
 			}
 		}
 	inline _item_t& insert_at(_size_t position) { return insert_at(position, _item_t()); }
 	_item_t& insert_at(_size_t position, _item_t const& item)
 		{
-		auto root=this->m_root;
+		auto root=_base_t::m_root;
 		if(!root)
 			{
 			if(position>0)
 				throw std::out_of_range(nullptr);
-			root=this->create_root();
+			root=_base_t::create_root();
 			}
 		_item_t* inserted=root->insert_at(position, item, false);
 		if(inserted)
 			return *inserted;
-		root=this->lift_root();
+		root=_base_t::lift_root();
 		return *root->insert_at(position, item, true);
 		}
 	bool remove(_item_t const& item)
 		{
-		for(auto it=this->begin(); it.has_current(); it.move_next())
+		for(auto it=_base_t::begin(); it.has_current(); it.move_next())
 			{
 			if(*it==item)
 				{
@@ -525,7 +525,7 @@ public:
 		}
 	bool set_at(_size_t position, _item_t const& item)
 		{
-		_item_t& got=this->get_at(position);
+		_item_t& got=_base_t::get_at(position);
 		if(got==item)
 			return false;
 		got=item;
@@ -533,19 +533,19 @@ public:
 		}
 	_size_t set_many(_size_t position, _item_t const* items, _size_t count)
 		{
-		auto root=this->m_root;
+		auto root=_base_t::m_root;
 		if(!root)
 			{
 			if(position>0)
 				throw std::out_of_range(nullptr);
-			root=this->create_root();
+			root=_base_t::create_root();
 			}
 		for(_size_t pos=0; pos<count; )
 			{
 			pos+=root->set_many(position+pos, &items[pos], count-pos);
 			if(pos==count)
 				break;
-			root=this->lift_root();
+			root=_base_t::lift_root();
 			}
 		return count;
 		}

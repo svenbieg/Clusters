@@ -899,11 +899,11 @@ public:
 	// Modification
 	bool remove_current(_item_t* item_ptr=nullptr)
 		{
-		if(!this->has_current())
+		if(!_base_t::has_current())
 			return false;
-		auto position=this->m_position;
-		this->m_cluster->remove_at(position, item_ptr);
-		this->set_position(position);
+		auto position=_base_t::m_position;
+		_base_t::m_cluster->remove_at(position, item_ptr);
+		_base_t::set_position(position);
 		return true;
 		}
 };

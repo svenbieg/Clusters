@@ -118,7 +118,7 @@ public:
 				{
 				case find_func::above:
 					{
-					if(pos+1>=this->m_item_count)
+					if(pos+1>=_base_t::m_item_count)
 						return _group_size;
 					return pos+1;
 					}
@@ -140,7 +140,7 @@ public:
 			case find_func::above:
 			case find_func::above_or_equal:
 				{
-				if(pos==this->m_item_count)
+				if(pos==_base_t::m_item_count)
 					return _group_size;
 				return pos;
 				}
@@ -170,15 +170,15 @@ public:
 		uint16_t pos=get_item_pos(item, &exists);
 		if(!exists)
 			return nullptr;
-		return &this->get_at(pos);
+		return &_base_t::get_at(pos);
 		}
 	_item_t* get(_item_t&& item, bool* created, bool again)override
 		{
 		bool exists=false;
 		uint16_t pos=get_item_pos(item, &exists);
 		if(exists)
-			return &this->get_at(pos);
-		_item_t* inserted=this->insert_item(pos, std::forward<_item_t>(item));
+			return &_base_t::get_at(pos);
+		_item_t* inserted=_base_t::insert_item(pos, std::forward<_item_t>(item));
 		if(inserted)
 			{
 			*created=true;
@@ -186,8 +186,8 @@ public:
 			}
 		return nullptr;
 		}
-	inline _item_t const& get_first()const noexcept override { return this->get_first_item(); }
-	inline _item_t const& get_last()const noexcept override { return this->get_last_item(); }
+	inline _item_t const& get_first()const noexcept override { return _base_t::get_first_item(); }
+	inline _item_t const& get_last()const noexcept override { return _base_t::get_last_item(); }
 	bool index_of(_item_t const& item, _size_t* pos_ptr)const noexcept override
 		{
 		bool exists=false;
@@ -206,7 +206,7 @@ public:
 		uint16_t pos=get_item_pos(item, &exists);
 		if(!exists)
 			return false;
-		this->remove_at(pos, item_ptr);
+		_base_t::remove_at(pos, item_ptr);
 		return true;
 		}
 
@@ -214,7 +214,7 @@ private:
 	// Access
 	uint16_t get_item_pos(_item_t const& item, bool* exists)const noexcept
 		{
-		uint16_t item_count=this->m_item_count;
+		uint16_t item_count=_base_t::m_item_count;
 		if(item_count==0)
 			return 0;
 		uint16_t start=0;
@@ -222,7 +222,7 @@ private:
 		while(start<end)
 			{
 			uint16_t pos=(uint16_t)(start+(end-start)/2);
-			_item_t const& cmp=this->get_at(pos);
+			_item_t const& cmp=_base_t::get_at(pos);
 			if(cmp>item)
 				{
 				end=pos;
@@ -260,9 +260,9 @@ public:
 	index_parent_group(uint16_t level=1)noexcept: _base_t(level), m_first(nullptr), m_last(nullptr) {}
 	index_parent_group(_parent_group_t const& group)noexcept: _base_t(group)
 		{
-		uint16_t last=(uint16_t)(this->m_child_count-1);
-		m_first=&this->m_children[0]->get_first();
-		m_last=&this->m_children[last]->get_last();
+		uint16_t last=(uint16_t)(_base_t::m_child_count-1);
+		m_first=&_base_t::m_children[0]->get_first();
+		m_last=&_base_t::m_children[last]->get_last();
 		}
 
 	// Access
@@ -288,11 +288,11 @@ public:
 			{
 			case find_func::above:
 				{
-				auto group=this->get_child(pos);
+				auto group=_base_t::get_child(pos);
 				_item_t const& last=group->get_last();
 				if(last==item)
 					{
-					if(pos+1>=this->m_child_count)
+					if(pos+1>=_base_t::m_child_count)
 						return _group_size;
 					return pos+1;
 					}
@@ -300,7 +300,7 @@ public:
 				}
 			case find_func::below:
 				{
-				auto group=this->get_child(pos);
+				auto group=_base_t::get_child(pos);
 				_item_t const& first=group->get_first();
 				if(first==item)
 					{
@@ -321,7 +321,7 @@ public:
 		uint16_t count=get_item_pos(item, &pos, true);
 		for(uint16_t u=0; u<count; u++)
 			{
-			auto got=this->m_children[pos+u]->get(item);
+			auto got=_base_t::m_children[pos+u]->get(item);
 			if(got)
 				return got;
 			}
@@ -333,7 +333,7 @@ public:
 		_item_t* got=get_internal(std::forward<_item_t>(item), &created, again);
 		if(created)
 			{
-			this->m_item_count++;
+			_base_t::m_item_count++;
 			update_bounds();
 			}
 		if(created_ptr)
@@ -349,10 +349,10 @@ public:
 		if(count!=1)
 			return false;
 		_size_t pos=0;
-		if(!this->m_children[group_pos]->index_of(item, &pos))
+		if(!_base_t::m_children[group_pos]->index_of(item, &pos))
 			return false;
 		for(uint16_t u=0; u<group_pos; u++)
-			pos+=this->m_children[u]->get_item_count();
+			pos+=_base_t::m_children[u]->get_item_count();
 		if(pos_ptr)
 			*pos_ptr=pos;
 		return true;
@@ -371,10 +371,10 @@ public:
 		uint16_t count=get_item_pos(item, &pos, true);
 		if(count!=1)
 			return false;
-		if(!this->m_children[pos]->remove(item, item_ptr))
+		if(!_base_t::m_children[pos]->remove(item, item_ptr))
 			return false;
-		this->m_item_count--;
-		this->combine_children(pos);
+		_base_t::m_item_count--;
+		_base_t::combine_children(pos);
 		update_bounds();
 		return true;
 		}
@@ -391,21 +391,21 @@ public:
 	void set_child(_group_t* child)noexcept override
 		{
 		_base_t::set_child(child);
-		m_first=&this->m_children[0]->get_first();
-		m_last=&this->m_children[0]->get_last();
+		m_first=&_base_t::m_children[0]->get_first();
+		m_last=&_base_t::m_children[0]->get_last();
 		}
 
 private:
 	// Access
 	uint16_t get_item_pos(_item_t const& item, uint16_t* group, bool must_exist)const noexcept
 		{
-		uint16_t child_count=this->m_child_count;
+		uint16_t child_count=_base_t::m_child_count;
 		uint16_t start=0;
 		uint16_t end=child_count;
 		while(start<end)
 			{
 			uint16_t pos=(uint16_t)(start+(end-start)/2);
-			auto child=this->m_children[pos];
+			auto child=_base_t::m_children[pos];
 			_item_t const& first=child->get_first();
 			_item_t const& last=child->get_last();
 			if(first>item)
@@ -428,7 +428,7 @@ private:
 		*group=start;
 		if(start>0)
 			{
-			auto child=this->get_child(start);
+			auto child=_base_t::get_child(start);
 			_item_t const& first=child->get_first();
 			if(first>item)
 				{
@@ -438,7 +438,7 @@ private:
 			}
 		if(start+1<child_count)
 			{
-			auto child=this->get_child(start);
+			auto child=_base_t::get_child(start);
 			_item_t const& last=child->get_last();
 			if(last<item)
 				return 2;
@@ -455,27 +455,27 @@ private:
 			{
 			for(uint16_t u=0; u<count; u++)
 				{
-				_item_t* got=this->m_children[pos+u]->get(std::forward<_item_t>(item), created_ptr, false);
+				_item_t* got=_base_t::m_children[pos+u]->get(std::forward<_item_t>(item), created_ptr, false);
 				if(got)
 					return got;
 				}
-			if(this->shift_children(pos, count))
+			if(_base_t::shift_children(pos, count))
 				{
 				count=get_item_pos(item, &pos, false);
 				for(uint16_t u=0; u<count; u++)
 					{
-					_item_t* got=this->m_children[pos+u]->get(std::forward<_item_t>(item), created_ptr, false);
+					_item_t* got=_base_t::m_children[pos+u]->get(std::forward<_item_t>(item), created_ptr, false);
 					if(got)
 						return got;
 					}
 				}
 			}
-		if(!this->split_child(pos))
+		if(!_base_t::split_child(pos))
 			return nullptr;
 		count=get_item_pos(item, &pos, false);
 		for(uint16_t u=0; u<count; u++)
 			{
-			_item_t* got=this->m_children[pos+u]->get(std::forward<_item_t>(item), created_ptr, false);
+			_item_t* got=_base_t::m_children[pos+u]->get(std::forward<_item_t>(item), created_ptr, false);
 			if(got)
 				return got;
 			}
@@ -483,14 +483,14 @@ private:
 		}
 	void update_bounds()noexcept
 		{
-		if(this->m_child_count==0)
+		if(_base_t::m_child_count==0)
 			{
 			m_first=nullptr;
 			m_last=nullptr;
 			return;
 			}
-		m_first=&this->m_children[0]->get_first();
-		m_last=&this->m_children[(uint16_t)(this->m_child_count-1)]->get_last();
+		m_first=&_base_t::m_children[0]->get_first();
+		m_last=&_base_t::m_children[(uint16_t)(_base_t::m_child_count-1)]->get_last();
 		}
 	
 	// Common
@@ -517,7 +517,7 @@ public:
 
 	// Con-/Destructors
 	index()noexcept: _base_t(nullptr) {}
-	index(index const& index): _base_t(nullptr) { this->copy_from(index); }
+	index(index const& index): _base_t(nullptr) { _base_t::copy_from(index); }
 	index(index&& index)noexcept: _base_t(index.m_root) { index.m_root=nullptr; }
 
 	// Access
@@ -531,7 +531,7 @@ public:
 		}
 	bool contains(_item_t const& item)const noexcept
 		{
-		auto root=this->m_root;
+		auto root=_base_t::m_root;
 		if(!root)
 			return false;
 		return root->get(item)!=nullptr;
@@ -544,7 +544,7 @@ public:
 		}
 	bool index_of(_item_t const& item, _size_t* pos_ptr)const noexcept
 		{
-		auto root=this->m_root;
+		auto root=_base_t::m_root;
 		if(!root)
 			return false;
 		return root->index_of(item, pos_ptr);
@@ -553,7 +553,7 @@ public:
 	// Modification
 	inline index& operator=(index const& index)
 		{
-		this->copy_from(index);
+		_base_t::copy_from(index);
 		return *this;
 		}
 	template <class _item_param_t> bool add(_item_param_t const& item)
@@ -565,7 +565,7 @@ public:
 		}
 	bool remove(_item_t const& item, _item_t* item_ptr=nullptr)noexcept
 		{
-		auto root=this->m_root;
+		auto root=_base_t::m_root;
 		if(!root)
 			return false;
 		return root->remove(item, item_ptr);
@@ -586,11 +586,11 @@ private:
 	// Common
 	_item_t* get_internal(_item_t&& item, bool* created_ptr)
 		{
-		auto root=this->create_root();
+		auto root=_base_t::create_root();
 		_item_t* got=root->get(std::forward<_item_t>(item), created_ptr, false);
 		if(got)
 			return got;
-		root=this->lift_root();
+		root=_base_t::lift_root();
 		return root->get(std::forward<_item_t>(item), created_ptr, true);
 		}
 };
@@ -618,16 +618,16 @@ public:
 	// Navigation
 	bool find(_item_t const& item, find_func func=find_func::equal)
 		{
-		auto group=this->m_cluster->get_root();
+		auto group=_base_t::m_cluster->get_root();
 		if(!group)
 			{
-			this->end();
+			_base_t::end();
 			return false;
 			}
 		uint16_t level_count=(uint16_t)(group->get_level()+1);
-		this->set_level_count(level_count);
-		auto it_ptr=&this->m_its[0];
-		this->m_position=0;
+		_base_t::set_level_count(level_count);
+		auto it_ptr=&_base_t::m_its[0];
+		_base_t::m_position=0;
 		bool exists=false;
 		while(group)
 			{
@@ -642,15 +642,15 @@ public:
 				auto parent_group=(_parent_group_t*)group;
 				group=parent_group->get_child(group_pos);
 				for(uint16_t u=0; u<group_pos; u++)
-					this->m_position+=parent_group->get_child(u)->get_item_count();
+					_base_t::m_position+=parent_group->get_child(u)->get_item_count();
 				continue;
 				}
 			auto item_group=(_item_group_t*)group;
-			this->m_current=&item_group->get_at(group_pos);
-			this->m_position+=group_pos;
+			_base_t::m_current=&item_group->get_at(group_pos);
+			_base_t::m_position+=group_pos;
 			return true;
 			}
-		this->end();
+		_base_t::end();
 		return false;
 		}
 };

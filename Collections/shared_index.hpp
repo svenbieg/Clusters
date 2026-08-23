@@ -45,11 +45,11 @@ public:
 	// Navigation
 	bool find(_item_t const& item, find_func func=find_func::equal)
 		{
-		if(this->is_outside())
-			this->lock();
+		if(_base_t::is_outside())
+			_base_t::lock();
 		if(!_iterator_t::find(item, func))
 			{
-			this->unlock();
+			_base_t::unlock();
 			return false;
 			}
 		return true;
@@ -66,7 +66,8 @@ class shared_index: public iterable_shared_cluster<index_traits<_item_t, _size_t
 {
 public:
 	// Using
-	using _traits_t=index_traits<_item_t, _item_t, _size_t, _group_size>;
+	using _traits_t=index_traits<_item_t, _size_t, _group_size>;
+	using _base_t=iterable_shared_cluster<_traits_t>;
 	using _cluster_t=typename _traits_t::cluster_t;
 	using iterator=shared_index_iterator<_traits_t, false>;
 	using const_iterator=shared_index_iterator<_traits_t, true>;
@@ -75,8 +76,16 @@ public:
 
 	// Con-/Destructors
 	shared_index()noexcept {}
+	shared_index(_cluster_t const& copy): _base_t(copy) {}
+	shared_index(shared_index& copy): _base_t(copy) {}
+	shared_index(shared_index const& copy)=delete;
 
 	// Access
+	_item_t operator[](_size_t position)
+		{
+		ReadLock lock(_base_t::m_mutex);
+		return _cluster_t::get_at(position);
+		}
 	inline const_iterator cfind(_item_t const& item, find_func func=find_func::equal)
 		{
 		const_iterator it(this);
@@ -85,7 +94,7 @@ public:
 		}
 	inline bool contains(_item_t const& item)
 		{
-		ReadLock lock(this->m_mutex);
+		ReadLock lock(_base_t::m_mutex);
 		return _cluster_t::contains(item);
 		}
 	inline iterator find(_item_t const& item, find_func func=find_func::equal)
@@ -96,24 +105,24 @@ public:
 		}
 	inline bool index_of(_item_t const& item, _size_t* pos_ptr)
 		{
-		ReadLock lock(this->m_mutex);
+		ReadLock lock(_base_t::m_mutex);
 		return _cluster_t::index_of(item, pos_ptr);
 		}
 
 	// Modification
 	template <class _item_param_t> inline bool add(_item_param_t const& item)
 		{
-		WriteLock lock(this->m_mutex);
+		WriteLock lock(_base_t::m_mutex);
 		return _cluster_t::add(item);
 		}
 	inline bool remove(_item_t const& item)
 		{
-		WriteLock lock(this->m_mutex);
+		WriteLock lock(_base_t::m_mutex);
 		return _cluster_t::remove(item);
 		}
 	template <class _item_param_t> inline bool set(_item_param_t const& item)
 		{
-		WriteLock lock(this->m_mutex);
+		WriteLock lock(_base_t::m_mutex);
 		return _cluster_t::set(item);
 		}
 };
