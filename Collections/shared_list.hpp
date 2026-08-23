@@ -15,8 +15,8 @@
 // Using
 //=======
 
-#include "Collections/list.hpp"
-#include "Collections/shared_cluster.hpp"
+#include "list.hpp"
+#include "shared_cluster.hpp"
 
 
 //===========
@@ -38,8 +38,9 @@ public:
 	using _base_t=iterable_shared_cluster<list_traits<_item_t, _size_t, _group_size>>;
 	using _traits_t=list_traits<_item_t, _size_t, _group_size>;
 	using _cluster_t=typename _traits_t::cluster_t;
-	using ReadLock=Concurrency::ReadLock;
-	using WriteLock=Concurrency::WriteLock;
+	using shared_mutex=std::shared_mutex;
+	using read_lock=std::shared_lock<shared_mutex>;
+	using write_lock=std::unique_lock<shared_mutex>;
 
 	// Con-/Destructors
 	shared_list()noexcept {}
@@ -50,54 +51,54 @@ public:
 	// Access
 	inline bool contains(_item_t const& item)
 		{
-		ReadLock lock(_base_t::m_mutex);
+		read_lock lock(_base_t::m_mutex);
 		return _cluster_t::contains(item);
 		}
 	inline _size_t get_many(_size_t position, _item_t* items, _size_t count)
 		{
-		ReadLock lock(_base_t::m_mutex);
+		read_lock lock(_base_t::m_mutex);
 		return _cluster_t::get_many(position, items, count);
 		}
 	inline bool index_of(_item_t const& item, _size_t* position)
 		{
-		ReadLock lock(_base_t::m_mutex);
+		read_lock lock(_base_t::m_mutex);
 		return _cluster_t::index_of(item, position);
 		}
 
 	// Modification
 	inline bool add(_item_t const& item)
 		{
-		WriteLock lock(_base_t::m_mutex);
+		write_lock lock(_base_t::m_mutex);
 		return _cluster_t::add(item);
 		}
 	inline void append(_item_t const& item)
 		{
-		WriteLock lock(_base_t::m_mutex);
+		write_lock lock(_base_t::m_mutex);
 		_cluster_t::append(item);
 		}
 	inline void append(_item_t const* items, _size_t count)
 		{
-		WriteLock lock(_base_t::m_mutex);
+		write_lock lock(_base_t::m_mutex);
 		_cluster_t::append(items, count);
 		}
 	inline bool insert_at(_size_t position, _item_t const& item)
 		{
-		WriteLock lock(_base_t::m_mutex);
+		write_lock lock(_base_t::m_mutex);
 		return _cluster_t::insert_at(position, item);
 		}
 	inline bool remove(_item_t const& item)
 		{
-		WriteLock lock(_base_t::m_mutex);
+		write_lock lock(_base_t::m_mutex);
 		return _cluster_t::remove(item);
 		}
 	inline bool set_at(_size_t position, _item_t const& item)
 		{
-		WriteLock lock(_base_t::m_mutex);
+		write_lock lock(_base_t::m_mutex);
 		return _cluster_t::set_at(position, item);
 		}
 	inline _size_t set_many(_size_t position, _item_t const* items, _size_t count)
 		{
-		WriteLock lock(_base_t::m_mutex);
+		write_lock lock(_base_t::m_mutex);
 		return _cluster_t::set_many(position, items, count);
 		}
 

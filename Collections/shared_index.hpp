@@ -15,8 +15,8 @@
 // Using
 //=======
 
-#include "Collections/index.hpp"
-#include "Collections/shared_cluster.hpp"
+#include "index.hpp"
+#include "shared_cluster.hpp"
 
 
 //===========
@@ -71,8 +71,9 @@ public:
 	using _cluster_t=typename _traits_t::cluster_t;
 	using iterator=shared_index_iterator<_traits_t, false>;
 	using const_iterator=shared_index_iterator<_traits_t, true>;
-	using ReadLock=Concurrency::ReadLock;
-	using WriteLock=Concurrency::WriteLock;
+	using shared_mutex=std::shared_mutex;
+	using read_lock=std::shared_lock<shared_mutex>;
+	using write_lock=std::unique_lock<shared_mutex>;
 
 	// Con-/Destructors
 	shared_index()noexcept {}
@@ -89,7 +90,7 @@ public:
 		}
 	inline bool contains(_item_t const& item)
 		{
-		ReadLock lock(_base_t::m_mutex);
+		read_lock lock(_base_t::m_mutex);
 		return _cluster_t::contains(item);
 		}
 	inline iterator find(_item_t const& item, find_func func=find_func::equal)
@@ -100,24 +101,24 @@ public:
 		}
 	inline bool index_of(_item_t const& item, _size_t* pos_ptr)
 		{
-		ReadLock lock(_base_t::m_mutex);
+		read_lock lock(_base_t::m_mutex);
 		return _cluster_t::index_of(item, pos_ptr);
 		}
 
 	// Modification
 	template <class _item_param_t> inline bool add(_item_param_t const& item)
 		{
-		WriteLock lock(_base_t::m_mutex);
+		write_lock lock(_base_t::m_mutex);
 		return _cluster_t::add(item);
 		}
 	inline bool remove(_item_t const& item)
 		{
-		WriteLock lock(_base_t::m_mutex);
+		write_lock lock(_base_t::m_mutex);
 		return _cluster_t::remove(item);
 		}
 	template <class _item_param_t> inline bool set(_item_param_t const& item)
 		{
-		WriteLock lock(_base_t::m_mutex);
+		write_lock lock(_base_t::m_mutex);
 		return _cluster_t::set(item);
 		}
 };

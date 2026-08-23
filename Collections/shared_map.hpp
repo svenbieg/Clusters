@@ -15,8 +15,8 @@
 // Using
 //=======
 
-#include "Collections/map.hpp"
-#include "Collections/shared_cluster.hpp"
+#include "map.hpp"
+#include "shared_cluster.hpp"
 
 
 //===========
@@ -77,8 +77,9 @@ public:
 	using _iterator_base_t=typename shared_cluster_iterator_base<_traits_t, false>::_base_t;
 	using iterator=shared_map_iterator<_traits_t, false>;
 	using const_iterator=shared_map_iterator<_traits_t, true>;
-	using ReadLock=Concurrency::ReadLock;
-	using WriteLock=Concurrency::WriteLock;
+	using shared_mutex=std::shared_mutex;
+	using read_lock=std::shared_lock<shared_mutex>;
+	using write_lock=std::unique_lock<shared_mutex>;
 
 	// Con-/Destructors
 	shared_map()noexcept {}
@@ -95,7 +96,7 @@ public:
 		}
 	inline bool contains(_key_t const& key)
 		{
-		ReadLock lock(_base_t::m_mutex);
+		read_lock lock(_base_t::m_mutex);
 		return _cluster_t::contains(key);
 		}
 	inline iterator find(_key_t const& key, find_func func=find_func::equal)
@@ -106,34 +107,34 @@ public:
 		}
 	template <class _key_param_t> inline _value_t get(_key_param_t const& key)
 		{
-		ReadLock lock(_base_t::m_mutex);
+		read_lock lock(_base_t::m_mutex);
 		return _cluster_t::get(key);
 		}
 	template <class _key_param_t> inline bool index_of(_key_param_t const& key, _size_t* pos_ptr)
 		{
-		ReadLock lock(_base_t::m_mutex);
+		read_lock lock(_base_t::m_mutex);
 		return _cluster_t::index_of(key, pos_ptr);
 		}
 	template <class _key_param_t> inline bool try_get(_key_param_t const& key, _value_t* value)
 		{
-		ReadLock lock(_base_t::m_mutex);
+		read_lock lock(_base_t::m_mutex);
 		return _cluster_t::try_get(key, value);
 		}
 
 	// Modification
 	template <class _key_param_t, class _value_param_t> inline bool add(_key_param_t const& key, _value_param_t const& value)
 		{
-		WriteLock lock(_base_t::m_mutex);
+		write_lock lock(_base_t::m_mutex);
 		return _cluster_t::add(key, value);
 		}
 	inline bool remove(_key_t const& key)
 		{
-		WriteLock lock(_base_t::m_mutex);
+		write_lock lock(_base_t::m_mutex);
 		return _cluster_t::remove(key);
 		}
 	template <class _key_param_t, class _value_param_t> inline bool set(_key_param_t const& key, _value_param_t const& value)
 		{
-		WriteLock lock(_base_t::m_mutex);
+		write_lock lock(_base_t::m_mutex);
 		return _cluster_t::set(key, value);
 		}
 };

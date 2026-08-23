@@ -15,9 +15,8 @@
 // Using
 //=======
 
-#include "Collections/cluster.hpp"
-#include "Concurrency/ReadLock.h"
-#include "Concurrency/WriteLock.h"
+#include <shared_mutex>
+#include "cluster.hpp"
 
 
 //===========
@@ -51,9 +50,9 @@ public:
 	using _cluster_t=typename _traits_t::cluster_t;
 	using _item_t=typename _traits_t::item_t;
 	using _size_t=typename _traits_t::size_t;
-	using Mutex=Concurrency::Mutex;
-	using ReadLock=Concurrency::ReadLock;
-	using WriteLock=Concurrency::WriteLock;
+	using shared_mutex=std::shared_mutex;
+	using read_lock=std::shared_lock<shared_mutex>;
+	using write_lock=std::unique_lock<shared_mutex>;
 
 	// Con-/Destructors
 	virtual ~shared_cluster()noexcept {}
@@ -61,17 +60,17 @@ public:
 	// Access
 	inline operator bool()
 		{
-		ReadLock lock(m_mutex);
+		read_lock lock(m_mutex);
 		return _base_t::m_root!=nullptr;
 		}
 	inline _item_t get_at(_size_t position)
 		{
-		ReadLock lock(m_mutex);
+		read_lock lock(m_mutex);
 		return _cluster_t::get_at(position);
 		}
 	inline _size_t get_count()
 		{
-		ReadLock lock(m_mutex);
+		read_lock lock(m_mutex);
 		return _cluster_t::get_count();
 		}
 
@@ -88,23 +87,23 @@ public:
 		}
 	inline bool clear()
 		{
-		WriteLock lock(m_mutex);
+		write_lock lock(m_mutex);
 		return _cluster_t::clear();
 		}
 	inline void copy_from(_cluster_t const& cluster)
 		{
-		WriteLock lock(m_mutex);
+		write_lock lock(m_mutex);
 		_cluster_t::copy_from(cluster);
 		}
 	inline void copy_from(shared_cluster& cluster)
 		{
-		WriteLock lock(m_mutex);
-		ReadLock read_lock(cluster.m_mutex);
+		write_lock lock(m_mutex);
+		read_lock read_lock(cluster.m_mutex);
 		_cluster_t::copy_from(cluster);
 		}
 	inline void remove_at(_size_t position, _item_t* item_ptr=nullptr)
 		{
-		WriteLock lock(m_mutex);
+		write_lock lock(m_mutex);
 		_cluster_t::remove_at(position, item_ptr);
 		}
 
@@ -133,7 +132,7 @@ protected:
 		}
 
 	// Common
-	Mutex m_mutex;
+	shared_mutex m_mutex;
 };
 
 
@@ -154,7 +153,6 @@ public:
 	using _item_ptr=typename std::conditional<_is_const, _item_t const*, _item_t*>::type;
 	using _item_ref=typename std::conditional<_is_const, _item_t const&, _item_t&>::type;
 	using _size_t=typename _traits_t::size_t;
-	using AccessMode=Concurrency::AccessMode;
 
 	// Con-/Destructors
 	shared_cluster_iterator_base(_shared_cluster_t* cluster)noexcept: _base_t((_cluster_ptr)cluster) {}
@@ -238,7 +236,7 @@ protected:
 	void lock()
 		{
 		auto cluster=(_shared_cluster_t*)_base_t::m_cluster;
-		_is_const? cluster->m_mutex.Lock(AccessMode::ReadOnly): cluster->m_mutex.Lock();
+		_is_const? cluster->m_mutex.lock_shared(): cluster->m_mutex.lock();
 		}
 	bool rbegin()
 		{
@@ -258,7 +256,7 @@ protected:
 	void unlock()noexcept
 		{
 		auto cluster=(_shared_cluster_t*)_base_t::m_cluster;
-		_is_const? cluster->m_mutex.Unlock(AccessMode::ReadOnly): cluster->m_mutex.Unlock();
+		_is_const? cluster->m_mutex.unlock_shared(): cluster->m_mutex.unlock();
 		}
 };
 
