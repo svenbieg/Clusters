@@ -26,46 +26,6 @@
 namespace Collections {
 
 
-//======================
-// Forward-Declarations
-//======================
-
-template <typename _item_t, typename _size_t, uint16_t _group_size> class shared_list;
-
-
-//=============
-// Shared Item
-//=============
-
-template <typename _item_t, typename _size_t, uint16_t _group_size>
-class shared_list_item
-{
-public:
-	// Using
-	using _shared_list_t=shared_list<_item_t, _size_t, _group_size>;
-
-	// Friends
-	friend _shared_list_t;
-
-	// Con-/Destructors
-	~shared_list_item();
-
-	// Access
-	operator _item_t();
-
-	// Modification
-	shared_list_item& operator=(_item_t const& item);
-
-private:
-	// Con-/Destructors
-	shared_list_item(_shared_list_t* list, _size_t position);
-
-	// Common
-	_shared_list_t* m_list;
-	_size_t m_position;
-};
-
-
 //=============
 // Shared List
 //=============
@@ -78,12 +38,8 @@ public:
 	using _base_t=iterable_shared_cluster<list_traits<_item_t, _size_t, _group_size>>;
 	using _traits_t=list_traits<_item_t, _size_t, _group_size>;
 	using _cluster_t=typename _traits_t::cluster_t;
-	using _shared_item_t=shared_list_item<_item_t, _size_t, _group_size>;
 	using ReadLock=Concurrency::ReadLock;
 	using WriteLock=Concurrency::WriteLock;
-
-	// Friends
-	friend _shared_item_t;
 
 	// Con-/Destructors
 	shared_list()noexcept {}
@@ -92,10 +48,6 @@ public:
 	shared_list(shared_list const& copy)=delete;
 
 	// Access
-	_shared_item_t operator[](_size_t position)
-		{
-		return _shared_item_t(this, position);
-		}
 	inline bool contains(_item_t const& item)
 		{
 		ReadLock lock(_base_t::m_mutex);
@@ -156,37 +108,5 @@ private:
 		return _cluster_t::set_at(position, item);
 		}
 };
-
-
-//=====================
-// Item Implementation
-//=====================
-
-template <typename _item_t, typename _size_t, uint16_t _group_size>
-shared_list_item<_item_t, _size_t, _group_size>::shared_list_item(shared_list<_item_t, _size_t, _group_size>* list, _size_t position):
-m_list(list),
-m_position(position)
-{
-m_list->m_mutex.Lock();
-}
-
-template <typename _item_t, typename _size_t, uint16_t _group_size>
-shared_list_item<_item_t, _size_t, _group_size>::~shared_list_item()
-{
-m_list->m_mutex.Unlock();
-}
-
-template <typename _item_t, typename _size_t, uint16_t _group_size>
-shared_list_item<_item_t, _size_t, _group_size>::operator _item_t()
-{
-return m_list->get_internal(m_position);
-}
-
-template <typename _item_t, typename _size_t, uint16_t _group_size>
-shared_list_item<_item_t, _size_t, _group_size>& shared_list_item<_item_t, _size_t, _group_size>::operator=(_item_t const& item)
-{
-m_list->set_internal(m_position, item);
-return *this;
-}
 
 }

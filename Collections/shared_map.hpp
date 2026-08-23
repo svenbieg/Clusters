@@ -26,46 +26,6 @@
 namespace Collections {
 
 
-//======================
-// Forward-Declarations
-//======================
-
-template <typename _key_t, typename _value_t, typename _size_t, uint16_t _group_size> class shared_map;
-
-
-//=============
-// Shared Item
-//=============
-
-template <typename _key_t, typename _value_t, typename _size_t, uint16_t _group_size>
-class shared_map_item
-{
-public:
-	// Using
-	using _shared_map_t=shared_map<_key_t, _value_t, _size_t, _group_size>;
-
-	// Friends
-	friend _shared_map_t;
-
-	// Con-/Destructors
-	~shared_map_item()=default;
-
-	// Access
-	operator _value_t();
-
-	// Modification
-	shared_map_item& operator=(_value_t const& value);
-
-private:
-	// Con-/Destructors
-	shared_map_item(_shared_map_t* map, _key_t const& key);
-
-	// Common
-	_key_t m_key;
-	_shared_map_t* m_map;
-};
-
-
 //==========
 // Iterator
 //==========
@@ -115,7 +75,6 @@ public:
 	using _item_t=typename _traits_t::item_t;
 	using _cluster_t=typename _traits_t::cluster_t;
 	using _iterator_base_t=typename shared_cluster_iterator_base<_traits_t, false>::_base_t;
-	using _shared_item_t=shared_map_item<_key_t, _value_t, _size_t, _group_size>;
 	using iterator=shared_map_iterator<_traits_t, false>;
 	using const_iterator=shared_map_iterator<_traits_t, true>;
 	using ReadLock=Concurrency::ReadLock;
@@ -128,10 +87,6 @@ public:
 	shared_map(shared_map const& copy)=delete;
 
 	// Access
-	inline _shared_item_t operator[](_key_t const& key)
-		{
-		return _shared_item_t(this, key);
-		}
 	inline const_iterator cfind(_key_t const& key, find_func func=find_func::equal)
 		{
 		const_iterator it(this);
@@ -182,29 +137,5 @@ public:
 		return _cluster_t::set(key, value);
 		}
 };
-
-
-//=====================
-// Item Implementation
-//=====================
-
-template <typename _key_t, typename _value_t, typename _size_t, uint16_t _group_size>
-shared_map_item<_key_t, _value_t, _size_t, _group_size>::shared_map_item(shared_map<_key_t, _value_t, _size_t, _group_size>* map, _key_t const& key):
-m_key(key),
-m_map(map)
-{}
-
-template <typename _key_t, typename _value_t, typename _size_t, uint16_t _group_size>
-shared_map_item<_key_t, _value_t, _size_t, _group_size>::operator _value_t()
-{
-return m_map->get(m_key);
-}
-
-template <typename _key_t, typename _value_t, typename _size_t, uint16_t _group_size>
-shared_map_item<_key_t, _value_t, _size_t, _group_size>& shared_map_item<_key_t, _value_t, _size_t, _group_size>::operator=(_value_t const& value)
-{
-m_map->set(m_key, value);
-return *this;
-}
 
 }

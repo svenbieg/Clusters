@@ -81,11 +81,6 @@ public:
 	shared_index(shared_index const& copy)=delete;
 
 	// Access
-	_item_t operator[](_size_t position)
-		{
-		ReadLock lock(_base_t::m_mutex);
-		return _cluster_t::get_at(position);
-		}
 	inline const_iterator cfind(_item_t const& item, find_func func=find_func::equal)
 		{
 		const_iterator it(this);
