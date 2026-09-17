@@ -20,7 +20,7 @@ This is the standard-implementation, there are two more implementations in <a hr
 <table>
 	<tr>
 		<td><img src="https://github.com/user-attachments/assets/f072ba0a-f0b8-4bc0-97f3-9ced4df4e8fe" width="30" align="right" /></td>
-		<td>The entries are stored in groups.</td>
+		<td>Entries are stored in groups.</td>
 	</tr><tr><td></td></tr><tr>
 		<td><img src="https://github.com/user-attachments/assets/bdd061b8-9c1b-4835-b80e-a97f24010145" width="30" align="right" /></td>
 		<td>The size of the groups is limited and 10 by default.</td>
