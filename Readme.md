@@ -38,7 +38,7 @@ This is the standard-implementation, there are two more implementations in <a hr
 		<td>The number of groups is limited too, another parent-group is created.</td>
 	</tr><tr><td></td></tr><tr>
 		<td><img src="https://github.com/user-attachments/assets/d3c32ae0-ad2e-4629-b5c8-bf4f54471bf6" width="90" /></td>
-		<td>If an entry needs to be inserted in a full group, a whole sub-tree can be moved.</td>
+		<td>When an entry needs to be inserted in a full group, a whole sub-tree can be moved.</td>
 	</tr>
 </table><br />
 
