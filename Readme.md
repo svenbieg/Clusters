@@ -23,10 +23,10 @@ This is the standard-implementation, there are two more implementations in <a hr
 		<td>Entries are stored in groups.</td>
 	</tr><tr><td></td></tr><tr>
 		<td><img src="https://github.com/user-attachments/assets/bdd061b8-9c1b-4835-b80e-a97f24010145" width="30" align="right" /></td>
-		<td>The size of the groups is limited and 10 by default.</td>
+		<td>The size of groups is limited and 10 by default.</td>
 	</tr><tr><td></td></tr><tr>
 		<td><img src="https://github.com/user-attachments/assets/fec0cfa7-5a44-47c8-b3d8-f4cd2fdcdebd" width="60" align="right" /></td>
-		<td>If the group is full a parent-group is created.</td>
+		<td>When a group is full, a parent-group is created.</td>
 	</tr><tr><td></td></tr><tr>
 		<td><img src="https://github.com/user-attachments/assets/e3d65374-7b7b-48f9-adff-c35a7cac015d" width="60" align="right" /></td>
 		<td>The first and the last entry can be moved to the neighbour-group.</td>
