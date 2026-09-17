@@ -32,7 +32,7 @@ This is the standard-implementation, there are two more implementations in <a hr
 		<td>The first and the last entry can be moved to the neighbour-group.</td>
 	</tr><tr><td></td></tr><tr>
 		<td><img src="https://github.com/user-attachments/assets/ef7ca560-ee37-4bad-9a5e-30cec6bb3beb" width="60" align="right" /></td>
-		<td>The entries are moved between the groups, so all groups get as full as possible.</td>
+		<td>Entries are moved between groups, so all groups get as full as possible.</td>
 	</tr><tr><td></td></tr><tr>
 		<td><img src="https://github.com/user-attachments/assets/69a62898-36b2-498f-9020-0a825e1f3c8f" width="90" /></td>
 		<td>The number of groups is limited too, another parent-group is created.</td>
