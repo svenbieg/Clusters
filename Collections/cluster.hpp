@@ -57,6 +57,7 @@ public:
 	virtual uint16_t get_child_count()const noexcept=0;
 	virtual _size_t get_item_count()const noexcept=0;
 	virtual uint16_t get_level()const noexcept=0;
+	virtual bool try_get_at(_size_t position, _item_t* item_ptr)const noexcept=0;
 
 	// Modification
 	virtual void remove_at(_size_t position, _item_t* item_ptr)=0;
@@ -114,6 +115,14 @@ public:
 	inline _item_t const* get_items()const noexcept { return (_item_t const*)m_items; }
 	inline _item_t const& get_last_item()const noexcept { return get_items()[m_item_count-1]; }
 	inline uint16_t get_level()const noexcept override { return 0; }
+	bool try_get_at(_size_t position, _item_t* item_ptr)const noexcept override
+		{
+		if(position>=m_item_count)
+			return false;
+		auto items=get_items();
+		*item_ptr=items[position];
+		return true;
+		}
 
 	// Modification
 	_item_t* insert_item(uint16_t position, _item_t const& insert)
@@ -277,6 +286,13 @@ public:
 		}
 	inline _size_t get_item_count()const noexcept override { return m_item_count; }
 	inline uint16_t get_level()const noexcept override { return m_level; }
+	bool try_get_at(_size_t position, _item_t* item_ptr)const noexcept override
+		{
+		if(position>=m_item_count)
+			return false;
+		uint16_t group=get_group(&position);
+		return m_children[group]->try_get_at(position, item_ptr);
+		}
 
 	// Modification
 	virtual _size_t insert_groups(uint16_t position, _group_t* const* groups, uint16_t count)noexcept
@@ -527,6 +543,12 @@ public:
 		}
 	inline _group_t* get_root()const noexcept { return m_root; }
 	inline iterator rend() { return iterator(this, -1); }
+	bool try_get_at(_size_t position, _item_t* item_ptr)const noexcept
+		{
+		if(!m_root)
+			return false;
+		return m_root->try_get_at(position, item_ptr);
+		}
 
 	// Modification
 	bool clear()noexcept
