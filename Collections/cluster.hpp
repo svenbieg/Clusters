@@ -504,6 +504,8 @@ public:
 	using _size_t=typename _traits_t::size_t;
 	using iterator=typename _traits_t::iterator_t;
 	using const_iterator=typename _traits_t::const_iterator_t;
+	static const _size_t _pos_after=-2;
+	static const _size_t _pos_before=-1;
 
 	// Friends
 	friend iterator;
@@ -519,10 +521,10 @@ public:
 	inline const_iterator begin(_size_t position)const { return const_iterator(this, position); }
 	inline const_iterator cbegin()const { return const_iterator(this, 0); }
 	inline const_iterator cbegin(_size_t position)const { return const_iterator(this, position); }
-	inline const_iterator cend()const { return const_iterator(this, -2); }
-	inline const_iterator crend()const { return const_iterator(this, -1); }
-	inline iterator end() { return iterator(this, -2); }
-	inline const_iterator end()const { return const_iterator(this, -2); }
+	inline const_iterator cend()const { return const_iterator(this, _pos_after); }
+	inline const_iterator crend()const { return const_iterator(this, _pos_before); }
+	inline iterator end() { return iterator(this, _pos_after); }
+	inline const_iterator end()const { return const_iterator(this, _pos_after); }
 	_item_t& get_at(_size_t position)
 		{
 		if(!m_root)
@@ -542,7 +544,7 @@ public:
 		return m_root->get_item_count();
 		}
 	inline _group_t* get_root()const noexcept { return m_root; }
-	inline iterator rend() { return iterator(this, -1); }
+	inline iterator rend() { return iterator(this, _pos_before); }
 	bool try_get_at(_size_t position, _item_t* item_ptr)const noexcept
 		{
 		if(!m_root)
@@ -652,18 +654,20 @@ public:
 	using _parent_group_t=typename _traits_t::parent_group_t;
 	using _size_t=typename _traits_t::size_t;
 	static const uint16_t _group_size=_traits_t::group_size;
+	static const _size_t _pos_after=_cluster_t::_pos_after;
+	static const _size_t _pos_before=_cluster_t::_pos_before;
 
 	// Con-/Destructors
 	cluster_iterator_base(cluster_iterator_base const& it):
-		m_cluster(it.m_cluster), m_current(nullptr), m_its(nullptr), m_level_count(0), m_position(-2)
+		m_cluster(it.m_cluster), m_current(nullptr), m_its(nullptr), m_level_count(0), m_position(_pos_after)
 		{
 		set_position(it.m_position);
 		}
 	cluster_iterator_base(_cluster_ptr cluster)noexcept:
-		m_cluster(cluster), m_current(nullptr), m_its(nullptr), m_level_count(0), m_position(-2)
+		m_cluster(cluster), m_current(nullptr), m_its(nullptr), m_level_count(0), m_position(_pos_after)
 		{}
 	cluster_iterator_base(_cluster_ptr cluster, _size_t position):
-		m_cluster(cluster), m_current(nullptr), m_its(nullptr), m_level_count(0), m_position(-2)
+		m_cluster(cluster), m_current(nullptr), m_its(nullptr), m_level_count(0), m_position(_pos_after)
 		{
 		set_position(position);
 		}
@@ -706,14 +710,14 @@ public:
 		return *this;
 		}
 	inline bool begin() { return set_position(0); }
-	inline void end() { reset(-2); }
+	inline void end() { reset(_pos_after); }
 	inline _size_t get_position()const noexcept { return m_position; }
 	virtual bool move_next()
 		{
-		if(m_position==-2)
-			return false;
-		if(m_position==-1)
+		if(m_position==_pos_before)
 			return begin();
+		if(m_position==_pos_after)
+			return false;
 		auto it_ptr=&m_its[m_level_count-1];
 		auto item_group=(_item_group_t*)it_ptr->group;
 		uint16_t count=item_group->get_child_count();
@@ -746,14 +750,14 @@ public:
 			m_position++;
 			return true;
 			}
-		reset(-2);
+		reset(_pos_after);
 		return false;
 		}
 	virtual bool move_previous()
 		{
-		if(m_position==-1)
+		if(m_position==_pos_before)
 			return false;
-		if(m_position==-2)
+		if(m_position==_pos_after)
 			return rbegin();
 		auto it_ptr=&m_its[m_level_count-1];
 		auto item_group=(_item_group_t*)it_ptr->group;
@@ -785,7 +789,7 @@ public:
 			m_position--;
 			return true;
 			}
-		reset(-1);
+		reset(_pos_before);
 		return false;
 		}
 	bool rbegin()
@@ -798,7 +802,7 @@ public:
 			}
 		return true;
 		}
-	inline void rend() { reset(-1); }
+	inline void rend() { reset(_pos_before); }
 	virtual bool set_position(_size_t position)
 		{
 		if(is_outside(position))
@@ -809,14 +813,14 @@ public:
 		_group_t* group=m_cluster->get_root();
 		if(!group)
 			{
-			reset(-2);
+			reset(_pos_after);
 			return false;
 			}
 		_size_t offset=position;
 		uint16_t group_pos=get_position_internal(group, &offset);
 		if(group_pos==_group_size)
 			{
-			reset(-2);
+			reset(_pos_after);
 			return false;
 			}
 		uint16_t level_count=(uint16_t)(group->get_level()+1);
@@ -831,7 +835,7 @@ public:
 			group_pos=get_position_internal(group, &offset);
 			if(group_pos==_group_size)
 				{
-				reset(-2);
+				reset(_pos_after);
 				return false;
 				}
 			it_ptr++;
@@ -879,7 +883,7 @@ protected:
 	inline bool is_outside()const noexcept { return is_outside(m_position); }
 	bool is_outside(_size_t position)const noexcept
 		{
-		return (position==-2||position==-1);
+		return (position==_pos_before||position==_pos_after);
 		}
 	void reset(_size_t position)
 		{
